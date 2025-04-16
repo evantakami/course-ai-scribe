@@ -20,6 +20,7 @@ export interface Question {
   options: string[];
   correctAnswer: number;
   difficulty: QuestionDifficulty;
+  explanation?: string; // Add explanation field
 }
 
 export type QuestionDifficulty = "easy" | "medium" | "hard";

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
@@ -73,7 +72,7 @@ const Index = () => {
 
   const handleContentLoaded = async (
     content: string, 
-    generateQuiz: boolean = false, 
+    generateQuiz: boolean = true,
     quizDifficulty: QuestionDifficulty = "medium",
     language: SummaryLanguage = "chinese"
   ) => {
@@ -93,39 +92,47 @@ const Index = () => {
     });
 
     try {
+      // Always generate summary
       const summary = await openaiService.generateSummary(content, "casual", language);
+      
+      // Start generating questions in parallel
+      setIsGeneratingQuiz(true);
+      const questionsPromise = openaiService.generateQuestions(
+        content,
+        quizDifficulty,
+        30,
+        language
+      );
+      
+      // Update with summary first
       setCourseContent(prev => {
         if (!prev) return null;
         return { ...prev, summary };
       });
+      
       setActiveTab("summary");
-      toast.success("课程内容已成功处理");
+      toast.success("课程摘要已生成");
 
-      // Generate quiz if requested
-      if (generateQuiz) {
-        setIsGeneratingQuiz(true);
-        try {
-          const questions = await openaiService.generateQuestions(
-            content,
-            quizDifficulty,
-            30,
-            language
-          );
-          
-          setCourseContent(prev => {
-            if (!prev) return null;
-            return { ...prev, questions };
-          });
-        } catch (error) {
-          console.error("Error generating quiz:", error);
-          toast.error("生成测验题时出错");
-        } finally {
-          setIsGeneratingQuiz(false);
-        }
+      // Wait for questions to be ready
+      try {
+        const questions = await questionsPromise;
+        
+        setCourseContent(prev => {
+          if (!prev) return null;
+          return { ...prev, questions };
+        });
+        
+        toast.success("测验题已生成");
+      } catch (error) {
+        console.error("Error generating quiz:", error);
+        toast.error("生成测验题时出错");
+      } finally {
+        setIsGeneratingQuiz(false);
       }
     } catch (error) {
       console.error("Error generating summary:", error);
       toast.error("处理内容时出错，请重试");
+      setIsGeneratingQuiz(false);
     } finally {
       setIsLoading(false);
     }
@@ -229,11 +236,22 @@ const Index = () => {
 
   const handleSelectHistoryContent = (content: string) => {
     setActiveTab("upload");
-    setCourseContent(null);
     
-    setTimeout(() => {
-      handleContentLoaded(content, false, "medium", currentLanguage);
-    }, 100);
+    // Don't regenerate content when selecting from history
+    // Just set the content directly if we already have it stored
+    const historyString = localStorage.getItem('content_history') || '[]';
+    const history: HistoryItem[] = JSON.parse(historyString);
+    const historyItem = history.find(item => item.rawContent === content);
+    
+    if (historyItem) {
+      // We don't want to regenerate things when selecting from history
+      setCourseContent({ 
+        rawContent: content,
+        summary: null,
+        questions: null
+      });
+      toast.info("已从历史记录加载内容，请点击处理按钮继续");
+    }
   };
 
   return (

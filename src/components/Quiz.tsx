@@ -17,8 +17,7 @@ const Quiz = ({ questions }: QuizProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [explanation, setExplanation] = useState<string | null>(null);
+  const [isShowingExplanation, setIsShowingExplanation] = useState(false);
 
   // Load saved answers for this quiz session if available
   useEffect(() => {
@@ -50,43 +49,33 @@ const Quiz = ({ questions }: QuizProps) => {
     setSelectedOption(optionIndex);
   };
 
-  const handleSubmitAnswer = async () => {
+  const handleSubmitAnswer = () => {
     if (selectedOption === null) return;
 
-    setIsSubmitting(true);
-    try {
-      const isCorrect = selectedOption === currentQuestion.correctAnswer;
-      const explanation = await openaiService.evaluateAnswer(
-        currentQuestion, 
-        selectedOption
-      );
-
-      setExplanation(explanation);
-      
-      const newAnswer = {
-        questionId: currentQuestion.id,
-        selectedOption,
-        isCorrect,
-        question: currentQuestion.text,
-        options: currentQuestion.options,
-        correctAnswer: currentQuestion.correctAnswer,
-        explanation,
-        timestamp: new Date()
-      };
-      
-      setUserAnswers(prev => [
-        ...prev.filter(a => a.questionId !== currentQuestion.id),
-        newAnswer
-      ]);
-      
-      // Save this answer to mistake collection if it's wrong
-      if (!isCorrect) {
-        saveToMistakeCollection(newAnswer);
-      }
-    } catch (error) {
-      console.error("Error evaluating answer:", error);
-    } finally {
-      setIsSubmitting(false);
+    const isCorrect = selectedOption === currentQuestion.correctAnswer;
+    
+    const newAnswer = {
+      questionId: currentQuestion.id,
+      selectedOption,
+      isCorrect,
+      question: currentQuestion.text,
+      options: currentQuestion.options,
+      correctAnswer: currentQuestion.correctAnswer,
+      explanation: currentQuestion.explanation,
+      timestamp: new Date()
+    };
+    
+    setUserAnswers(prev => [
+      ...prev.filter(a => a.questionId !== currentQuestion.id),
+      newAnswer
+    ]);
+    
+    // Automatically show explanation
+    setIsShowingExplanation(true);
+    
+    // Save this answer to mistake collection if it's wrong
+    if (!isCorrect) {
+      saveToMistakeCollection(newAnswer);
     }
   };
 
@@ -121,7 +110,7 @@ const Quiz = ({ questions }: QuizProps) => {
 
   const handleNextQuestion = () => {
     setSelectedOption(null);
-    setExplanation(null);
+    setIsShowingExplanation(false);
     setCurrentQuestionIndex(prev => 
       prev < questions.length - 1 ? prev + 1 : prev
     );
@@ -129,10 +118,14 @@ const Quiz = ({ questions }: QuizProps) => {
 
   const handlePrevQuestion = () => {
     setSelectedOption(null);
-    setExplanation(null);
+    setIsShowingExplanation(false);
     setCurrentQuestionIndex(prev => 
       prev > 0 ? prev - 1 : prev
     );
+  };
+
+  const handleToggleExplanation = () => {
+    setIsShowingExplanation(!isShowingExplanation);
   };
 
   const getProgress = () => {
@@ -204,14 +197,14 @@ const Quiz = ({ questions }: QuizProps) => {
           ))}
         </RadioGroup>
 
-        {explanation && (
+        {isAnswerSubmitted && isShowingExplanation && currentQuestion.explanation && (
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
             <h4 className="flex items-center text-sm font-medium text-blue-800 mb-2">
               <HelpCircle className="mr-1 h-4 w-4" />
               解析
             </h4>
             <div className="text-sm text-gray-700 prose max-w-none">
-              <ReactMarkdown>{explanation}</ReactMarkdown>
+              <ReactMarkdown>{currentQuestion.explanation}</ReactMarkdown>
             </div>
           </div>
         )}
@@ -226,30 +219,38 @@ const Quiz = ({ questions }: QuizProps) => {
               上一题
             </Button>
             
-            {isAnswerSubmitted && !isCorrect && (
-              <Button
-                variant="outline"
-                onClick={handleSaveToMistakeCollection}
-                className="flex items-center gap-1"
-              >
-                <BookOpen className="h-4 w-4" />
-                添加到错题本
-              </Button>
+            {isAnswerSubmitted && (
+              <>
+                {!isCorrect && (
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveToMistakeCollection}
+                    className="flex items-center gap-1"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    添加到错题本
+                  </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  onClick={handleToggleExplanation}
+                  className="flex items-center gap-1"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  {isShowingExplanation ? "隐藏解析" : "我为什么错了？"}
+                </Button>
+              </>
             )}
           </div>
 
           {!isAnswerSubmitted ? (
             <Button 
               onClick={handleSubmitAnswer} 
-              disabled={selectedOption === null || isSubmitting}
+              disabled={selectedOption === null}
               className="bg-edu-600 hover:bg-edu-700"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  检查中...
-                </>
-              ) : "确认答案"}
+              确认答案
             </Button>
           ) : (
             <Button

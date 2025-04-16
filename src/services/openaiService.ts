@@ -38,7 +38,6 @@ class OpenAIService {
     return this.model;
   }
 
-  // Custom prompts methods
   getCustomPrompt(type: 'summary' | 'questions' | 'explanation', style?: SummaryStyle): string {
     if (type === 'summary' && style) {
       return this.customPrompts[type][style] || this.getDefaultPrompt(type, style);
@@ -87,9 +86,9 @@ class OpenAIService {
       case 'summary':
         return "对以下课程内容进行总结。确保捕捉所有关键知识点和重要信息。内容要全面但简洁。内容可以采用Markdown格式以提高可读性。";
       case 'questions':
-        return "根据这个课程内容创建多选题。每个问题必须有恰好4个选项，且只有一个正确答案。所有问题和答案必须直接基于提供的内容，不要引入外部信息。";
+        return "根据这个课程内容创建多选题。每个问题必须有恰好4个选项，且只有一个正确答案。所有问题和答案必须直接基于提供的内容，不要引入外部信息。对每个问题，包含一个解释字段，用Markdown格式解释为什么正确答案是对的，以及其他选项为什么是错误的。";
       case 'explanation':
-        return "提供详细解释说明为什么正确答案是对的，并特别针对用户的答案（无论是否正确）进行分析。如果答案不正确，请解释可能导致选择错误选项的常见误解。为了降低幻觉，请确保解释严格基��原始内容，不要添加没有在原始材料中出现的信息。";
+        return "提供详细解释说明为什么正确答案是对的，并特别针对用户的答案（无论是否正确）进行分析。如果答案不正确，请解释可能导致选择错误选项的常见误解。为了降低幻觉，请确保解释严格基于原始内容，不要添加没有在原始材料中出现的信息。";
       default:
         return "";
     }
@@ -207,14 +206,16 @@ class OpenAIService {
     2. 每个问题必须有恰好4个选项，且只有一个正确答案
     3. 所有问题和答案必须直接基于提供的内容 - 不要引入外部信息
     4. ${languagePrompt}
-    5. 以这种JSON格式返回响应：
+    5. 为每个问题添加一个explanation字段，使用Markdown格式提供详细解释
+    6. 以这种JSON格式返回响应：
     [
       {
         "id": 1,
         "text": "这里是问题文本？",
         "options": ["选项A", "选项B", "选项C", "选项D"],
         "correctAnswer": 0, // 正确选项的索引（0-3）
-        "difficulty": "${difficulty}"
+        "difficulty": "${difficulty}",
+        "explanation": "这里是Markdown格式的详细解释说明为什么正确答案是对的，以及其他选项为什么是错误的"
       },
       ...更多问题
     ]
@@ -236,6 +237,10 @@ class OpenAIService {
   }
 
   async evaluateAnswer(question: Question, selectedOptionIndex: number, language: SummaryLanguage = 'chinese'): Promise<string> {
+    if (question.explanation) {
+      return question.explanation;
+    }
+    
     const isCorrect = selectedOptionIndex === question.correctAnswer;
     const selectedOption = question.options[selectedOptionIndex];
     const correctOption = question.options[question.correctAnswer];
