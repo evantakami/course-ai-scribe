@@ -1,8 +1,9 @@
 
-import { SummaryStyle, QuestionDifficulty, Question, Summary } from "@/types";
+import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage } from "@/types";
 
 class OpenAIService {
   private apiKey: string | null = null;
+  private model: string = "gpt-4o";
 
   setApiKey(key: string) {
     this.apiKey = key;
@@ -16,8 +17,22 @@ class OpenAIService {
     return this.apiKey;
   }
 
+  setModel(model: string) {
+    this.model = model;
+    localStorage.setItem('openai_model', model);
+  }
+
+  getModel(): string {
+    const savedModel = localStorage.getItem('openai_model');
+    if (savedModel) {
+      this.model = savedModel;
+    }
+    return this.model;
+  }
+
   private async callAPI(prompt: string): Promise<string> {
     const apiKey = this.getApiKey();
+    const model = this.getModel();
     
     if (!apiKey) {
       throw new Error("API key not set. Please enter your OpenAI API key.");
@@ -31,7 +46,7 @@ class OpenAIService {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: model,
           messages: [
             {
               role: "system",
@@ -59,15 +74,18 @@ class OpenAIService {
     }
   }
 
-  async generateSummary(content: string, style: SummaryStyle): Promise<Summary> {
+  async generateSummary(content: string, style: SummaryStyle, language: SummaryLanguage): Promise<Summary> {
     const stylePrompt = style === 'academic' 
       ? "in an academic, formal style with proper terminology" 
       : "in a casual, easy-to-understand style";
     
+    const languagePrompt = `Output the summary in ${language} language.`;
+    
     const prompt = `
     Summarize the following course content ${stylePrompt}. 
     Make sure to capture ALL key knowledge points and important information.
-    Be comprehensive but concise:
+    Be comprehensive but concise.
+    ${languagePrompt}
 
     ${content}
     `;
@@ -76,16 +94,19 @@ class OpenAIService {
     
     return {
       content: result,
-      style
+      style,
+      language
     };
   }
 
-  async generateQuestions(content: string, difficulty: QuestionDifficulty, count: number = 10): Promise<Question[]> {
+  async generateQuestions(content: string, difficulty: QuestionDifficulty, count: number = 10, language: SummaryLanguage = 'english'): Promise<Question[]> {
     const difficultyDescription = {
       'easy': 'basic understanding and recall of the material',
       'medium': 'application of concepts and some analysis',
       'hard': 'deep understanding, analysis, and synthesis of complex ideas'
     }[difficulty];
+
+    const languagePrompt = `Create the questions and all answers in ${language} language.`;
 
     const prompt = `
     Create ${count} multiple-choice questions based on this course content:
@@ -96,7 +117,8 @@ class OpenAIService {
     1. Questions should be at ${difficulty} difficulty level (${difficultyDescription})
     2. Each question must have exactly 4 options with only one correct answer
     3. All questions and answers must be directly based on the provided content - do not introduce external information
-    4. Return the response in this JSON format:
+    4. ${languagePrompt}
+    5. Return the response in this JSON format:
     [
       {
         "id": 1,
@@ -124,11 +146,13 @@ class OpenAIService {
     }
   }
 
-  async evaluateAnswer(question: Question, selectedOptionIndex: number): Promise<string> {
+  async evaluateAnswer(question: Question, selectedOptionIndex: number, language: SummaryLanguage = 'english'): Promise<string> {
     const isCorrect = selectedOptionIndex === question.correctAnswer;
     const selectedOption = question.options[selectedOptionIndex];
     const correctOption = question.options[question.correctAnswer];
     
+    const languagePrompt = `Provide the explanation in ${language} language.`;
+
     const prompt = `
     The user answered the following multiple-choice question:
     
@@ -143,6 +167,7 @@ class OpenAIService {
     Provide a detailed explanation of why the correct answer is right, and specifically address the user's answer (whether correct or incorrect). 
     If incorrect, explain the misconception that might have led to selecting the wrong option.
     Keep the explanation concise but educational.
+    ${languagePrompt}
     `;
 
     const explanation = await this.callAPI(prompt);

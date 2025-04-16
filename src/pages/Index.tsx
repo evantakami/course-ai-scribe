@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { CourseContent, Summary, SummaryStyle, Question, QuestionDifficulty } from "@/types";
+import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,28 +17,58 @@ const Index = () => {
   const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState<boolean>(false);
+  const [currentLanguage, setCurrentLanguage] = useState<SummaryLanguage>("chinese");
 
   const handleApiKeySet = () => {
     setIsKeySet(true);
   };
 
-  const handleContentLoaded = async (content: string) => {
+  const handleContentLoaded = async (
+    content: string, 
+    generateQuiz: boolean = false, 
+    quizDifficulty: QuestionDifficulty = "medium",
+    language: SummaryLanguage = "chinese"
+  ) => {
     if (!isKeySet) {
       toast.error("请先设置OpenAI API密钥");
       return;
     }
 
     setIsLoading(true);
+    setCurrentLanguage(language);
     setCourseContent({ rawContent: content });
 
     try {
-      const summary = await openaiService.generateSummary(content, "casual");
+      const summary = await openaiService.generateSummary(content, "casual", language);
       setCourseContent(prev => {
         if (!prev) return null;
         return { ...prev, summary };
       });
       setActiveTab("summary");
       toast.success("课程内容已成功处理");
+
+      // Generate quiz if requested
+      if (generateQuiz) {
+        setIsGeneratingQuiz(true);
+        try {
+          const questions = await openaiService.generateQuestions(
+            content,
+            quizDifficulty,
+            30,
+            language
+          );
+          
+          setCourseContent(prev => {
+            if (!prev) return null;
+            return { ...prev, questions };
+          });
+        } catch (error) {
+          console.error("Error generating quiz:", error);
+          toast.error("生成测验题时出错");
+        } finally {
+          setIsGeneratingQuiz(false);
+        }
+      }
     } catch (error) {
       console.error("Error generating summary:", error);
       toast.error("处理内容时出错，请重试");
@@ -54,7 +84,8 @@ const Index = () => {
     try {
       const summary = await openaiService.generateSummary(
         courseContent.rawContent, 
-        style
+        style,
+        currentLanguage
       );
       
       setCourseContent(prev => {
@@ -69,6 +100,30 @@ const Index = () => {
     }
   };
 
+  const handleLanguageChange = async (language: SummaryLanguage) => {
+    if (!courseContent?.rawContent) return;
+    setCurrentLanguage(language);
+    
+    setIsLoading(true);
+    try {
+      const summary = await openaiService.generateSummary(
+        courseContent.rawContent, 
+        courseContent.summary?.style || "casual",
+        language
+      );
+      
+      setCourseContent(prev => {
+        if (!prev) return null;
+        return { ...prev, summary };
+      });
+    } catch (error) {
+      console.error("Error changing summary language:", error);
+      toast.error("更改摘要语言时出错");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGenerateQuiz = async () => {
     if (!courseContent?.rawContent) return;
     
@@ -77,7 +132,8 @@ const Index = () => {
       const questions = await openaiService.generateQuestions(
         courseContent.rawContent,
         "medium",
-        30
+        30,
+        currentLanguage
       );
       
       setCourseContent(prev => {
@@ -101,7 +157,8 @@ const Index = () => {
       const questions = await openaiService.generateQuestions(
         courseContent.rawContent,
         difficulty,
-        30
+        30,
+        currentLanguage
       );
       
       setCourseContent(prev => {
@@ -179,6 +236,7 @@ const Index = () => {
                   summary={courseContent?.summary || null} 
                   isLoading={isLoading}
                   onStyleChange={handleStyleChange}
+                  onLanguageChange={handleLanguageChange}
                   onGenerateQuiz={handleGenerateQuiz}
                 />
               </TabsContent>

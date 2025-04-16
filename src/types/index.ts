@@ -2,9 +2,11 @@
 export interface Summary {
   content: string;
   style: SummaryStyle;
+  language: SummaryLanguage;
 }
 
 export type SummaryStyle = 'casual' | 'academic';
+export type SummaryLanguage = 'english' | 'chinese' | 'spanish' | 'french';
 
 export interface Question {
   id: number;
@@ -28,3 +30,14 @@ export interface CourseContent {
   summary?: Summary;
   questions?: Question[];
 }
+
+export interface AIModelOption {
+  value: string;
+  label: string;
+}
+
+export const AI_MODELS: AIModelOption[] = [
+  { value: 'gpt-4o', label: 'GPT-4o' },
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
+];

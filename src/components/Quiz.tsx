@@ -2,12 +2,10 @@
 import { useState } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Check, X, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, HelpCircle } from "lucide-react";
 import { openaiService } from "@/services/openaiService";
-import { Loader2 } from "lucide-react";
 
 interface QuizProps {
   questions: Question[];
@@ -15,216 +13,178 @@ interface QuizProps {
 
 const Quiz = ({ questions }: QuizProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<UserAnswer[]>([]);
+  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
-  
-  const userAnswer = answers.find(a => a.questionId === currentQuestion.id);
+  const userAnswer = userAnswers.find(answer => answer.questionId === currentQuestion.id);
+  const isAnswerSubmitted = userAnswer !== undefined;
+  const isCorrect = userAnswer?.isCorrect;
 
-  const handleOptionSelect = (optionIndex: number) => {
-    setExplanation(null);
-    
-    const newAnswers = [...answers];
-    const existingAnswerIndex = newAnswers.findIndex(
-      a => a.questionId === currentQuestion.id
-    );
-
-    if (existingAnswerIndex >= 0) {
-      newAnswers[existingAnswerIndex] = {
-        ...newAnswers[existingAnswerIndex],
-        selectedOption: optionIndex,
-        isCorrect: undefined,
-      };
-    } else {
-      newAnswers.push({
-        questionId: currentQuestion.id,
-        selectedOption: optionIndex,
-        isCorrect: undefined,
-      });
-    }
-
-    setAnswers(newAnswers);
+  const handleSelectOption = (value: string) => {
+    const optionIndex = parseInt(value);
+    setSelectedOption(optionIndex);
   };
 
-  const handleCheckAnswer = async () => {
-    if (!userAnswer) return;
+  const handleSubmitAnswer = async () => {
+    if (selectedOption === null) return;
 
-    setIsEvaluating(true);
+    setIsSubmitting(true);
     try {
+      const isCorrect = selectedOption === currentQuestion.correctAnswer;
       const explanation = await openaiService.evaluateAnswer(
-        currentQuestion,
-        userAnswer.selectedOption
+        currentQuestion, 
+        selectedOption
       );
-      
-      const isCorrect = userAnswer.selectedOption === currentQuestion.correctAnswer;
-      
-      const newAnswers = [...answers];
-      const answerIndex = newAnswers.findIndex(a => a.questionId === currentQuestion.id);
-      
-      if (answerIndex >= 0) {
-        newAnswers[answerIndex] = {
-          ...newAnswers[answerIndex],
-          isCorrect
-        };
-        setAnswers(newAnswers);
-      }
-      
+
       setExplanation(explanation);
+      
+      setUserAnswers(prev => [
+        ...prev.filter(a => a.questionId !== currentQuestion.id),
+        {
+          questionId: currentQuestion.id,
+          selectedOption,
+          isCorrect
+        }
+      ]);
     } catch (error) {
       console.error("Error evaluating answer:", error);
-      setExplanation("无法生成解释。请稍后再试。");
     } finally {
-      setIsEvaluating(false);
+      setIsSubmitting(false);
     }
   };
 
-  const goToNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setExplanation(null);
-    }
+  const handleNextQuestion = () => {
+    setSelectedOption(null);
+    setExplanation(null);
+    setCurrentQuestionIndex(prev => 
+      prev < questions.length - 1 ? prev + 1 : prev
+    );
   };
 
-  const goToPreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-      setExplanation(null);
-    }
+  const handlePrevQuestion = () => {
+    setSelectedOption(null);
+    setExplanation(null);
+    setCurrentQuestionIndex(prev => 
+      prev > 0 ? prev - 1 : prev
+    );
   };
 
-  const getOptionClassName = (optionIndex: number) => {
-    if (userAnswer?.isCorrect === undefined) return "";
+  const getProgress = () => {
+    const answeredCount = userAnswers.length;
+    const totalCount = questions.length;
+    const percentage = Math.round((answeredCount / totalCount) * 100);
     
-    if (optionIndex === currentQuestion.correctAnswer) {
-      return "bg-green-50 border-green-300";
-    }
-    
-    if (optionIndex === userAnswer.selectedOption && userAnswer.isCorrect === false) {
-      return "bg-red-50 border-red-300";
-    }
-    
-    return "";
+    return {
+      answeredCount,
+      totalCount,
+      percentage,
+      correct: userAnswers.filter(a => a.isCorrect).length
+    };
   };
+
+  const progress = getProgress();
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <span className="text-sm text-gray-500">
+        <div className="text-sm text-gray-500">
           问题 {currentQuestionIndex + 1} / {questions.length}
-        </span>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={goToPreviousQuestion}
-            disabled={currentQuestionIndex === 0}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={goToNextQuestion}
-            disabled={currentQuestionIndex === questions.length - 1}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        </div>
+        <div className="text-sm flex items-center">
+          <CheckCircle className="text-green-500 h-4 w-4 mr-1" />
+          <span className="mr-3">{progress.correct} 正确</span>
+          <XCircle className="text-red-500 h-4 w-4 mr-1" />
+          <span>{progress.answeredCount - progress.correct} 错误</span>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-md shadow-sm border">
-        <h3 className="text-lg font-medium mb-4">{currentQuestion.text}</h3>
-        
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <h3 className="text-lg font-medium mb-4">
+          {currentQuestion.text}
+        </h3>
+
         <RadioGroup 
-          value={userAnswer?.selectedOption?.toString()} 
-          onValueChange={(value) => handleOptionSelect(parseInt(value))}
+          value={selectedOption?.toString()} 
+          onValueChange={handleSelectOption}
           className="space-y-3"
-          disabled={userAnswer?.isCorrect !== undefined}
+          disabled={isAnswerSubmitted}
         >
           {currentQuestion.options.map((option, index) => (
-            <div 
-              key={index}
-              className={`flex items-center space-x-2 border p-3 rounded-md ${getOptionClassName(index)}`}
-            >
+            <div key={index} className={`
+              flex items-start space-x-2 rounded-md p-3 border transition-colors
+              ${isAnswerSubmitted ? (
+                index === currentQuestion.correctAnswer ? 'bg-green-50 border-green-200' :
+                index === userAnswer?.selectedOption ? 'bg-red-50 border-red-200' :
+                'border-transparent'
+              ) : (
+                selectedOption === index ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50 border-transparent'
+              )}
+            `}>
               <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-              <Label htmlFor={`option-${index}`} className="flex-grow cursor-pointer">
+              <Label 
+                htmlFor={`option-${index}`} 
+                className="flex-grow font-normal cursor-pointer"
+              >
                 {option}
               </Label>
-              {userAnswer?.isCorrect !== undefined && index === currentQuestion.correctAnswer && (
-                <Check className="h-5 w-5 text-green-500" />
-              )}
-              {userAnswer?.isCorrect === false && index === userAnswer.selectedOption && (
-                <X className="h-5 w-5 text-red-500" />
+              {isAnswerSubmitted && (
+                index === currentQuestion.correctAnswer ? (
+                  <CheckCircle className="text-green-500 h-5 w-5 flex-shrink-0" />
+                ) : index === userAnswer?.selectedOption ? (
+                  <XCircle className="text-red-500 h-5 w-5 flex-shrink-0" />
+                ) : null
               )}
             </div>
           ))}
         </RadioGroup>
 
-        <div className="mt-6 space-y-4">
-          {userAnswer && userAnswer.isCorrect === undefined && (
-            <Button 
-              onClick={handleCheckAnswer} 
-              disabled={isEvaluating}
-              className="w-full bg-edu-600 hover:bg-edu-700"
-            >
-              {isEvaluating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  评估中...
-                </>
-              ) : (
-                <>
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  检查答案
-                </>
-              )}
-            </Button>
-          )}
+        {explanation && (
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+            <h4 className="flex items-center text-sm font-medium text-blue-800 mb-2">
+              <HelpCircle className="mr-1 h-4 w-4" />
+              解析
+            </h4>
+            <div className="text-sm text-gray-700 whitespace-pre-wrap">
+              {explanation}
+            </div>
+          </div>
+        )}
 
-          {explanation && (
-            <Card>
-              <CardContent className="p-4">
-                <h4 className="font-medium mb-2 flex items-center">
-                  {userAnswer?.isCorrect ? (
-                    <Check className="h-5 w-5 mr-2 text-green-500" />
-                  ) : (
-                    <X className="h-5 w-5 mr-2 text-red-500" />
-                  )}
-                  解析
-                </h4>
-                <div className="text-sm text-gray-700 whitespace-pre-line">
-                  {explanation}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      <div className="flex justify-between mt-4">
-        {currentQuestionIndex > 0 && (
-          <Button 
-            variant="outline" 
-            onClick={goToPreviousQuestion}
-            className="flex items-center"
+        <div className="mt-6 flex justify-between">
+          <Button
+            variant="outline"
+            onClick={handlePrevQuestion}
+            disabled={currentQuestionIndex === 0}
           >
-            <ChevronLeft className="mr-1 h-4 w-4" />
             上一题
           </Button>
-        )}
-        <div className="flex-1"></div>
-        {currentQuestionIndex < questions.length - 1 && (
-          <Button 
-            variant="outline" 
-            onClick={goToNextQuestion}
-            className="flex items-center"
-          >
-            下一题
-            <ChevronRight className="ml-1 h-4 w-4" />
-          </Button>
-        )}
+
+          {!isAnswerSubmitted ? (
+            <Button 
+              onClick={handleSubmitAnswer} 
+              disabled={selectedOption === null || isSubmitting}
+              className="bg-edu-600 hover:bg-edu-700"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  检查中...
+                </>
+              ) : "确认答案"}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNextQuestion}
+              disabled={currentQuestionIndex === questions.length - 1}
+              className="bg-edu-600 hover:bg-edu-700"
+            >
+              下一题
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
