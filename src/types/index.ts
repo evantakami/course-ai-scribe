@@ -1,4 +1,5 @@
 
+
 export interface Summary {
   content: string;
   style: SummaryStyle;
@@ -37,7 +38,9 @@ export interface AIModelOption {
 }
 
 export const AI_MODELS: AIModelOption[] = [
-  { value: 'gpt-4o', label: 'GPT-4o' },
-  { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
+  { value: 'gpt4.1', label: 'GPT-4.1' },
+  { value: 'gpt4.1-nano', label: 'GPT-4.1 Nano' },
+  { value: 'gpt4.1-mini', label: 'GPT-4.1 Mini' },
+  { value: 'o4-mini', label: 'O4 Mini' }
 ];
+
