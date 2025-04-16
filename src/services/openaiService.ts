@@ -1,9 +1,10 @@
 
+
 import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage } from "@/types";
 
 class OpenAIService {
   private apiKey: string | null = null;
-  private model: string = "gpt4.1-nano";  // 默认模型改为gpt4.1-nano
+  private model: string = "gpt-4o-mini";  // 默认模型改为gpt-4o-mini，这是一个实际存在的模型
 
   setApiKey(key: string) {
     this.apiKey = key;
@@ -176,3 +177,4 @@ class OpenAIService {
 }
 
 export const openaiService = new OpenAIService();
+
