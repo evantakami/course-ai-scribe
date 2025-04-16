@@ -1,272 +1,185 @@
-
 import { useState, useEffect } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Wand2, Sparkles, Save, RotateCcw } from "lucide-react";
-import { CustomPrompt, SummaryStyle } from "@/types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { openaiService } from "@/services/openaiService";
+import { SummaryStyle, CustomPromptType } from "@/types";
+
+const formSchema = z.object({
+  summary: z.string(),
+  questions: z.string(),
+  explanation: z.string(),
+});
 
 const CustomPromptSettings = () => {
-  const [casualSummaryPrompt, setCasualSummaryPrompt] = useState("");
-  const [academicSummaryPrompt, setAcademicSummaryPrompt] = useState("");
-  const [questionsPrompt, setQuestionsPrompt] = useState("");
-  const [explanationPrompt, setExplanationPrompt] = useState("");
-  const [activeTab, setActiveTab] = useState("summary");
-  const [activeSummaryStyle, setActiveSummaryStyle] = useState<SummaryStyle>("casual");
-  const [isOpen, setIsOpen] = useState(false);
+  const [summaryPrompt, setSummaryPrompt] = useState<string>(openaiService.getCustomPrompt('summary'));
+  const [questionsPrompt, setQuestionsPrompt] = useState<string>(openaiService.getCustomPrompt('questions'));
+  const [explanationPrompt, setExplanationPrompt] = useState<string>(openaiService.getCustomPrompt('explanation'));
+  const [isSummaryCustom, setIsSummaryCustom] = useState<boolean>(!!openaiService.getCustomPrompt('summary'));
+  const [isQuestionsCustom, setIsQuestionsCustom] = useState<boolean>(!!openaiService.getCustomPrompt('questions'));
+  const [isExplanationCustom, setIsExplanationCustom] = useState<boolean>(!!openaiService.getCustomPrompt('explanation'));
+  const [summaryStyle, setSummaryStyle] = useState<SummaryStyle>("casual");
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      summary: summaryPrompt,
+      questions: questionsPrompt,
+      explanation: explanationPrompt,
+    },
+  });
 
   useEffect(() => {
-    if (isOpen) {
-      // Load current prompts from the service
-      setCasualSummaryPrompt(openaiService.getCustomPrompt("summary", "casual"));
-      setAcademicSummaryPrompt(openaiService.getCustomPrompt("summary", "academic"));
-      setQuestionsPrompt(openaiService.getCustomPrompt("questions"));
-      setExplanationPrompt(openaiService.getCustomPrompt("explanation"));
-    }
-  }, [isOpen]);
+    setSummaryPrompt(openaiService.getCustomPrompt('summary', summaryStyle));
+    setQuestionsPrompt(openaiService.getCustomPrompt('questions'));
+    setExplanationPrompt(openaiService.getCustomPrompt('explanation'));
+    form.reset({
+      summary: openaiService.getCustomPrompt('summary', summaryStyle),
+      questions: openaiService.getCustomPrompt('questions'),
+      explanation: openaiService.getCustomPrompt('explanation'),
+    });
+  }, [summaryStyle]);
 
-  const handleSaveSummaryPrompt = (style: SummaryStyle) => {
-    try {
-      const prompt = style === "casual" ? casualSummaryPrompt : academicSummaryPrompt;
-      
-      if (prompt.trim().length === 0) {
-        toast.error("提示词不能为空");
-        return;
-      }
-      
-      openaiService.setCustomPrompt("summary", prompt, style);
-      toast.success(`${style === "casual" ? "通俗易懂" : "学术专业"}提示词已保存`);
-    } catch (error) {
-      console.error("Failed to save prompt:", error);
-      toast.error("保存提示词失败");
-    }
+  const handleStyleChange = (value: string) => {
+    setSummaryStyle(value as SummaryStyle);
   };
 
-  const handleSavePrompt = (type: 'questions' | 'explanation') => {
-    try {
-      const promptMap = {
-        'questions': questionsPrompt,
-        'explanation': explanationPrompt
-      };
-      
-      const prompt = promptMap[type];
-      
-      if (prompt.trim().length === 0) {
-        toast.error("提示词不能为空");
-        return;
-      }
-      
-      openaiService.setCustomPrompt(type, prompt);
-      toast.success("提示词已保存");
-    } catch (error) {
-      console.error("Failed to save prompt:", error);
-      toast.error("保存提示词失败");
+  const handleSavePrompt = (type: CustomPromptType, value: string) => {
+    openaiService.setCustomPrompt(type, value, summaryStyle);
+    switch (type) {
+      case 'summary':
+        setSummaryPrompt(value);
+        setIsSummaryCustom(true);
+        break;
+      case 'questions':
+        setQuestionsPrompt(value);
+        setIsQuestionsCustom(true);
+        break;
+      case 'explanation':
+        setExplanationPrompt(value);
+        setIsExplanationCustom(true);
+        break;
     }
+    toast({
+      title: `${type === 'summary' ? '摘要' : type === 'questions' ? '问题' : '解释'}提示已保存`,
+    });
   };
 
-  const handleResetSummaryPrompt = (style: SummaryStyle) => {
-    try {
-      openaiService.resetCustomPrompt("summary", style);
-      
-      // Refresh the prompt in the UI
-      if (style === "casual") {
-        setCasualSummaryPrompt(openaiService.getCustomPrompt("summary", "casual"));
-      } else {
-        setAcademicSummaryPrompt(openaiService.getCustomPrompt("summary", "academic"));
-      }
-      
-      toast.success(`${style === "casual" ? "通俗易懂" : "学术专业"}提示词已重置为默认值`);
-    } catch (error) {
-      console.error("Failed to reset prompt:", error);
-      toast.error("重置提示词失败");
+  const handleResetPrompt = (type: CustomPromptType) => {
+    openaiService.resetCustomPrompt(type, summaryStyle);
+    switch (type) {
+      case 'summary':
+        setSummaryPrompt(openaiService.getCustomPrompt('summary', summaryStyle));
+        setIsSummaryCustom(false);
+        break;
+      case 'questions':
+        setQuestionsPrompt(openaiService.getCustomPrompt('questions'));
+        setIsQuestionsCustom(false);
+        break;
+      case 'explanation':
+        setExplanationPrompt(openaiService.getCustomPrompt('explanation'));
+        setIsExplanationCustom(false);
+        break;
     }
-  };
-
-  const handleResetPrompt = (type: 'questions' | 'explanation') => {
-    try {
-      openaiService.resetCustomPrompt(type);
-      
-      // Refresh the prompt in the UI
-      switch (type) {
-        case 'questions':
-          setQuestionsPrompt(openaiService.getCustomPrompt("questions"));
-          break;
-        case 'explanation':
-          setExplanationPrompt(openaiService.getCustomPrompt("explanation"));
-          break;
-      }
-      
-      toast.success("已重置为默认提示词");
-    } catch (error) {
-      console.error("Failed to reset prompt:", error);
-      toast.error("重置提示词失败");
-    }
+    form.reset({
+      summary: openaiService.getCustomPrompt('summary', summaryStyle),
+      questions: openaiService.getCustomPrompt('questions'),
+      explanation: openaiService.getCustomPrompt('explanation'),
+    });
+    toast({
+      title: `${type === 'summary' ? '摘要' : type === 'questions' ? '问题' : '解释'}提示已重置为默认值`,
+    });
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1">
-          <Wand2 className="h-4 w-4" />
-          提示词设置
-        </Button>
-      </SheetTrigger>
-      <SheetContent className="sm:max-w-md">
-        <SheetHeader className="mb-4">
-          <SheetTitle className="flex items-center">
-            <Sparkles className="mr-2 h-5 w-5" />
-            自定义AI提示词
-          </SheetTitle>
-          <SheetDescription>
-            自定义生成内容摘要和问题的提示词，使AI输出更符合您的需求
-          </SheetDescription>
-        </SheetHeader>
-        
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="summary">摘要提示词</TabsTrigger>
-            <TabsTrigger value="questions">问题提示词</TabsTrigger>
-            <TabsTrigger value="explanation">解释提示词</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="summary" className="space-y-4">
-            <Tabs 
-              value={activeSummaryStyle} 
-              onValueChange={setActiveSummaryStyle}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="casual">通俗易懂</TabsTrigger>
-                <TabsTrigger value="academic">学术专业</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="casual" className="space-y-4">
-                <p className="text-sm text-muted-foreground mb-2">
-                  定制生成通俗易懂的课程内容摘要提示词。此提示词会影响AI如何以简单易懂的方式概括课程内容。
-                </p>
-                <Textarea
-                  placeholder="输入通俗易懂摘要提示词..."
-                  className="min-h-[200px]"
-                  value={casualSummaryPrompt}
-                  onChange={(e) => setCasualSummaryPrompt(e.target.value)}
-                />
-                <div className="flex justify-between">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleResetSummaryPrompt("casual")}
-                  >
-                    <RotateCcw className="h-4 w-4 mr-1" />
-                    重置默认
-                  </Button>
-                  <Button 
-                    onClick={() => handleSaveSummaryPrompt("casual")}
-                  >
-                    <Save className="h-4 w-4 mr-1" />
-                    保存
-                  </Button>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="academic" className="space-y-4">
-                <p className="text-sm text-muted-foreground mb-2">
-                  定制生成学术专业的课程内容摘要提示词。此提示词会影响AI如何以专业学术的方式概括课程内容。
-                </p>
-                <Textarea
-                  placeholder="输入学术专业摘要提示词..."
-                  className="min-h-[200px]"
-                  value={academicSummaryPrompt}
-                  onChange={(e) => setAcademicSummaryPrompt(e.target.value)}
-                />
-                <div className="flex justify-between">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleResetSummaryPrompt("academic")}
-                  >
-                    <RotateCcw className="h-4 w-4 mr-1" />
-                    重置默认
-                  </Button>
-                  <Button 
-                    onClick={() => handleSaveSummaryPrompt("academic")}
-                  >
-                    <Save className="h-4 w-4 mr-1" />
-                    保存
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-          
-          <TabsContent value="questions" className="space-y-4">
-            <p className="text-sm text-muted-foreground mb-2">
-              定制生成测验问题的提示词。此提示词会影响AI如何创建课程内容相关的测验题。
-            </p>
-            <Textarea
-              placeholder="输入自定义问题提示词..."
-              className="min-h-[200px]"
-              value={questionsPrompt}
-              onChange={(e) => setQuestionsPrompt(e.target.value)}
-            />
-            <div className="flex justify-between">
-              <Button 
-                variant="outline" 
-                onClick={() => handleResetPrompt('questions')}
-              >
-                <RotateCcw className="h-4 w-4 mr-1" />
-                重置默认
-              </Button>
-              <Button 
-                onClick={() => handleSavePrompt('questions')}
-              >
-                <Save className="h-4 w-4 mr-1" />
-                保存
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>自定义提示语</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="summary">摘要提示语</Label>
+            <div className="flex items-center space-x-2">
+              <Select onValueChange={handleStyleChange} defaultValue={summaryStyle}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="选择风格" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="casual">通俗易懂</SelectItem>
+                  <SelectItem value="academic">学术专业</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={() => handleResetPrompt('summary')}>
+                重置
               </Button>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="explanation" className="space-y-4">
-            <p className="text-sm text-muted-foreground mb-2">
-              定制测验解释的提示词。此提示词会影响AI如何解释测验题的答案。
-            </p>
-            <Textarea
-              placeholder="输入自定义解释提示词..."
-              className="min-h-[200px]"
-              value={explanationPrompt}
-              onChange={(e) => setExplanationPrompt(e.target.value)}
-            />
-            <div className="flex justify-between">
-              <Button 
-                variant="outline" 
-                onClick={() => handleResetPrompt('explanation')}
-              >
-                <RotateCcw className="h-4 w-4 mr-1" />
-                重置默认
-              </Button>
-              <Button 
-                onClick={() => handleSavePrompt('explanation')}
-              >
-                <Save className="h-4 w-4 mr-1" />
-                保存
-              </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </SheetContent>
-    </Sheet>
+          </div>
+          <Textarea
+            id="summary"
+            value={summaryPrompt}
+            onChange={(e) => setSummaryPrompt(e.target.value)}
+            className="min-h-[100px]"
+            onBlur={(e) => handleSavePrompt('summary', e.target.value)}
+          />
+        </div>
+
+        <div className="grid gap-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="questions">问题提示语</Label>
+            <Button variant="outline" size="sm" onClick={() => handleResetPrompt('questions')}>
+              重置
+            </Button>
+          </div>
+          <Textarea
+            id="questions"
+            value={questionsPrompt}
+            onChange={(e) => setQuestionsPrompt(e.target.value)}
+            className="min-h-[100px]"
+            onBlur={(e) => handleSavePrompt('questions', e.target.value)}
+          />
+        </div>
+
+        <div className="grid gap-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="explanation">解释提示语</Label>
+            <Button variant="outline" size="sm" onClick={() => handleResetPrompt('explanation')}>
+              重置
+            </Button>
+          </div>
+          <Textarea
+            id="explanation"
+            value={explanationPrompt}
+            onChange={(e) => setExplanationPrompt(e.target.value)}
+            className="min-h-[100px]"
+            onBlur={(e) => handleSavePrompt('explanation', e.target.value)}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

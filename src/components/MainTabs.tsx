@@ -1,10 +1,11 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen } from "lucide-react";
+import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle } from "@/types";
 import FileUpload from "./FileUpload";
 import CourseSummary from "./CourseSummary";
 import QuizGenerator from "./QuizGenerator";
+import MistakeCollection from "./MistakeCollection";
 
 interface MainTabsProps {
   activeTab: string;
@@ -42,22 +43,28 @@ const MainTabs = ({
       onValueChange={setActiveTab}
       className="space-y-4"
     >
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="upload" disabled={isLoading}>
-          <BookOpen className="mr-2 h-4 w-4" />
+          <FileText className="mr-2 h-4 w-4" />
           输入内容
         </TabsTrigger>
         <TabsTrigger 
           value="summary" 
           disabled={isLoading || !courseContent?.summary}
         >
+          <BookOpen className="mr-2 h-4 w-4" />
           总结
         </TabsTrigger>
         <TabsTrigger 
           value="quiz" 
           disabled={isLoading || isGeneratingQuiz || !courseContent?.questions}
         >
+          <HelpCircle className="mr-2 h-4 w-4" />
           知识测验
+        </TabsTrigger>
+        <TabsTrigger value="mistakes">
+          <BookOpenCheck className="mr-2 h-4 w-4" />
+          错题本
         </TabsTrigger>
       </TabsList>
 
@@ -86,6 +93,10 @@ const MainTabs = ({
           isGenerating={isGeneratingQuiz}
           onDifficultyChange={handleDifficultyChange}
         />
+      </TabsContent>
+      
+      <TabsContent value="mistakes" className="mt-4">
+        <MistakeCollection />
       </TabsContent>
     </Tabs>
   );

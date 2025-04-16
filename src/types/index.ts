@@ -12,7 +12,7 @@ export interface Summary {
 }
 
 export type SummaryStyle = "casual" | "academic";
-export type SummaryLanguage = "english" | "chinese";
+export type SummaryLanguage = "english" | "chinese" | "spanish" | "french";
 
 export interface Question {
   id: number;
@@ -28,6 +28,12 @@ export interface UserAnswer {
   questionId: number;
   selectedOption: number;
   isCorrect: boolean;
+  // Additional fields for mistake collection
+  question?: string;
+  options?: string[];
+  correctAnswer?: number;
+  explanation?: string;
+  timestamp?: Date | string;
 }
 
 export interface HistoryItem {
@@ -42,6 +48,7 @@ export type CustomPromptType = 'summary' | 'questions' | 'explanation';
 export interface CustomPrompt {
   type: CustomPromptType;
   content: string;
+  style?: SummaryStyle;
 }
 
 export interface AIModelOption {

@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Loader2, HelpCircle } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, HelpCircle, BookOpen } from "lucide-react";
 import { openaiService } from "@/services/openaiService";
+import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 interface QuizProps {
   questions: Question[];
@@ -17,6 +19,26 @@ const Quiz = ({ questions }: QuizProps) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
+
+  // Load saved answers for this quiz session if available
+  useEffect(() => {
+    const savedAnswers = localStorage.getItem('current_quiz_answers');
+    if (savedAnswers) {
+      try {
+        const parsedAnswers = JSON.parse(savedAnswers);
+        setUserAnswers(parsedAnswers);
+      } catch (error) {
+        console.error("Failed to load saved answers:", error);
+      }
+    }
+  }, []);
+
+  // Save answers whenever they change
+  useEffect(() => {
+    if (userAnswers.length > 0) {
+      localStorage.setItem('current_quiz_answers', JSON.stringify(userAnswers));
+    }
+  }, [userAnswers]);
 
   const currentQuestion = questions[currentQuestionIndex];
   const userAnswer = userAnswers.find(answer => answer.questionId === currentQuestion.id);
@@ -41,19 +63,60 @@ const Quiz = ({ questions }: QuizProps) => {
 
       setExplanation(explanation);
       
+      const newAnswer = {
+        questionId: currentQuestion.id,
+        selectedOption,
+        isCorrect,
+        question: currentQuestion.text,
+        options: currentQuestion.options,
+        correctAnswer: currentQuestion.correctAnswer,
+        explanation,
+        timestamp: new Date()
+      };
+      
       setUserAnswers(prev => [
         ...prev.filter(a => a.questionId !== currentQuestion.id),
-        {
-          questionId: currentQuestion.id,
-          selectedOption,
-          isCorrect
-        }
+        newAnswer
       ]);
+      
+      // Save this answer to mistake collection if it's wrong
+      if (!isCorrect) {
+        saveToMistakeCollection(newAnswer);
+      }
     } catch (error) {
       console.error("Error evaluating answer:", error);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const saveToMistakeCollection = (answer: UserAnswer) => {
+    try {
+      const mistakesString = localStorage.getItem('mistake_collection') || '[]';
+      let mistakes = JSON.parse(mistakesString);
+      
+      // Check if this question is already in the collection
+      const existingIndex = mistakes.findIndex((m: UserAnswer) => m.questionId === answer.questionId);
+      
+      if (existingIndex >= 0) {
+        // Update existing entry
+        mistakes[existingIndex] = answer;
+      } else {
+        // Add new entry
+        mistakes.push(answer);
+      }
+      
+      localStorage.setItem('mistake_collection', JSON.stringify(mistakes));
+    } catch (error) {
+      console.error("Failed to save to mistake collection:", error);
+    }
+  };
+
+  const handleSaveToMistakeCollection = () => {
+    if (!userAnswer) return;
+    
+    saveToMistakeCollection(userAnswer);
+    toast.success("已添加到错题本");
   };
 
   const handleNextQuestion = () => {
@@ -147,20 +210,33 @@ const Quiz = ({ questions }: QuizProps) => {
               <HelpCircle className="mr-1 h-4 w-4" />
               解析
             </h4>
-            <div className="text-sm text-gray-700 whitespace-pre-wrap">
-              {explanation}
+            <div className="text-sm text-gray-700 prose max-w-none">
+              <ReactMarkdown>{explanation}</ReactMarkdown>
             </div>
           </div>
         )}
 
         <div className="mt-6 flex justify-between">
-          <Button
-            variant="outline"
-            onClick={handlePrevQuestion}
-            disabled={currentQuestionIndex === 0}
-          >
-            上一题
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handlePrevQuestion}
+              disabled={currentQuestionIndex === 0}
+            >
+              上一题
+            </Button>
+            
+            {isAnswerSubmitted && !isCorrect && (
+              <Button
+                variant="outline"
+                onClick={handleSaveToMistakeCollection}
+                className="flex items-center gap-1"
+              >
+                <BookOpen className="h-4 w-4" />
+                添加到错题本
+              </Button>
+            )}
+          </div>
 
           {!isAnswerSubmitted ? (
             <Button 
@@ -191,4 +267,3 @@ const Quiz = ({ questions }: QuizProps) => {
 };
 
 export default Quiz;
-
