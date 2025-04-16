@@ -1,3 +1,4 @@
+
 export interface CourseContent {
   rawContent: string | null;
   summary: Summary | null;
@@ -42,3 +43,14 @@ export interface CustomPrompt {
   type: CustomPromptType;
   content: string;
 }
+
+export interface AIModelOption {
+  value: string;
+  label: string;
+}
+
+export const AI_MODELS: AIModelOption[] = [
+  { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
+  { value: "gpt-4", label: "GPT-4" },
+  { value: "gpt-4-turbo", label: "GPT-4 Turbo" }
+];

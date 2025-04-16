@@ -84,7 +84,13 @@ const Index = () => {
 
     setIsLoading(true);
     setCurrentLanguage(language);
-    setCourseContent({ rawContent: content });
+    
+    // Initialize with proper CourseContent structure
+    setCourseContent({ 
+      rawContent: content,
+      summary: null,
+      questions: null
+    });
 
     try {
       const summary = await openaiService.generateSummary(content, "casual", language);
@@ -278,4 +284,3 @@ const Index = () => {
 };
 
 export default Index;
-
