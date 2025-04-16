@@ -53,11 +53,11 @@ class OpenAIService {
   private getDefaultPrompt(type: 'summary' | 'questions' | 'explanation'): string {
     switch (type) {
       case 'summary':
-        return "Summarize the following course content. Make sure to capture ALL key knowledge points and important information. Be comprehensive but concise.";
+        return "对以下课程内容进行总结。确保捕捉所有关键知识点和重要信息。内容要全面但简洁。";
       case 'questions':
-        return "Create multiple-choice questions based on this course content. Each question must have exactly 4 options with only one correct answer. All questions and answers must be directly based on the provided content.";
+        return "根据这个课程内容创建多选题。每个问题必须有恰好4个选项，且只有一个正确答案。所有问题和答案必须直接基于提供的内容，不要引入外部信息。";
       case 'explanation':
-        return "Provide a detailed explanation of why the correct answer is right, and specifically address the user's answer (whether correct or incorrect). If incorrect, explain the misconception that might have led to selecting the wrong option.";
+        return "提供详细解释说明为什么正确答案是对的，并特别针对用户的答案（无论是否正确）进行分析。如果答案不正确，请解释可能导致选择错误选项的常见误解。为了降低幻觉，请确保解释严格基于原始内容，不要添加没有在原始材料中出现的信息。";
       default:
         return "";
     }
@@ -125,16 +125,16 @@ class OpenAIService {
 
   async generateSummary(content: string, style: SummaryStyle, language: SummaryLanguage): Promise<Summary> {
     const stylePrompt = style === 'academic' 
-      ? "in an academic, formal style with proper terminology" 
-      : "in a casual, easy-to-understand style";
+      ? "请使用学术、正式的风格，使用适当的术语" 
+      : "请使用轻松、易于理解的风格";
     
-    const languagePrompt = `Output the summary in ${language} language.`;
+    const languagePrompt = `使用${language === 'chinese' ? '中文' : '英文'}输出摘要。`;
     
     const basePrompt = this.getCustomPrompt('summary');
     
     const prompt = `
     ${basePrompt}
-    ${stylePrompt}. 
+    ${stylePrompt}
     ${languagePrompt}
 
     ${content}
@@ -149,14 +149,14 @@ class OpenAIService {
     };
   }
 
-  async generateQuestions(content: string, difficulty: QuestionDifficulty, count: number = 10, language: SummaryLanguage = 'english'): Promise<Question[]> {
+  async generateQuestions(content: string, difficulty: QuestionDifficulty, count: number = 10, language: SummaryLanguage = 'chinese'): Promise<Question[]> {
     const difficultyDescription = {
-      'easy': 'basic understanding and recall of the material',
-      'medium': 'application of concepts and some analysis',
-      'hard': 'deep understanding, analysis, and synthesis of complex ideas'
+      'easy': '基础理解和回忆材料',
+      'medium': '概念的应用和一些分析',
+      'hard': '深度理解、分析和综合复杂思想'
     }[difficulty];
 
-    const languagePrompt = `Create the questions and all answers in ${language} language.`;
+    const languagePrompt = `使用${language === 'chinese' ? '中文' : '英文'}创建问题和所有答案。`;
     
     const basePrompt = this.getCustomPrompt('questions');
 
@@ -165,21 +165,21 @@ class OpenAIService {
     
     ${content}
     
-    Requirements:
-    1. Questions should be at ${difficulty} difficulty level (${difficultyDescription})
-    2. Each question must have exactly 4 options with only one correct answer
-    3. All questions and answers must be directly based on the provided content - do not introduce external information
+    要求：
+    1. 问题应该是${difficulty}难度级别（${difficultyDescription}）
+    2. 每个问题必须有恰好4个选项，且只有一个正确答案
+    3. 所有问题和答案必须直接基于提供的内容 - 不要引入外部信息
     4. ${languagePrompt}
-    5. Return the response in this JSON format:
+    5. 以这种JSON格式返回响应：
     [
       {
         "id": 1,
-        "text": "Question text here?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "correctAnswer": 0, // Index of correct option (0-3)
+        "text": "这里是问题文本？",
+        "options": ["选项A", "选项B", "选项C", "选项D"],
+        "correctAnswer": 0, // 正确选项的索引（0-3）
         "difficulty": "${difficulty}"
       },
-      ...more questions
+      ...更多问题
     ]
     `;
 
@@ -194,31 +194,33 @@ class OpenAIService {
       return questions;
     } catch (error) {
       console.error("Error parsing questions response:", error);
-      throw new Error("Failed to generate questions. Please try again.");
+      throw new Error("生成问题失败。请重试。");
     }
   }
 
-  async evaluateAnswer(question: Question, selectedOptionIndex: number, language: SummaryLanguage = 'english'): Promise<string> {
+  async evaluateAnswer(question: Question, selectedOptionIndex: number, language: SummaryLanguage = 'chinese'): Promise<string> {
     const isCorrect = selectedOptionIndex === question.correctAnswer;
     const selectedOption = question.options[selectedOptionIndex];
     const correctOption = question.options[question.correctAnswer];
     
-    const languagePrompt = `Provide the explanation in ${language} language.`;
+    const languagePrompt = `请使用${language === 'chinese' ? '中文' : '英文'}提供解释。`;
     
     const basePrompt = this.getCustomPrompt('explanation');
 
     const prompt = `
     ${basePrompt}
     
-    Question: ${question.text}
+    问题: ${question.text}
     
-    Options:
+    选项:
     ${question.options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}
     
-    User selected: ${selectedOption}
-    Correct answer: ${correctOption}
+    用户选择: ${selectedOption}
+    正确答案: ${correctOption}
+    用户是否选择正确: ${isCorrect ? '是' : '否'}
     
-    Keep the explanation concise but educational.
+    请提供简明但有教育意义的解释。解释为什么正确答案是对的，如果用户答错了，解释为什么用户的选择是错误的。
+    为了降低幻觉，确保你的解释严格基于原始内容，不要添加没有在课程材料中出现的信息。
     ${languagePrompt}
     `;
 

@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty } from "@/types";
+import { useState, useEffect } from "react";
+import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import ApiKeyInput from "@/components/ApiKeyInput";
@@ -9,6 +9,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import TopControls from "@/components/TopControls";
 import MainTabs from "@/components/MainTabs";
+import { v4 as uuidv4 } from "uuid";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import AppSidebar from "@/components/layout/AppSidebar";
 
 const Index = () => {
   const [isKeySet, setIsKeySet] = useState<boolean>(!!openaiService.getApiKey());
@@ -20,6 +23,52 @@ const Index = () => {
 
   const handleApiKeySet = () => {
     setIsKeySet(true);
+  };
+  
+  // Auto-save content to history
+  useEffect(() => {
+    if (courseContent?.rawContent && !isLoading) {
+      saveToHistory(courseContent.rawContent);
+    }
+  }, [courseContent?.summary]);
+
+  const saveToHistory = (content: string) => {
+    try {
+      // Get existing history
+      const historyString = localStorage.getItem('content_history') || '[]';
+      let history: HistoryItem[] = JSON.parse(historyString);
+      
+      // Check if content already exists in history
+      const exists = history.some(item => item.rawContent === content);
+      
+      if (!exists) {
+        // Generate title from content (first line or first few words)
+        let title = content.split('\n')[0] || '';
+        if (title.length > 40) {
+          title = title.substring(0, 40) + '...';
+        }
+        
+        // Add new item to history
+        const newItem: HistoryItem = {
+          id: uuidv4(),
+          rawContent: content,
+          timestamp: new Date(),
+          title: title
+        };
+        
+        // Add to beginning of array
+        history = [newItem, ...history];
+        
+        // Limit history to 20 items
+        if (history.length > 20) {
+          history = history.slice(0, 20);
+        }
+        
+        localStorage.setItem('content_history', JSON.stringify(history));
+      }
+    } catch (error) {
+      console.error("Failed to save to history:", error);
+    }
   };
 
   const handleContentLoaded = async (
@@ -183,37 +232,45 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          {isKeySet && <AppSidebar onSelectContent={handleSelectHistoryContent} />}
+          
+          <div className="flex-1">
+            <Header />
 
-      <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
-        {!isKeySet ? (
-          <div className="flex justify-center my-8">
-            <ApiKeyInput onApiKeySet={handleApiKeySet} />
+            <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+              {!isKeySet ? (
+                <div className="flex justify-center my-8">
+                  <ApiKeyInput onApiKeySet={handleApiKeySet} />
+                </div>
+              ) : (
+                <>
+                  <TopControls 
+                    onSelectHistoryContent={handleSelectHistoryContent} 
+                    onApiKeySet={handleApiKeySet} 
+                  />
+                  
+                  <MainTabs 
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    courseContent={courseContent}
+                    isLoading={isLoading}
+                    isGeneratingQuiz={isGeneratingQuiz}
+                    handleContentLoaded={handleContentLoaded}
+                    handleStyleChange={handleStyleChange}
+                    handleLanguageChange={handleLanguageChange}
+                    handleGenerateQuiz={handleGenerateQuiz}
+                    handleDifficultyChange={handleDifficultyChange}
+                  />
+                </>
+              )}
+            </main>
+
+            <Footer />
           </div>
-        ) : (
-          <>
-            <TopControls 
-              onSelectHistoryContent={handleSelectHistoryContent} 
-              onApiKeySet={handleApiKeySet} 
-            />
-            
-            <MainTabs 
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              courseContent={courseContent}
-              isLoading={isLoading}
-              isGeneratingQuiz={isGeneratingQuiz}
-              handleContentLoaded={handleContentLoaded}
-              handleStyleChange={handleStyleChange}
-              handleLanguageChange={handleLanguageChange}
-              handleGenerateQuiz={handleGenerateQuiz}
-              handleDifficultyChange={handleDifficultyChange}
-            />
-          </>
-        )}
-      </main>
-
-      <Footer />
+        </div>
+      </SidebarProvider>
       
       <Toaster position="top-center" />
     </div>
@@ -221,3 +278,4 @@ const Index = () => {
 };
 
 export default Index;
+

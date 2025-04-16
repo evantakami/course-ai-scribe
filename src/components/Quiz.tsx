@@ -191,3 +191,4 @@ const Quiz = ({ questions }: QuizProps) => {
 };
 
 export default Quiz;
+
