@@ -1,10 +1,14 @@
 
-
-import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage } from "@/types";
+import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage, CustomPrompt } from "@/types";
 
 class OpenAIService {
   private apiKey: string | null = null;
   private model: string = "gpt-4o-mini";  // 默认模型改为gpt-4o-mini，这是一个实际存在的模型
+  private customPrompts: Record<string, string> = {};
+
+  constructor() {
+    this.loadCustomPrompts();
+  }
 
   setApiKey(key: string) {
     this.apiKey = key;
@@ -29,6 +33,50 @@ class OpenAIService {
       this.model = savedModel;
     }
     return this.model;
+  }
+
+  // Custom prompts methods
+  getCustomPrompt(type: 'summary' | 'questions' | 'explanation'): string {
+    return this.customPrompts[type] || this.getDefaultPrompt(type);
+  }
+
+  setCustomPrompt(type: 'summary' | 'questions' | 'explanation', content: string) {
+    this.customPrompts[type] = content;
+    this.saveCustomPrompts();
+  }
+
+  resetCustomPrompt(type: 'summary' | 'questions' | 'explanation') {
+    delete this.customPrompts[type];
+    this.saveCustomPrompts();
+  }
+
+  private getDefaultPrompt(type: 'summary' | 'questions' | 'explanation'): string {
+    switch (type) {
+      case 'summary':
+        return "Summarize the following course content. Make sure to capture ALL key knowledge points and important information. Be comprehensive but concise.";
+      case 'questions':
+        return "Create multiple-choice questions based on this course content. Each question must have exactly 4 options with only one correct answer. All questions and answers must be directly based on the provided content.";
+      case 'explanation':
+        return "Provide a detailed explanation of why the correct answer is right, and specifically address the user's answer (whether correct or incorrect). If incorrect, explain the misconception that might have led to selecting the wrong option.";
+      default:
+        return "";
+    }
+  }
+
+  private saveCustomPrompts() {
+    localStorage.setItem('openai_custom_prompts', JSON.stringify(this.customPrompts));
+  }
+
+  private loadCustomPrompts() {
+    const saved = localStorage.getItem('openai_custom_prompts');
+    if (saved) {
+      try {
+        this.customPrompts = JSON.parse(saved);
+      } catch (error) {
+        console.error("Failed to parse custom prompts", error);
+        this.customPrompts = {};
+      }
+    }
   }
 
   private async callAPI(prompt: string): Promise<string> {
@@ -82,10 +130,11 @@ class OpenAIService {
     
     const languagePrompt = `Output the summary in ${language} language.`;
     
+    const basePrompt = this.getCustomPrompt('summary');
+    
     const prompt = `
-    Summarize the following course content ${stylePrompt}. 
-    Make sure to capture ALL key knowledge points and important information.
-    Be comprehensive but concise.
+    ${basePrompt}
+    ${stylePrompt}. 
     ${languagePrompt}
 
     ${content}
@@ -108,9 +157,11 @@ class OpenAIService {
     }[difficulty];
 
     const languagePrompt = `Create the questions and all answers in ${language} language.`;
+    
+    const basePrompt = this.getCustomPrompt('questions');
 
     const prompt = `
-    Create ${count} multiple-choice questions based on this course content:
+    ${basePrompt}
     
     ${content}
     
@@ -153,9 +204,11 @@ class OpenAIService {
     const correctOption = question.options[question.correctAnswer];
     
     const languagePrompt = `Provide the explanation in ${language} language.`;
+    
+    const basePrompt = this.getCustomPrompt('explanation');
 
     const prompt = `
-    The user answered the following multiple-choice question:
+    ${basePrompt}
     
     Question: ${question.text}
     
@@ -165,8 +218,6 @@ class OpenAIService {
     User selected: ${selectedOption}
     Correct answer: ${correctOption}
     
-    Provide a detailed explanation of why the correct answer is right, and specifically address the user's answer (whether correct or incorrect). 
-    If incorrect, explain the misconception that might have led to selecting the wrong option.
     Keep the explanation concise but educational.
     ${languagePrompt}
     `;
@@ -177,4 +228,3 @@ class OpenAIService {
 }
 
 export const openaiService = new OpenAIService();
-

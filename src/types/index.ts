@@ -1,6 +1,4 @@
 
-
-
 export interface Summary {
   content: string;
   style: SummaryStyle;
@@ -28,9 +26,11 @@ export interface UserAnswer {
 }
 
 export interface CourseContent {
+  id?: string;
   rawContent: string;
   summary?: Summary;
   questions?: Question[];
+  createdAt?: Date;
 }
 
 export interface AIModelOption {
@@ -45,4 +45,14 @@ export const AI_MODELS: AIModelOption[] = [
   { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
 ];
 
+export interface CustomPrompt {
+  type: 'summary' | 'questions' | 'explanation';
+  content: string;
+}
 
+export interface HistoryItem {
+  id: string;
+  rawContent: string;
+  summary?: Summary;
+  timestamp: Date;
+}

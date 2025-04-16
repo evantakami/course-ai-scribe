@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useCallback } from "react";
-import { UploadCloud, FileText, X, Settings } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { UploadCloud, FileText, X, Settings, Save } from "lucide-react";
 import { useDropzone } from 'react-dropzone';
 import { toast } from "sonner";
 import { 
@@ -41,7 +40,7 @@ interface FileUploadProps {
 const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState<string>("");
-  const [isTextMode, setIsTextMode] = useState<boolean>(false);
+  const [isTextMode, setIsTextMode] = useState<boolean>(true);
   const [language, setLanguage] = useState<SummaryLanguage>("chinese");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
   const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
@@ -113,6 +112,32 @@ const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
     reader.readAsText(selectedFile);
   };
 
+  const handleSaveContent = () => {
+    if (textContent.trim().length === 0) {
+      toast.error("没有内容可保存");
+      return;
+    }
+    
+    try {
+      const historyString = localStorage.getItem('content_history') || '[]';
+      const history = JSON.parse(historyString);
+      
+      const newItem = {
+        id: Date.now().toString(),
+        rawContent: textContent,
+        timestamp: new Date()
+      };
+      
+      const updatedHistory = [newItem, ...history].slice(0, 20);
+      
+      localStorage.setItem('content_history', JSON.stringify(updatedHistory));
+      toast.success("内容已保存，可在历史记录中查看");
+    } catch (error) {
+      console.error("保存内容失败:", error);
+      toast.error("保存内容失败");
+    }
+  };
+
   const languageOptions = [
     { value: "chinese", label: "中文" },
     { value: "english", label: "English" },
@@ -145,82 +170,95 @@ const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
             </Select>
           </div>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80">
-              <div className="space-y-4">
-                <h4 className="font-medium">AI模型设置</h4>
-                <div className="space-y-2">
-                  <Label htmlFor="model">选择模型</Label>
-                  <Select value={selectedModel} onValueChange={handleModelChange}>
-                    <SelectTrigger id="model">
-                      <SelectValue placeholder="选择AI模型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {AI_MODELS.map(model => (
-                        <SelectItem key={model.value} value={model.value}>
-                          {model.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="generateQuiz" 
-                      checked={generateQuiz} 
-                      onCheckedChange={(checked) => 
-                        setGenerateQuiz(checked as boolean)
-                      }
-                    />
-                    <Label htmlFor="generateQuiz">上传时直接生成测验题</Label>
+          <div className="flex items-center space-x-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-4">
+                  <h4 className="font-medium">AI模型设置</h4>
+                  <div className="space-y-2">
+                    <Label htmlFor="model">选择模型</Label>
+                    <Select value={selectedModel} onValueChange={handleModelChange}>
+                      <SelectTrigger id="model">
+                        <SelectValue placeholder="选择AI模型" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_MODELS.map(model => (
+                          <SelectItem key={model.value} value={model.value}>
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
-                  {generateQuiz && (
-                    <div className="ml-6 mt-2">
-                      <Label htmlFor="difficulty">测验难度</Label>
-                      <Select 
-                        value={quizDifficulty} 
-                        onValueChange={(value) => 
-                          setQuizDifficulty(value as QuestionDifficulty)
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="generateQuiz" 
+                        checked={generateQuiz} 
+                        onCheckedChange={(checked) => 
+                          setGenerateQuiz(checked as boolean)
                         }
-                      >
-                        <SelectTrigger id="difficulty" className="mt-1">
-                          <SelectValue placeholder="选择难度" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {difficultyOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
+                      <Label htmlFor="generateQuiz">上传时直接生成测验题</Label>
                     </div>
-                  )}
+                    
+                    {generateQuiz && (
+                      <div className="ml-6 mt-2">
+                        <Label htmlFor="difficulty">测验难度</Label>
+                        <Select 
+                          value={quizDifficulty} 
+                          onValueChange={(value) => 
+                            setQuizDifficulty(value as QuestionDifficulty)
+                          }
+                        >
+                          <SelectTrigger id="difficulty" className="mt-1">
+                            <SelectValue placeholder="选择难度" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {difficultyOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       
         {isTextMode ? (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">输入课程内容</h3>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleCloseTextMode}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSaveContent}
+                  disabled={textContent.trim().length === 0}
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  保存
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleFileUpload}
+                >
+                  <UploadCloud className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             
             <Textarea 

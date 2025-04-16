@@ -10,6 +10,8 @@ import FileUpload from "@/components/FileUpload";
 import CourseSummary from "@/components/CourseSummary";
 import QuizGenerator from "@/components/QuizGenerator";
 import { openaiService } from "@/services/openaiService";
+import HistoryDrawer from "@/components/HistoryDrawer";
+import CustomPromptSettings from "@/components/CustomPromptSettings";
 
 const Index = () => {
   const [isKeySet, setIsKeySet] = useState<boolean>(!!openaiService.getApiKey());
@@ -173,6 +175,21 @@ const Index = () => {
     }
   };
 
+  const handleSelectHistoryContent = (content: string) => {
+    // Set the content directly and make the textarea visible
+    setActiveTab("upload");
+    // We need to reset courseContent to trigger a refresh in FileUpload
+    setCourseContent(null);
+    
+    // Wait for the state to update before setting new content
+    setTimeout(() => {
+      // Here we would ideally pass the content to FileUpload
+      // but since components can't easily share state this way,
+      // we'll need a different approach in a more thorough refactoring
+      handleContentLoaded(content, false, "medium", currentLanguage);
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-edu-700 text-white py-6 px-4 md:px-6">
@@ -194,7 +211,11 @@ const Index = () => {
           </div>
         ) : (
           <>
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between mb-4">
+              <div className="flex space-x-2">
+                <HistoryDrawer onSelectContent={handleSelectHistoryContent} />
+                <CustomPromptSettings />
+              </div>
               <ApiKeyInput onApiKeySet={handleApiKeySet} />
             </div>
             
@@ -206,7 +227,7 @@ const Index = () => {
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="upload" disabled={isLoading}>
                   <BookOpen className="mr-2 h-4 w-4" />
-                  上传内容
+                  输入内容
                 </TabsTrigger>
                 <TabsTrigger 
                   value="summary" 
