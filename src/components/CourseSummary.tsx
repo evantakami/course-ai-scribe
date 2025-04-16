@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { 
   Select, 
   SelectContent, 
@@ -97,9 +98,9 @@ const CourseSummary = ({
           ) : summary ? (
             <TabsContent value={activeStyle} className="mt-0">
               <div className="prose max-w-none">
-                <div className="whitespace-pre-wrap text-gray-700">
+                <ReactMarkdown className="whitespace-pre-wrap text-gray-700">
                   {summary.content}
-                </div>
+                </ReactMarkdown>
               </div>
             </TabsContent>
           ) : (

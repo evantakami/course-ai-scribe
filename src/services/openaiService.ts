@@ -1,10 +1,13 @@
-
 import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage, CustomPrompt } from "@/types";
 
 class OpenAIService {
   private apiKey: string | null = null;
   private model: string = "gpt-4o-mini";  // 默认模型改为gpt-4o-mini，这是一个实际存在的模型
-  private customPrompts: Record<string, string> = {};
+  private customPrompts: Record<string, Record<string, string>> = {
+    summary: {},
+    questions: {},
+    explanation: {}
+  };
 
   constructor() {
     this.loadCustomPrompts();
@@ -36,24 +39,53 @@ class OpenAIService {
   }
 
   // Custom prompts methods
-  getCustomPrompt(type: 'summary' | 'questions' | 'explanation'): string {
-    return this.customPrompts[type] || this.getDefaultPrompt(type);
+  getCustomPrompt(type: 'summary' | 'questions' | 'explanation', style?: SummaryStyle): string {
+    if (type === 'summary' && style) {
+      return this.customPrompts[type][style] || this.getDefaultPrompt(type, style);
+    }
+    return this.customPrompts[type]['default'] || this.getDefaultPrompt(type);
   }
 
-  setCustomPrompt(type: 'summary' | 'questions' | 'explanation', content: string) {
-    this.customPrompts[type] = content;
+  setCustomPrompt(type: 'summary' | 'questions' | 'explanation', content: string, style?: SummaryStyle) {
+    if (type === 'summary' && style) {
+      if (!this.customPrompts[type]) {
+        this.customPrompts[type] = {};
+      }
+      this.customPrompts[type][style] = content;
+    } else {
+      if (!this.customPrompts[type]) {
+        this.customPrompts[type] = {};
+      }
+      this.customPrompts[type]['default'] = content;
+    }
     this.saveCustomPrompts();
   }
 
-  resetCustomPrompt(type: 'summary' | 'questions' | 'explanation') {
-    delete this.customPrompts[type];
+  resetCustomPrompt(type: 'summary' | 'questions' | 'explanation', style?: SummaryStyle) {
+    if (type === 'summary' && style) {
+      if (this.customPrompts[type]) {
+        delete this.customPrompts[type][style];
+      }
+    } else {
+      if (this.customPrompts[type]) {
+        delete this.customPrompts[type]['default'];
+      }
+    }
     this.saveCustomPrompts();
   }
 
-  private getDefaultPrompt(type: 'summary' | 'questions' | 'explanation'): string {
+  private getDefaultPrompt(type: 'summary' | 'questions' | 'explanation', style?: SummaryStyle): string {
+    if (type === 'summary' && style) {
+      if (style === 'casual') {
+        return "对以下课程内容进行通俗易懂的总结。使用简单的语言和比喻，让没有专业背景的人也能理解。避免使用专业术语，如果必须使用专业词汇，请提供简单解释。确保总结全面但通俗易懂。内容可以采用Markdown格式以提高可读性。";
+      } else if (style === 'academic') {
+        return "对以下课程内容进行学术专业的总结。使用专业的术语和概念，保持准确性和严谨性。面向具有该领域基础知识的读者，可以使用适当的专业术语。确保总结全面且专业。内容可以采用Markdown格式以提高可读性。";
+      }
+    }
+    
     switch (type) {
       case 'summary':
-        return "对以下课程内容进行总结。确保捕捉所有关键知识点和重要信息。内容要全面但简洁。";
+        return "对以下课程内容进行总结。确保捕捉所有关键知识点和重要信息。内容要全面但简洁。内容可以采用Markdown格式以提高可读性。";
       case 'questions':
         return "根据这个课程内容创建多选题。每个问题必须有恰好4个选项，且只有一个正确答案。所有问题和答案必须直接基于提供的内容，不要引入外部信息。";
       case 'explanation':
@@ -74,7 +106,11 @@ class OpenAIService {
         this.customPrompts = JSON.parse(saved);
       } catch (error) {
         console.error("Failed to parse custom prompts", error);
-        this.customPrompts = {};
+        this.customPrompts = {
+          summary: {},
+          questions: {},
+          explanation: {}
+        };
       }
     }
   }
@@ -130,12 +166,13 @@ class OpenAIService {
     
     const languagePrompt = `使用${language === 'chinese' ? '中文' : '英文'}输出摘要。`;
     
-    const basePrompt = this.getCustomPrompt('summary');
+    const basePrompt = this.getCustomPrompt('summary', style);
     
     const prompt = `
     ${basePrompt}
     ${stylePrompt}
     ${languagePrompt}
+    请使用Markdown格式来增强内容的可读性。
 
     ${content}
     `;
@@ -222,6 +259,7 @@ class OpenAIService {
     请提供简明但有教育意义的解释。解释为什么正确答案是对的，如果用户答错了，解释为什么用户的选择是错误的。
     为了降低幻觉，确保你的解释严格基于原始内容，不要添加没有在课程材料中出现的信息。
     ${languagePrompt}
+    请使用Markdown格式来增强内容的可读性。
     `;
 
     const explanation = await this.callAPI(prompt);
