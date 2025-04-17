@@ -532,6 +532,7 @@ const Index = () => {
         <TopControls 
           onSelectHistoryContent={handleSelectHistoryContent} 
           onApiKeySet={handleApiKeySet} 
+          onViewCourses={() => setView("catalog")}
         />
         
         <MainTabs 

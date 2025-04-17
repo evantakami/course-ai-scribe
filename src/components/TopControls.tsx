@@ -8,7 +8,7 @@ import { BookOpen } from "lucide-react";
 interface TopControlsProps {
   onSelectHistoryContent: (content: string) => void;
   onApiKeySet: () => void;
-  onViewCourses?: () => void;
+  onViewCourses: () => void;
 }
 
 const TopControls = ({ onSelectHistoryContent, onApiKeySet, onViewCourses }: TopControlsProps) => {
@@ -19,7 +19,7 @@ const TopControls = ({ onSelectHistoryContent, onApiKeySet, onViewCourses }: Top
           variant="outline" 
           size="sm" 
           className="gap-2"
-          onClick={() => onViewCourses && onViewCourses()}
+          onClick={onViewCourses}
         >
           <BookOpen className="h-5 w-5" />
           我的课程
