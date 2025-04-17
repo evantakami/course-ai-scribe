@@ -278,17 +278,23 @@ const Index = () => {
           const updatedQuestions = {
             easy: historyItem.questions.easy?.map(q => ({
               ...q,
-              explanation: q.explanation
+              id: q.id || uuidv4(),
+              explanation: q.explanation || "" 
             })),
             medium: historyItem.questions.medium?.map(q => ({
               ...q,
-              explanation: q.explanation
+              id: q.id || uuidv4(),
+              explanation: q.explanation || ""
             })),
             hard: historyItem.questions.hard?.map(q => ({
               ...q,
-              explanation: q.explanation
+              id: q.id || uuidv4(),
+              explanation: q.explanation || ""
             }))
           };
+          
+          console.log("Loaded questions with explanations:", updatedQuestions);
+          
           loadedContent.questions = updatedQuestions;
         }
         
@@ -418,8 +424,8 @@ const Index = () => {
       const summaryPromise = generateAllSummaries(content, language);
       const quizPromise = generateQuiz ? generateAllQuestions(content, language) : null;
       
-      summaryPromise;
-      quizPromise;
+      await summaryPromise;
+      if (quizPromise) await quizPromise;
       
       setActiveTab("summary");
     } catch (error) {
