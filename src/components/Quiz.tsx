@@ -27,17 +27,30 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
     return <div className="text-center py-8 text-gray-500">No questions available</div>;
   }
 
+  // Reset selected option when questions change
   useEffect(() => {
+    setSelectedOption(null);
+    setIsShowingExplanation(false);
+    setCustomExplanation(null);
+    setCurrentQuestionIndex(0);
+  }, [questions]);
+
+  useEffect(() => {
+    // Only load user answers for the current set of questions
     const savedAnswers = localStorage.getItem('current_quiz_answers');
     if (savedAnswers) {
       try {
         const parsedAnswers = JSON.parse(savedAnswers);
-        setUserAnswers(parsedAnswers);
+        // Filter only answers related to the current questions set
+        const relevantAnswers = parsedAnswers.filter((answer: UserAnswer) => 
+          questions.some(q => q.id === answer.questionId)
+        );
+        setUserAnswers(relevantAnswers);
       } catch (error) {
         console.error("Failed to load saved answers:", error);
       }
     }
-  }, []);
+  }, [questions]);
 
   useEffect(() => {
     if (userAnswers.length > 0) {
@@ -49,6 +62,12 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
     }
   }, [userAnswers, saveUserAnswers]);
 
+  // Ensure we have a valid current question
+  if (currentQuestionIndex >= questions.length) {
+    setCurrentQuestionIndex(0);
+    return <div className="text-center py-8 text-gray-500">Loading questions...</div>;
+  }
+
   const currentQuestion = questions[currentQuestionIndex];
   
   // Safety check for currentQuestion
@@ -57,7 +76,7 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
   }
   
   const userAnswer = userAnswers.find(answer => 
-    currentQuestion && answer.questionId === currentQuestion.id
+    answer.questionId === currentQuestion.id
   );
   const isAnswerSubmitted = userAnswer !== undefined;
   const isCorrect = userAnswer?.isCorrect;
@@ -164,7 +183,10 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
   };
 
   const getProgress = () => {
-    const answeredCount = userAnswers.length;
+    const answeredQuestions = questions.filter(q => 
+      userAnswers.some(a => a.questionId === q.id)
+    );
+    const answeredCount = answeredQuestions.length;
     const totalCount = questions.length;
     const percentage = Math.round((answeredCount / totalCount) * 100);
     
@@ -172,7 +194,9 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
       answeredCount,
       totalCount,
       percentage,
-      correct: userAnswers.filter(a => a.isCorrect).length
+      correct: userAnswers.filter(a => 
+        a.isCorrect && questions.some(q => q.id === a.questionId)
+      ).length
     };
   };
 

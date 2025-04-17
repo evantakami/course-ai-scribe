@@ -104,6 +104,8 @@ const Index = () => {
 
   const generateAllQuestions = async (content: string, language: SummaryLanguage) => {
     try {
+      setIsGeneratingQuiz(true);
+      
       const [easyQuestionsPromise, mediumQuestionsPromise, hardQuestionsPromise] = [
         openaiService.generateQuestions(content, "easy", 10, language),
         openaiService.generateQuestions(content, "medium", 10, language),
@@ -145,6 +147,8 @@ const Index = () => {
       console.error("Error generating quiz:", error);
       toast.error("生成测验题时出错");
       return false;
+    } finally {
+      setIsGeneratingQuiz(false);
     }
   };
 
@@ -173,7 +177,6 @@ const Index = () => {
       let quizPromise;
       
       if (generateQuiz) {
-        setIsGeneratingQuiz(true);
         quizPromise = generateAllQuestions(content, language);
       }
       
@@ -186,8 +189,8 @@ const Index = () => {
       
       setActiveTab("summary");
       toast.success("课程摘要已生成");
-
-      if (generateQuiz && quizPromise) {
+      
+      if (quizPromise) {
         await quizPromise;
       }
     } catch (error) {
@@ -195,7 +198,6 @@ const Index = () => {
       toast.error("处理内容时出错，请重试");
     } finally {
       setIsLoading(false);
-      setIsGeneratingQuiz(false);
     }
   };
 
