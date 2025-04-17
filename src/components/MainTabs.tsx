@@ -24,6 +24,7 @@ interface MainTabsProps {
   handleGenerateQuiz: () => void;
   handleDifficultyChange: (difficulty: QuestionDifficulty) => void;
   saveUserAnswersToHistory?: (userAnswers: UserAnswer[]) => void;
+  handleRegenerateQuiz?: (difficulty: QuestionDifficulty) => void;
 }
 
 const MainTabs = ({
@@ -37,7 +38,8 @@ const MainTabs = ({
   handleLanguageChange,
   handleGenerateQuiz,
   handleDifficultyChange,
-  saveUserAnswersToHistory
+  saveUserAnswersToHistory,
+  handleRegenerateQuiz
 }: MainTabsProps) => {
   return (
     <Tabs
@@ -95,6 +97,7 @@ const MainTabs = ({
           isGenerating={isGeneratingQuiz}
           onDifficultyChange={handleDifficultyChange}
           saveUserAnswers={saveUserAnswersToHistory}
+          onRegenerateQuiz={handleRegenerateQuiz}
         />
       </TabsContent>
       
