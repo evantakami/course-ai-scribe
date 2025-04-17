@@ -1,4 +1,3 @@
-
 export interface CourseContent {
   rawContent: string | null;
   summary: Summary | null;
@@ -42,6 +41,11 @@ export interface HistoryItem {
   rawContent: string;
   timestamp: Date | string;
   title?: string;
+  // New fields to store generated content
+  summaries?: StyleSummaries;
+  questions?: Question[] | null;
+  userAnswers?: UserAnswer[] | null;
+  language?: SummaryLanguage;
 }
 
 export type CustomPromptType = 'summary' | 'questions' | 'explanation';

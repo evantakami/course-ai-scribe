@@ -10,7 +10,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Scroll, History, Clock, Trash2, ArrowRight } from "lucide-react";
+import { Scroll, History, Clock, Trash2, ArrowRight, FileText, HelpCircle } from "lucide-react";
 import { HistoryItem } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface HistoryDrawerProps {
@@ -105,6 +106,18 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
     return content.substring(0, maxLength) + '...';
   };
 
+  const getHistoryItemStatus = (item: HistoryItem) => {
+    const hasSummaries = item.summaries && Object.keys(item.summaries).length > 0;
+    const hasQuiz = item.questions && item.questions.length > 0;
+    const hasAnswers = item.userAnswers && item.userAnswers.length > 0;
+    
+    const summaryCount = hasSummaries ? Object.keys(item.summaries!).length : 0;
+    const quizCount = hasQuiz ? item.questions!.length : 0;
+    const answersCount = hasAnswers ? item.userAnswers!.length : 0;
+    
+    return { hasSummaries, hasQuiz, hasAnswers, summaryCount, quizCount, answersCount };
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -166,40 +179,75 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {historyItems.map((item) => (
-                <Card key={item.id} className="relative overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex justify-between">
-                      {formatDate(item.timestamp)}
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      {item.rawContent.length} 个字符
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <p className="text-sm text-muted-foreground whitespace-pre-line line-clamp-3">
-                      {truncateContent(item.rawContent)}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="flex justify-between pt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleDeleteItem(item.id)}
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      删除
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleSelectContent(item.rawContent)}
-                    >
-                      使用
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+              {historyItems.map((item) => {
+                const { hasSummaries, hasQuiz, hasAnswers, summaryCount, quizCount, answersCount } = getHistoryItemStatus(item);
+                
+                return (
+                  <Card key={item.id} className="relative overflow-hidden">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex justify-between">
+                        {item.title || truncateContent(item.rawContent, 40)}
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(item.timestamp)}
+                        </span>
+                      </CardTitle>
+                      <CardDescription className="text-xs flex items-center gap-2">
+                        <span>{item.rawContent.length} 个字符</span>
+                        {item.language && (
+                          <Badge variant="outline" className="text-xs">
+                            {item.language === "english" ? "英文" : 
+                             item.language === "chinese" ? "中文" : 
+                             item.language === "spanish" ? "西班牙语" : "法语"}
+                          </Badge>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <p className="text-sm text-muted-foreground whitespace-pre-line line-clamp-2">
+                        {truncateContent(item.rawContent)}
+                      </p>
+                      
+                      {/* Content statistics */}
+                      <div className="flex gap-2 mt-2">
+                        {hasSummaries && (
+                          <Badge variant="outline" className="bg-blue-50">
+                            <FileText className="h-3 w-3 mr-1" />
+                            {summaryCount} 份摘要
+                          </Badge>
+                        )}
+                        {hasQuiz && (
+                          <Badge variant="outline" className="bg-green-50">
+                            <HelpCircle className="h-3 w-3 mr-1" />
+                            {quizCount} 题测验
+                          </Badge>
+                        )}
+                        {hasAnswers && (
+                          <Badge variant="outline" className="bg-orange-50">
+                            已答 {answersCount} 题
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between pt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleDeleteItem(item.id)}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        删除
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSelectContent(item.rawContent)}
+                      >
+                        使用
+                        <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </ScrollArea>
