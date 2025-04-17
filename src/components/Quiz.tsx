@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,10 @@ import { toast } from "sonner";
 
 interface QuizProps {
   questions: Question[];
+  saveUserAnswers?: (userAnswers: UserAnswer[]) => void;
 }
 
-const Quiz = ({ questions }: QuizProps) => {
+const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -21,7 +21,6 @@ const Quiz = ({ questions }: QuizProps) => {
   const [customExplanation, setCustomExplanation] = useState<string | null>(null);
   const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
 
-  // Load saved answers for this quiz session if available
   useEffect(() => {
     const savedAnswers = localStorage.getItem('current_quiz_answers');
     if (savedAnswers) {
@@ -34,12 +33,15 @@ const Quiz = ({ questions }: QuizProps) => {
     }
   }, []);
 
-  // Save answers whenever they change
   useEffect(() => {
     if (userAnswers.length > 0) {
       localStorage.setItem('current_quiz_answers', JSON.stringify(userAnswers));
+      
+      if (saveUserAnswers) {
+        saveUserAnswers(userAnswers);
+      }
     }
-  }, [userAnswers]);
+  }, [userAnswers, saveUserAnswers]);
 
   const currentQuestion = questions[currentQuestionIndex];
   const userAnswer = userAnswers.find(answer => answer.questionId === currentQuestion.id);
@@ -72,12 +74,9 @@ const Quiz = ({ questions }: QuizProps) => {
       newAnswer
     ]);
     
-    // Automatically show explanation
     setIsShowingExplanation(true);
-    // Reset any custom explanation when submitting a new answer
     setCustomExplanation(null);
     
-    // Save this answer to mistake collection if it's wrong
     if (!isCorrect) {
       saveToMistakeCollection(newAnswer);
     }
@@ -88,14 +87,11 @@ const Quiz = ({ questions }: QuizProps) => {
       const mistakesString = localStorage.getItem('mistake_collection') || '[]';
       let mistakes = JSON.parse(mistakesString);
       
-      // Check if this question is already in the collection
       const existingIndex = mistakes.findIndex((m: UserAnswer) => m.questionId === answer.questionId);
       
       if (existingIndex >= 0) {
-        // Update existing entry
         mistakes[existingIndex] = answer;
       } else {
-        // Add new entry
         mistakes.push(answer);
       }
       

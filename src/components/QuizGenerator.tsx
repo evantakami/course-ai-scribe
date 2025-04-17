@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Question, QuestionDifficulty } from "@/types";
+import { Question, QuestionDifficulty, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,12 +11,14 @@ interface QuizGeneratorProps {
   questions: Question[] | null;
   isGenerating: boolean;
   onDifficultyChange: (difficulty: QuestionDifficulty) => void;
+  saveUserAnswers?: (userAnswers: UserAnswer[]) => void;
 }
 
 const QuizGenerator = ({
   questions,
   isGenerating,
   onDifficultyChange,
+  saveUserAnswers,
 }: QuizGeneratorProps) => {
   const [activeDifficulty, setActiveDifficulty] = useState<QuestionDifficulty>("medium");
 
@@ -51,7 +53,7 @@ const QuizGenerator = ({
             </div>
           ) : questions ? (
             <TabsContent value={activeDifficulty} className="mt-0">
-              <Quiz questions={questions} />
+              <Quiz questions={questions} saveUserAnswers={saveUserAnswers} />
             </TabsContent>
           ) : (
             <div className="text-center py-8 text-gray-500">
