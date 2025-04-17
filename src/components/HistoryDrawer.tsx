@@ -3,23 +3,21 @@ import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Scroll, History, Clock, Trash2, ArrowRight, FileText, HelpCircle, Check } from "lucide-react";
+import { Scroll, History, Clock, Trash2, ArrowRight } from "lucide-react";
 import { HistoryItem } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { 
   AlertDialog,
@@ -34,12 +32,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface HistoryDrawerProps {
   onSelectContent: (content: string) => void;
@@ -94,24 +86,6 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
     }
   };
 
-  const formatDate = (date: Date | string) => {
-    if (typeof date === 'string') {
-      date = new Date(date);
-    }
-    return new Intl.DateTimeFormat('zh-CN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
-
-  const truncateContent = (content: string, maxLength = 100) => {
-    if (content.length <= maxLength) return content;
-    return content.substring(0, maxLength) + '...';
-  };
-
   const getHistoryItemStatus = (item: HistoryItem) => {
     const hasSummaries = item.summaries && Object.keys(item.summaries).length > 0;
     const hasQuiz = item.questions && item.questions.length > 0;
@@ -138,9 +112,6 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
             <Scroll className="mr-2 h-5 w-5" />
             历史内容
           </SheetTitle>
-          <SheetDescription>
-            查看和使用您之前保存的内容
-          </SheetDescription>
         </SheetHeader>
         
         <div className="flex justify-between items-center mb-4">
@@ -191,74 +162,27 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
                 return (
                   <Card key={item.id} className="relative overflow-hidden">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex justify-between">
-                        {item.title || truncateContent(item.rawContent, 40)}
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(item.timestamp)}
-                        </span>
+                      <CardTitle className="text-base">
+                        {item.title || item.rawContent.slice(0, 40) + '...'}
                       </CardTitle>
-                      <CardDescription className="text-xs flex items-center gap-2">
-                        <span>{item.rawContent.length} 个字符</span>
-                        {item.language && (
-                          <Badge variant="outline" className="text-xs">
-                            {item.language === "english" ? "英文" : 
-                             item.language === "chinese" ? "中文" : 
-                             item.language === "spanish" ? "西班牙语" : "法语"}
-                          </Badge>
-                        )}
-                      </CardDescription>
                     </CardHeader>
                     <CardContent className="pb-2">
-                      <p className="text-sm text-muted-foreground whitespace-pre-line line-clamp-2">
-                        {truncateContent(item.rawContent)}
-                      </p>
-                      
                       {/* Content statistics */}
                       <div className="flex flex-wrap gap-2 mt-2">
                         {hasSummaries && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge variant="outline" className="bg-blue-50">
-                                  <FileText className="h-3 w-3 mr-1" />
-                                  {summaryCount} 份摘要
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>已生成 {summaryCount} 种风格的摘要</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <Badge variant="outline" className="bg-blue-50">
+                            {summaryCount} 份摘要
+                          </Badge>
                         )}
                         {hasQuiz && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge variant="outline" className="bg-green-50">
-                                  <HelpCircle className="h-3 w-3 mr-1" />
-                                  {quizCount} 题测验
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>包含 {quizCount} 道测试题</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <Badge variant="outline" className="bg-green-50">
+                            {quizCount} 题测验
+                          </Badge>
                         )}
                         {hasAnswers && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge variant="outline" className="bg-orange-50">
-                                  <Check className="h-3 w-3 mr-1" />
-                                  已答 {answersCount} 题
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>已完成 {answersCount} 道题</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <Badge variant="outline" className="bg-orange-50">
+                            已答 {answersCount} 题
+                          </Badge>
                         )}
                       </div>
                     </CardContent>

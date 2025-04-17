@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Edit2, X, FileText, HelpCircle, Check, BookOpen } from "lucide-react";
+import { Edit2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -38,18 +38,6 @@ const HistorySidebarItem = ({
     onUpdateTitle(item.id, editTitle);
     setEditingTitle(false);
     toast.success("标题已更新");
-  };
-
-  const formatDate = (date: Date | string) => {
-    if (typeof date === 'string') {
-      date = new Date(date);
-    }
-    return new Intl.DateTimeFormat('zh-CN', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
   };
 
   const getHistoryItemStatus = () => {
@@ -105,9 +93,6 @@ const HistorySidebarItem = ({
           className="group relative"
         >
           <span className="line-clamp-1">{item.title || "未命名笔记"}</span>
-          <span className="text-xs text-muted-foreground block mt-1">
-            {formatDate(item.timestamp)}
-          </span>
           
           {/* Status indicators */}
           <div className="flex flex-wrap gap-1 mt-1">
@@ -116,7 +101,6 @@ const HistorySidebarItem = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-blue-50">
-                      <BookOpen className="h-3 w-3 mr-1" />
                       摘要
                     </Badge>
                   </TooltipTrigger>
@@ -131,7 +115,6 @@ const HistorySidebarItem = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-green-50">
-                      <HelpCircle className="h-3 w-3 mr-1" />
                       测验
                     </Badge>
                   </TooltipTrigger>
@@ -146,7 +129,6 @@ const HistorySidebarItem = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-orange-50">
-                      <Check className="h-3 w-3 mr-1" />
                       已答题
                     </Badge>
                   </TooltipTrigger>
