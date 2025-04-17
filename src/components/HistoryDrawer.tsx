@@ -88,11 +88,19 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
 
   const getHistoryItemStatus = (item: HistoryItem) => {
     const hasSummaries = item.summaries && Object.keys(item.summaries).length > 0;
-    const hasQuiz = item.questions && item.questions.length > 0;
+    const hasQuiz = item.questions && (
+      (item.questions.easy && item.questions.easy.length > 0) ||
+      (item.questions.medium && item.questions.medium.length > 0) ||
+      (item.questions.hard && item.questions.hard.length > 0)
+    );
     const hasAnswers = item.userAnswers && item.userAnswers.length > 0;
     
     const summaryCount = hasSummaries ? Object.keys(item.summaries!).length : 0;
-    const quizCount = hasQuiz ? item.questions!.length : 0;
+    const quizCount = hasQuiz ? (
+      (item.questions?.easy?.length || 0) +
+      (item.questions?.medium?.length || 0) +
+      (item.questions?.hard?.length || 0)
+    ) : 0;
     const answersCount = hasAnswers ? item.userAnswers!.length : 0;
     
     return { hasSummaries, hasQuiz, hasAnswers, summaryCount, quizCount, answersCount };

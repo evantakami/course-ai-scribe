@@ -42,7 +42,11 @@ const HistorySidebarItem = ({
 
   const getHistoryItemStatus = () => {
     const hasSummaries = item.summaries && Object.keys(item.summaries).length > 0;
-    const hasQuiz = item.questions && item.questions.length > 0;
+    const hasQuiz = item.questions && (
+      (item.questions.easy && item.questions.easy.length > 0) ||
+      (item.questions.medium && item.questions.medium.length > 0) ||
+      (item.questions.hard && item.questions.hard.length > 0)
+    );
     const hasAnswers = item.userAnswers && item.userAnswers.length > 0;
     
     return { hasSummaries, hasQuiz, hasAnswers };
@@ -121,7 +125,11 @@ const HistorySidebarItem = ({
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{item.questions?.length || 0}道测试题</p>
+                      <p>{
+                        (item.questions?.easy?.length || 0) + 
+                        (item.questions?.medium?.length || 0) + 
+                        (item.questions?.hard?.length || 0)
+                      }道测试题</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
