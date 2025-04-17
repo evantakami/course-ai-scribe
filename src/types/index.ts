@@ -62,3 +62,7 @@ export const AI_MODELS: AIModelOption[] = [
   { value: "gpt-4", label: "GPT-4" },
   { value: "gpt-4o-mini", label: "GPT-4o Mini" }
 ];
+
+export interface StyleSummaries {
+  [style: string]: string;
+}

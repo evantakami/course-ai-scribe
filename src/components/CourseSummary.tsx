@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Summary, SummaryStyle, SummaryLanguage } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,10 @@ interface CourseSummaryProps {
   onGenerateQuiz: () => void;
 }
 
+interface StyleSummary {
+  [key: string]: string;
+}
+
 const CourseSummary = ({
   summary,
   isLoading,
@@ -30,15 +34,34 @@ const CourseSummary = ({
   onGenerateQuiz,
 }: CourseSummaryProps) => {
   const [activeStyle, setActiveStyle] = useState<SummaryStyle>(summary?.style || "casual");
+  const [savedSummaries, setSavedSummaries] = useState<StyleSummary>({});
+  const [localLoading, setLocalLoading] = useState<boolean>(false);
+
+  // Update saved summaries when new summary is received
+  useEffect(() => {
+    if (summary && !isLoading) {
+      setSavedSummaries(prev => ({
+        ...prev,
+        [summary.style]: summary.content
+      }));
+    }
+  }, [summary, isLoading]);
 
   const handleStyleChange = (value: string) => {
     const style = value as SummaryStyle;
     setActiveStyle(style);
-    onStyleChange(style);
+    
+    // Only call the API if we don't have this style saved yet
+    if (!savedSummaries[style]) {
+      setLocalLoading(true);
+      onStyleChange(style);
+    }
   };
 
   const handleLanguageChange = (value: string) => {
     onLanguageChange(value as SummaryLanguage);
+    // Clear saved summaries when language changes
+    setSavedSummaries({});
   };
 
   const languageOptions = [
@@ -47,6 +70,16 @@ const CourseSummary = ({
     { value: "spanish", label: "Español" },
     { value: "french", label: "Français" }
   ];
+
+  // Determine if we should display loading state
+  const showLoading = isLoading || (localLoading && !savedSummaries[activeStyle]);
+
+  // Update local loading state when global loading changes
+  useEffect(() => {
+    if (!isLoading) {
+      setLocalLoading(false);
+    }
+  }, [isLoading]);
 
   return (
     <Card className="w-full">
@@ -86,16 +119,24 @@ const CourseSummary = ({
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="casual" disabled={isLoading}>通俗易懂</TabsTrigger>
-            <TabsTrigger value="academic" disabled={isLoading}>学术专业</TabsTrigger>
-            <TabsTrigger value="basic" disabled={isLoading}>基础概念</TabsTrigger>
+            <TabsTrigger value="casual" disabled={showLoading}>通俗易懂</TabsTrigger>
+            <TabsTrigger value="academic" disabled={showLoading}>学术专业</TabsTrigger>
+            <TabsTrigger value="basic" disabled={showLoading}>基础概念</TabsTrigger>
           </TabsList>
           
-          {isLoading ? (
+          {showLoading ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
               <span className="ml-2 text-edu-600">正在生成摘要...</span>
             </div>
+          ) : savedSummaries[activeStyle] ? (
+            <TabsContent value={activeStyle} className="mt-0">
+              <div className="prose max-w-none">
+                <ReactMarkdown>
+                  {savedSummaries[activeStyle]}
+                </ReactMarkdown>
+              </div>
+            </TabsContent>
           ) : summary ? (
             <TabsContent value={activeStyle} className="mt-0">
               <div className="prose max-w-none">
