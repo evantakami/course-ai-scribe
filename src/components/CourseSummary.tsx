@@ -85,9 +85,10 @@ const CourseSummary = ({
           onValueChange={handleStyleChange}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="casual" disabled={isLoading}>通俗易懂</TabsTrigger>
             <TabsTrigger value="academic" disabled={isLoading}>学术专业</TabsTrigger>
+            <TabsTrigger value="basic" disabled={isLoading}>基础概念</TabsTrigger>
           </TabsList>
           
           {isLoading ? (

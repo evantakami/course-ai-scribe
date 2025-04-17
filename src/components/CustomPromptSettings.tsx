@@ -33,7 +33,7 @@ const promptTypes: { value: CustomPromptType; label: string }[] = [
 const CustomPromptSettings = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<CustomPromptType>("summary");
-  const [summaryStyle, setSummaryStyle] = useState<"casual" | "academic" | undefined>("casual");
+  const [summaryStyle, setSummaryStyle] = useState<"casual" | "academic" | "basic" | undefined>("casual");
   const [promptContent, setPromptContent] = useState("");
   
   const handleSheetOpen = (open: boolean) => {
@@ -74,7 +74,7 @@ const CustomPromptSettings = () => {
   };
   
   const handleSummaryStyleChange = (value: string) => {
-    const style = value as "casual" | "academic";
+    const style = value as "casual" | "academic" | "basic";
     setSummaryStyle(style);
     
     // Load the prompt for the new style
@@ -156,6 +156,7 @@ const CustomPromptSettings = () => {
                   <SelectContent>
                     <SelectItem value="casual">通俗易懂</SelectItem>
                     <SelectItem value="academic">学术专业</SelectItem>
+                    <SelectItem value="basic">基础概念</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

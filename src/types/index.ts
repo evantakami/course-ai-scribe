@@ -11,7 +11,7 @@ export interface Summary {
   language: SummaryLanguage;
 }
 
-export type SummaryStyle = "casual" | "academic";
+export type SummaryStyle = "academic" | "casual" | "basic";
 export type SummaryLanguage = "english" | "chinese" | "spanish" | "french";
 
 export interface Question {
@@ -62,4 +62,3 @@ export const AI_MODELS: AIModelOption[] = [
   { value: "gpt-4", label: "GPT-4" },
   { value: "gpt-4o-mini", label: "GPT-4o Mini" }
 ];
-
