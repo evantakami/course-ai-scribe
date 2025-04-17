@@ -147,7 +147,7 @@ const CustomPromptSettings = () => {
             {activeTab === "summary" && (
               <div className="mb-4">
                 <Select 
-                  value={summaryStyle} 
+                  value={summaryStyle || "casual"} 
                   onValueChange={handleSummaryStyleChange}
                 >
                   <SelectTrigger className="w-full">

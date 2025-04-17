@@ -179,14 +179,14 @@ const MistakeCollection = () => {
           </Tabs>
           
           <Select 
-            value={selectedCourseId || ""} 
+            value={selectedCourseId || "all"} 
             onValueChange={setSelectedCourseId}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="筛选课程" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全部课程</SelectItem>
+              <SelectItem value="all">全部课程</SelectItem>
               {courses.map(course => (
                 <SelectItem key={course.id} value={course.id} className="flex items-center">
                   {course.name}
