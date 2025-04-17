@@ -18,6 +18,8 @@ const Quiz = ({ questions }: QuizProps) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isShowingExplanation, setIsShowingExplanation] = useState(false);
+  const [customExplanation, setCustomExplanation] = useState<string | null>(null);
+  const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
 
   // Load saved answers for this quiz session if available
   useEffect(() => {
@@ -72,6 +74,8 @@ const Quiz = ({ questions }: QuizProps) => {
     
     // Automatically show explanation
     setIsShowingExplanation(true);
+    // Reset any custom explanation when submitting a new answer
+    setCustomExplanation(null);
     
     // Save this answer to mistake collection if it's wrong
     if (!isCorrect) {
@@ -111,6 +115,7 @@ const Quiz = ({ questions }: QuizProps) => {
   const handleNextQuestion = () => {
     setSelectedOption(null);
     setIsShowingExplanation(false);
+    setCustomExplanation(null);
     setCurrentQuestionIndex(prev => 
       prev < questions.length - 1 ? prev + 1 : prev
     );
@@ -119,6 +124,7 @@ const Quiz = ({ questions }: QuizProps) => {
   const handlePrevQuestion = () => {
     setSelectedOption(null);
     setIsShowingExplanation(false);
+    setCustomExplanation(null);
     setCurrentQuestionIndex(prev => 
       prev > 0 ? prev - 1 : prev
     );
@@ -126,6 +132,25 @@ const Quiz = ({ questions }: QuizProps) => {
 
   const handleToggleExplanation = () => {
     setIsShowingExplanation(!isShowingExplanation);
+  };
+
+  const handleGenerateWhyWrong = async () => {
+    if (!userAnswer || userAnswer.isCorrect || !currentQuestion) return;
+    
+    setIsLoadingExplanation(true);
+    try {
+      const explanation = await openaiService.evaluateAnswer(
+        currentQuestion, 
+        userAnswer.selectedOption
+      );
+      setCustomExplanation(explanation);
+      setIsShowingExplanation(true);
+    } catch (error) {
+      console.error("Failed to generate explanation:", error);
+      toast.error("生成解析失败，请重试");
+    } finally {
+      setIsLoadingExplanation(false);
+    }
   };
 
   const getProgress = () => {
@@ -197,14 +222,23 @@ const Quiz = ({ questions }: QuizProps) => {
           ))}
         </RadioGroup>
 
-        {isAnswerSubmitted && isShowingExplanation && currentQuestion.explanation && (
+        {isAnswerSubmitted && isShowingExplanation && (
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
             <h4 className="flex items-center text-sm font-medium text-blue-800 mb-2">
               <HelpCircle className="mr-1 h-4 w-4" />
               解析
             </h4>
             <div className="text-sm text-gray-700 prose max-w-none">
-              <ReactMarkdown>{currentQuestion.explanation}</ReactMarkdown>
+              {isLoadingExplanation ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  <span>生成解析中...</span>
+                </div>
+              ) : (
+                <ReactMarkdown>
+                  {customExplanation || currentQuestion.explanation || "暂无解析"}
+                </ReactMarkdown>
+              )}
             </div>
           </div>
         )}
@@ -232,14 +266,28 @@ const Quiz = ({ questions }: QuizProps) => {
                   </Button>
                 )}
                 
-                <Button
-                  variant="outline"
-                  onClick={handleToggleExplanation}
-                  className="flex items-center gap-1"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  {isShowingExplanation ? "隐藏解析" : "我为什么错了？"}
-                </Button>
+                {!isCorrect && (
+                  <Button
+                    variant="outline"
+                    onClick={handleGenerateWhyWrong}
+                    className="flex items-center gap-1"
+                    disabled={isLoadingExplanation}
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    {customExplanation ? "更新解析" : "我为什么错了？"}
+                  </Button>
+                )}
+                
+                {(isCorrect || customExplanation) && (
+                  <Button
+                    variant="outline"
+                    onClick={handleToggleExplanation}
+                    className="flex items-center gap-1"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    {isShowingExplanation ? "隐藏解析" : "显示解析"}
+                  </Button>
+                )}
               </>
             )}
           </div>

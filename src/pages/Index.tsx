@@ -24,7 +24,6 @@ const Index = () => {
     setIsKeySet(true);
   };
   
-  // Auto-save content to history
   useEffect(() => {
     if (courseContent?.rawContent && !isLoading) {
       saveToHistory(courseContent.rawContent);
@@ -33,21 +32,17 @@ const Index = () => {
 
   const saveToHistory = (content: string) => {
     try {
-      // Get existing history
       const historyString = localStorage.getItem('content_history') || '[]';
       let history: HistoryItem[] = JSON.parse(historyString);
       
-      // Check if content already exists in history
       const exists = history.some(item => item.rawContent === content);
       
       if (!exists) {
-        // Generate title from content (first line or first few words)
         let title = content.split('\n')[0] || '';
         if (title.length > 40) {
           title = title.substring(0, 40) + '...';
         }
         
-        // Add new item to history
         const newItem: HistoryItem = {
           id: uuidv4(),
           rawContent: content,
@@ -55,10 +50,8 @@ const Index = () => {
           title: title
         };
         
-        // Add to beginning of array
         history = [newItem, ...history];
         
-        // Limit history to 20 items
         if (history.length > 20) {
           history = history.slice(0, 20);
         }
@@ -84,7 +77,6 @@ const Index = () => {
     setIsLoading(true);
     setCurrentLanguage(language);
     
-    // Initialize with proper CourseContent structure
     setCourseContent({ 
       rawContent: content,
       summary: null,
@@ -92,10 +84,8 @@ const Index = () => {
     });
 
     try {
-      // Always generate summary
       const summary = await openaiService.generateSummary(content, "casual", language);
       
-      // Start generating questions in parallel
       setIsGeneratingQuiz(true);
       const questionsPromise = openaiService.generateQuestions(
         content,
@@ -104,7 +94,6 @@ const Index = () => {
         language
       );
       
-      // Update with summary first
       setCourseContent(prev => {
         if (!prev) return null;
         return { ...prev, summary };
@@ -113,7 +102,6 @@ const Index = () => {
       setActiveTab("summary");
       toast.success("课程摘要已生成");
 
-      // Wait for questions to be ready
       try {
         const questions = await questionsPromise;
         
@@ -237,14 +225,11 @@ const Index = () => {
   const handleSelectHistoryContent = (content: string) => {
     setActiveTab("upload");
     
-    // Don't regenerate content when selecting from history
-    // Just set the content directly if we already have it stored
     const historyString = localStorage.getItem('content_history') || '[]';
     const history: HistoryItem[] = JSON.parse(historyString);
     const historyItem = history.find(item => item.rawContent === content);
     
     if (historyItem) {
-      // We don't want to regenerate things when selecting from history
       setCourseContent({ 
         rawContent: content,
         summary: null,
