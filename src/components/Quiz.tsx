@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,11 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
   const [isShowingExplanation, setIsShowingExplanation] = useState(false);
   const [customExplanation, setCustomExplanation] = useState<string | null>(null);
   const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
+
+  // Guard against empty questions array
+  if (!questions || questions.length === 0) {
+    return <div className="text-center py-8 text-gray-500">No questions available</div>;
+  }
 
   useEffect(() => {
     const savedAnswers = localStorage.getItem('current_quiz_answers');
@@ -44,7 +50,15 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
   }, [userAnswers, saveUserAnswers]);
 
   const currentQuestion = questions[currentQuestionIndex];
-  const userAnswer = userAnswers.find(answer => answer.questionId === currentQuestion.id);
+  
+  // Safety check for currentQuestion
+  if (!currentQuestion) {
+    return <div className="text-center py-8 text-gray-500">Question not available</div>;
+  }
+  
+  const userAnswer = userAnswers.find(answer => 
+    currentQuestion && answer.questionId === currentQuestion.id
+  );
   const isAnswerSubmitted = userAnswer !== undefined;
   const isCorrect = userAnswer?.isCorrect;
 
@@ -54,7 +68,7 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
   };
 
   const handleSubmitAnswer = () => {
-    if (selectedOption === null) return;
+    if (selectedOption === null || !currentQuestion) return;
 
     const isCorrect = selectedOption === currentQuestion.correctAnswer;
     
