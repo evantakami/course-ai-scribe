@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { SummaryLanguage, QuestionDifficulty } from "@/types";
 import { openaiService } from "@/services/openaiService";
 import TextInput from "./TextInput";
@@ -14,12 +14,20 @@ interface FileUploadProps {
     content: string, 
     generateQuiz: boolean, 
     quizDifficulty: QuestionDifficulty,
-    language: SummaryLanguage
+    language: SummaryLanguage,
+    courseId: string
   ) => void;
   isLoading: boolean;
+  selectedCourseId: string;
+  onSelectCourse: (courseId: string) => void;
 }
 
-const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
+const FileUpload = ({ 
+  onContentLoaded, 
+  isLoading, 
+  selectedCourseId,
+  onSelectCourse 
+}: FileUploadProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState<string>("");
   const [isTextMode, setIsTextMode] = useState<boolean>(true);
@@ -27,6 +35,23 @@ const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
   const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
   const [selectedModel, setSelectedModel] = useState<string>(openaiService.getModel());
+
+  // Initialize selectedCourseId if not set
+  useEffect(() => {
+    if (!selectedCourseId) {
+      try {
+        const userProfileString = localStorage.getItem('user_profile');
+        if (userProfileString) {
+          const userProfile = JSON.parse(userProfileString);
+          if (userProfile.courses && userProfile.courses.length > 0) {
+            onSelectCourse(userProfile.courses[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to initialize course:", error);
+      }
+    }
+  }, [selectedCourseId, onSelectCourse]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -58,16 +83,24 @@ const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
       toast.error("请输入课程内容");
       return;
     }
-    onContentLoaded(textContent, generateQuiz, quizDifficulty, language);
+    if (!selectedCourseId) {
+      toast.error("请先选择课程");
+      return;
+    }
+    onContentLoaded(textContent, generateQuiz, quizDifficulty, language, selectedCourseId);
   };
 
   const handleUpload = () => {
     if (!selectedFile) return;
+    if (!selectedCourseId) {
+      toast.error("请先选择课程");
+      return;
+    }
     
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;
-      onContentLoaded(content, generateQuiz, quizDifficulty, language);
+      onContentLoaded(content, generateQuiz, quizDifficulty, language, selectedCourseId);
     };
     reader.onerror = () => {
       toast.error("读取文件出错");
@@ -81,20 +114,31 @@ const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
       return;
     }
     
+    if (!selectedCourseId) {
+      toast.error("请先选择课程");
+      return;
+    }
+    
     try {
       const historyString = localStorage.getItem('content_history') || '[]';
       const history = JSON.parse(historyString);
       
+      // Extract title from first line
+      const firstLine = textContent.split('\n')[0] || '';
+      let title = firstLine.length > 60 ? firstLine.substring(0, 60) + '...' : firstLine;
+      
       const newItem = {
         id: Date.now().toString(),
         rawContent: textContent,
-        timestamp: new Date()
+        timestamp: new Date(),
+        title,
+        courseId: selectedCourseId
       };
       
-      const updatedHistory = [newItem, ...history].slice(0, 20);
+      const updatedHistory = [newItem, ...history].slice(0, 50);
       
       localStorage.setItem('content_history', JSON.stringify(updatedHistory));
-      toast.success("内容已保存，可在历史记录中查看");
+      toast.success("内容已保存，可在课程历史记录中查看");
     } catch (error) {
       console.error("保存内容失败:", error);
       toast.error("保存内容失败");
@@ -132,6 +176,8 @@ const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
             onSubmitText={handleSubmitText}
             isLoading={isLoading}
             onSaveContent={handleSaveContent}
+            selectedCourseId={selectedCourseId}
+            onSelectCourse={onSelectCourse}
           />
         ) : (
           <FileUploader
@@ -140,6 +186,8 @@ const FileUpload = ({ onContentLoaded, isLoading }: FileUploadProps) => {
             onHandleManualTextInput={handleManualTextInput}
             onHandleUpload={handleUpload}
             isLoading={isLoading}
+            selectedCourseId={selectedCourseId}
+            onSelectCourse={onSelectCourse}
           />
         )}
       </CardContent>

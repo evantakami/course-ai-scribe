@@ -17,7 +17,8 @@ interface MainTabsProps {
     content: string,
     generateQuiz: boolean,
     quizDifficulty: QuestionDifficulty,
-    language: SummaryLanguage
+    language: SummaryLanguage,
+    courseId: string
   ) => void;
   handleStyleChange: (style: SummaryStyle) => void;
   handleLanguageChange: (language: SummaryLanguage) => void;
@@ -25,6 +26,9 @@ interface MainTabsProps {
   handleDifficultyChange: (difficulty: QuestionDifficulty) => void;
   saveUserAnswersToHistory?: (userAnswers: UserAnswer[]) => void;
   handleRegenerateQuiz?: (difficulty: QuestionDifficulty) => void;
+  selectedCourseId: string;
+  onSelectCourse: (courseId: string) => void;
+  onViewCourses?: () => void;
 }
 
 const MainTabs = ({
@@ -39,7 +43,10 @@ const MainTabs = ({
   handleGenerateQuiz,
   handleDifficultyChange,
   saveUserAnswersToHistory,
-  handleRegenerateQuiz
+  handleRegenerateQuiz,
+  selectedCourseId,
+  onSelectCourse,
+  onViewCourses
 }: MainTabsProps) => {
   return (
     <Tabs
@@ -76,7 +83,9 @@ const MainTabs = ({
         <div className="flex justify-center">
           <FileUpload 
             onContentLoaded={handleContentLoaded} 
-            isLoading={isLoading} 
+            isLoading={isLoading}
+            selectedCourseId={selectedCourseId}
+            onSelectCourse={onSelectCourse}
           />
         </div>
       </TabsContent>

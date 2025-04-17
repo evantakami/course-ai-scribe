@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer } from "@/types";
+import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer, Course } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import ApiKeyInput from "@/components/ApiKeyInput";
@@ -10,8 +10,8 @@ import Footer from "@/components/layout/Footer";
 import TopControls from "@/components/TopControls";
 import MainTabs from "@/components/MainTabs";
 import { v4 as uuidv4 } from "uuid";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import AppSidebar from "@/components/layout/AppSidebar";
+import CourseCatalog from "@/components/courses/CourseCatalog";
+import CourseHistory from "@/components/courses/CourseHistory";
 
 const Index = () => {
   const [isKeySet, setIsKeySet] = useState<boolean>(!!openaiService.getApiKey());
@@ -21,20 +21,62 @@ const Index = () => {
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState<boolean>(false);
   const [currentLanguage, setCurrentLanguage] = useState<SummaryLanguage>("chinese");
   const [currentQuizDifficulty, setCurrentQuizDifficulty] = useState<QuestionDifficulty>("medium");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [view, setView] = useState<"catalog" | "history" | "content">("content");
 
   const handleApiKeySet = () => {
     setIsKeySet(true);
   };
   
+  // Initialize user profile if not exists
+  useEffect(() => {
+    initializeUserProfile();
+  }, []);
+  
+  // Save content to history when summary or questions are generated
   useEffect(() => {
     if (courseContent?.rawContent && !isLoading) {
       saveToHistory(courseContent);
     }
   }, [courseContent?.summary, courseContent?.questions]);
 
+  const initializeUserProfile = () => {
+    try {
+      const userProfileString = localStorage.getItem('user_profile');
+      if (!userProfileString) {
+        // Create default user profile
+        const defaultCourse: Course = {
+          id: uuidv4(),
+          name: "通用课程",
+          color: "bg-blue-500",
+          timestamp: new Date()
+        };
+        
+        const userProfile = {
+          courses: [defaultCourse],
+          quizStats: {
+            totalQuizzes: 0,
+            correctAnswers: 0,
+            totalQuestions: 0
+          }
+        };
+        
+        localStorage.setItem('user_profile', JSON.stringify(userProfile));
+        setSelectedCourseId(defaultCourse.id);
+      } else {
+        const userProfile = JSON.parse(userProfileString);
+        if (userProfile.courses && userProfile.courses.length > 0) {
+          setSelectedCourseId(userProfile.courses[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to initialize user profile:", error);
+    }
+  };
+
   const saveToHistory = (content: CourseContent) => {
     try {
-      if (!content.rawContent) return;
+      if (!content.rawContent || !selectedCourseId) return;
       
       const historyString = localStorage.getItem('content_history') || '[]';
       let history: HistoryItem[] = JSON.parse(historyString);
@@ -45,42 +87,17 @@ const Index = () => {
       const firstLine = content.rawContent.split('\n')[0] || '';
       let title = firstLine;
       
-      // Try to extract a category from the first line
-      let category = "";
-      if (title.includes(':')) {
-        const parts = title.split(':');
-        category = parts[0].trim();
-        title = parts.slice(1).join(':').trim();
-      } else if (title.includes('：')) {
-        const parts = title.split('：');
-        category = parts[0].trim();
-        title = parts.slice(1).join('：').trim();
-      } else if (title.includes('-')) {
-        const parts = title.split('-');
-        category = parts[0].trim();
-        title = parts.slice(1).join('-').trim();
-      } else if (title.length > 30) {
-        category = title.substring(0, 15).trim();
-        title = title;
-      } else {
-        category = "课程笔记";
-      }
-      
-      // Format the title with category
-      let formattedTitle = category;
-      if (title && title !== category) {
-        formattedTitle += " - " + title;
-      }
-      
-      if (formattedTitle.length > 60) {
-        formattedTitle = formattedTitle.substring(0, 60) + '...';
+      // Limit title length
+      if (title.length > 60) {
+        title = title.substring(0, 60) + '...';
       }
       
       if (existingIndex !== -1) {
         history[existingIndex] = {
           ...history[existingIndex],
           timestamp: new Date(),
-          title: formattedTitle,
+          title: title,
+          courseId: selectedCourseId,
           summaries: content.summary ? {
             ...(history[existingIndex].summaries || {}),
             [content.summary.style]: content.summary.content
@@ -93,7 +110,8 @@ const Index = () => {
           id: uuidv4(),
           rawContent: content.rawContent,
           timestamp: new Date(),
-          title: formattedTitle,
+          title: title,
+          courseId: selectedCourseId,
           summaries: content.summary ? { [content.summary.style]: content.summary.content } : undefined,
           questions: content.questions,
           language: content.summary?.language
@@ -101,8 +119,8 @@ const Index = () => {
         
         history = [newItem, ...history];
         
-        if (history.length > 20) {
-          history = history.slice(0, 20);
+        if (history.length > 50) {
+          history = history.slice(0, 50);
         }
       }
       
@@ -129,7 +147,6 @@ const Index = () => {
         let totalQuizzes = 0;
         let correctAnswers = 0;
         let totalQuestions = 0;
-        const categories = new Set<string>();
         
         history.forEach(item => {
           if (item.userAnswers && item.userAnswers.length) {
@@ -142,12 +159,6 @@ const Index = () => {
               }
               totalQuestions++;
             });
-            
-            // Extract category
-            if (item.title) {
-              const category = item.title.split(' - ')[0];
-              if (category) categories.add(category);
-            }
           }
         });
         
@@ -158,8 +169,7 @@ const Index = () => {
             totalQuizzes,
             correctAnswers,
             totalQuestions
-          },
-          categories: Array.from(categories)
+          }
         };
         
         localStorage.setItem('user_profile', JSON.stringify(updatedProfile));
@@ -178,19 +188,88 @@ const Index = () => {
       
       const existingIndex = history.findIndex(item => item.rawContent === courseContent.rawContent);
       
+      // Add courseId to user answers
+      const updatedAnswers = userAnswers.map(answer => ({
+        ...answer,
+        courseId: selectedCourseId,
+        timestamp: answer.timestamp || new Date()
+      }));
+      
       if (existingIndex !== -1) {
         history[existingIndex] = {
           ...history[existingIndex],
-          userAnswers
+          userAnswers: updatedAnswers
         };
         
         localStorage.setItem('content_history', JSON.stringify(history));
+        
+        // Also save incorrect answers to mistake collection
+        saveIncorrectToMistakeCollection(updatedAnswers, courseContent);
         
         // Update user stats whenever we save answers
         updateUserStats();
       }
     } catch (error) {
       console.error("Failed to save user answers to history:", error);
+    }
+  };
+
+  const saveIncorrectToMistakeCollection = (userAnswers: UserAnswer[], content: CourseContent) => {
+    try {
+      const incorrectAnswers = userAnswers.filter(answer => !answer.isCorrect);
+      
+      if (incorrectAnswers.length === 0) return;
+      
+      // Get detailed information about each incorrect answer
+      const detailedIncorrectAnswers = incorrectAnswers.map(answer => {
+        // Find the question details
+        let questionDetails: Question | undefined;
+        
+        if (content.questions?.easy) {
+          questionDetails = content.questions.easy.find(q => q.id === answer.questionId);
+        }
+        
+        if (!questionDetails && content.questions?.medium) {
+          questionDetails = content.questions.medium.find(q => q.id === answer.questionId);
+        }
+        
+        if (!questionDetails && content.questions?.hard) {
+          questionDetails = content.questions.hard.find(q => q.id === answer.questionId);
+        }
+        
+        // Update the answer with question details
+        return {
+          ...answer,
+          question: questionDetails?.text,
+          options: questionDetails?.options,
+          correctAnswer: questionDetails?.correctAnswer,
+          explanation: questionDetails?.explanation,
+          courseId: selectedCourseId,
+          timestamp: new Date()
+        };
+      });
+      
+      // Get existing collection
+      const mistakesString = localStorage.getItem('mistake_collection') || '[]';
+      const existingMistakes: UserAnswer[] = JSON.parse(mistakesString);
+      
+      // Add new mistakes, avoiding duplicates
+      const updatedMistakes = [...existingMistakes];
+      
+      detailedIncorrectAnswers.forEach(newMistake => {
+        const existingIndex = updatedMistakes.findIndex(m => m.questionId === newMistake.questionId);
+        if (existingIndex >= 0) {
+          updatedMistakes[existingIndex] = newMistake;
+        } else {
+          updatedMistakes.push(newMistake);
+        }
+      });
+      
+      // Save back to storage, limit to 100 items
+      localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes.slice(0, 100)));
+      
+    } catch (error) {
+      console.error("Failed to save to mistake collection:", error);
     }
   };
 
@@ -264,10 +343,7 @@ const Index = () => {
       toast.success("通俗易懂摘要已生成");
       
       // Process the remaining styles
-      const [_, academicSummary, basicSummary] = await Promise.all(summaryPromises);
-      
-      // We don't need to update the UI with these since the CourseSummary component
-      // will handle displaying them when they're ready through the onStyleChange prop
+      await Promise.all(summaryPromises);
       
       return true;
     } catch (error) {
@@ -281,7 +357,8 @@ const Index = () => {
     content: string, 
     generateQuiz: boolean = true,
     quizDifficulty: QuestionDifficulty = "medium",
-    language: SummaryLanguage = "chinese"
+    language: SummaryLanguage = "chinese",
+    courseId: string = selectedCourseId
   ) => {
     if (!isKeySet) {
       toast.error("请先设置OpenAI API密钥");
@@ -290,6 +367,7 @@ const Index = () => {
 
     setIsLoading(true);
     setCurrentLanguage(language);
+    setSelectedCourseId(courseId);
     
     setCourseContent({ 
       rawContent: content,
@@ -414,55 +492,80 @@ const Index = () => {
       questions: null
     });
     setActiveTab("upload");
-    toast.info("已从历史记录加载内容，请点击处理按钮继续");
+    setView("content");
+    toast.info("已加载内容，请点击处理按钮继续");
+  };
+
+  const handleCourseSelect = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    setView("history");
+  };
+
+  const renderContent = () => {
+    if (!isKeySet) {
+      return (
+        <div className="flex justify-center my-8">
+          <ApiKeyInput onApiKeySet={handleApiKeySet} />
+        </div>
+      );
+    }
+
+    if (view === "catalog") {
+      return (
+        <CourseCatalog onCourseSelect={handleCourseSelect} />
+      );
+    }
+
+    if (view === "history") {
+      return (
+        <CourseHistory 
+          courseId={selectedCourseId}
+          onBackClick={() => setView("catalog")}
+          onSelectContent={handleSelectHistoryContent}
+        />
+      );
+    }
+
+    // Default view: content
+    return (
+      <>
+        <TopControls 
+          onSelectHistoryContent={handleSelectHistoryContent} 
+          onApiKeySet={handleApiKeySet} 
+        />
+        
+        <MainTabs 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          courseContent={courseContent}
+          isLoading={isLoading}
+          isGeneratingQuiz={isGeneratingQuiz}
+          handleContentLoaded={handleContentLoaded}
+          handleStyleChange={handleStyleChange}
+          handleLanguageChange={handleLanguageChange}
+          handleGenerateQuiz={handleGenerateQuiz}
+          handleDifficultyChange={handleDifficultyChange}
+          saveUserAnswersToHistory={saveUserAnswersToHistory}
+          handleRegenerateQuiz={handleRegenerateQuiz}
+          selectedCourseId={selectedCourseId}
+          onSelectCourse={setSelectedCourseId}
+          onViewCourses={() => setView("catalog")}
+        />
+      </>
+    );
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          {isKeySet && <AppSidebar 
-            onSelectContent={handleSelectHistoryContent}
-            saveUserAnswersToHistory={saveUserAnswersToHistory}
-          />}
-          
-          <div className="flex-1">
-            <Header />
-
-            <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
-              {!isKeySet ? (
-                <div className="flex justify-center my-8">
-                  <ApiKeyInput onApiKeySet={handleApiKeySet} />
-                </div>
-              ) : (
-                <>
-                  <TopControls 
-                    onSelectHistoryContent={handleSelectHistoryContent} 
-                    onApiKeySet={handleApiKeySet} 
-                  />
-                  
-                  <MainTabs 
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    courseContent={courseContent}
-                    isLoading={isLoading}
-                    isGeneratingQuiz={isGeneratingQuiz}
-                    handleContentLoaded={handleContentLoaded}
-                    handleStyleChange={handleStyleChange}
-                    handleLanguageChange={handleLanguageChange}
-                    handleGenerateQuiz={handleGenerateQuiz}
-                    handleDifficultyChange={handleDifficultyChange}
-                    saveUserAnswersToHistory={saveUserAnswersToHistory}
-                    handleRegenerateQuiz={handleRegenerateQuiz}
-                  />
-                </>
-              )}
-            </main>
-
-            <Footer />
-          </div>
+      <div className="flex min-h-screen w-full">
+        <div className="flex-1">
+          <Header />
+          <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+            {renderContent()}
+          </main>
+          <Footer />
         </div>
-      </SidebarProvider>
+      </div>
       
       <Toaster position="top-center" />
     </div>

@@ -39,6 +39,16 @@ export interface UserAnswer {
   correctAnswer?: number;
   explanation?: string;
   timestamp?: Date | string;
+  courseId?: string;
+}
+
+export interface Course {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  timestamp: Date | string;
 }
 
 export interface HistoryItem {
@@ -46,6 +56,7 @@ export interface HistoryItem {
   rawContent: string;
   timestamp: Date | string;
   title?: string;
+  courseId: string;
   // New fields to store generated content
   summaries?: StyleSummaries;
   questions?: {
@@ -79,3 +90,16 @@ export const AI_MODELS: AIModelOption[] = [
 export interface StyleSummaries {
   [style: string]: string;
 }
+
+export interface UserStats {
+  totalQuizzes: number;
+  correctAnswers: number;
+  totalQuestions: number;
+}
+
+export interface UserProfile {
+  username?: string;
+  courses: Course[];
+  quizStats: UserStats;
+}
+

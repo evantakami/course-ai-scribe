@@ -4,6 +4,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Save, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import { SummaryLanguage, QuestionDifficulty } from "@/types";
+import CourseSelector from "./courses/CourseSelector";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface TextInputProps {
   textContent: string;
@@ -12,6 +14,8 @@ interface TextInputProps {
   onSubmitText: () => void;
   isLoading: boolean;
   onSaveContent: () => void;
+  selectedCourseId: string;
+  onSelectCourse: (courseId: string) => void;
 }
 
 const TextInput = ({
@@ -20,7 +24,9 @@ const TextInput = ({
   onHandleFileUpload,
   onSubmitText,
   isLoading,
-  onSaveContent
+  onSaveContent,
+  selectedCourseId,
+  onSelectCourse
 }: TextInputProps) => {
   return (
     <div className="space-y-4">
@@ -45,6 +51,15 @@ const TextInput = ({
           </Button>
         </div>
       </div>
+      
+      <Card className="border-dashed">
+        <CardContent className="p-3">
+          <CourseSelector 
+            selectedCourseId={selectedCourseId} 
+            onSelectCourse={onSelectCourse} 
+          />
+        </CardContent>
+      </Card>
       
       <Textarea 
         placeholder="粘贴或输入课程对话内容..." 

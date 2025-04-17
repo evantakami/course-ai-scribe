@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { FileText, UploadCloud } from "lucide-react";
 import { useDropzone } from 'react-dropzone';
 import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
+import CourseSelector from "./courses/CourseSelector";
 
 interface FileUploaderProps {
   onDrop: (acceptedFiles: File[]) => void;
@@ -10,6 +12,8 @@ interface FileUploaderProps {
   onHandleManualTextInput: () => void;
   onHandleUpload: () => void;
   isLoading: boolean;
+  selectedCourseId: string;
+  onSelectCourse: (courseId: string) => void;
 }
 
 const FileUploader = ({
@@ -17,7 +21,9 @@ const FileUploader = ({
   selectedFile,
   onHandleManualTextInput,
   onHandleUpload,
-  isLoading
+  isLoading,
+  selectedCourseId,
+  onSelectCourse
 }: FileUploaderProps) => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -38,7 +44,16 @@ const FileUploader = ({
   });
 
   return (
-    <>
+    <div className="space-y-4">
+      <Card className="border-dashed">
+        <CardContent className="p-3">
+          <CourseSelector 
+            selectedCourseId={selectedCourseId} 
+            onSelectCourse={onSelectCourse} 
+          />
+        </CardContent>
+      </Card>
+      
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-8 text-center ${
@@ -83,7 +98,7 @@ const FileUploader = ({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 
