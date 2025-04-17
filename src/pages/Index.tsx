@@ -275,26 +275,27 @@ const Index = () => {
         }
         
         if (historyItem.questions) {
+          console.log("Original history item questions:", JSON.stringify(historyItem.questions));
+          
           const updatedQuestions = {
             easy: historyItem.questions.easy?.map(q => ({
               ...q,
-              id: q.id || uuidv4(),
-              explanation: q.explanation || "" 
+              id: typeof q.id === 'string' ? parseInt(q.id, 10) || Number(new Date()) : q.id,
+              explanation: q.explanation || ""
             })),
             medium: historyItem.questions.medium?.map(q => ({
               ...q,
-              id: q.id || uuidv4(),
+              id: typeof q.id === 'string' ? parseInt(q.id, 10) || Number(new Date()) : q.id,
               explanation: q.explanation || ""
             })),
             hard: historyItem.questions.hard?.map(q => ({
               ...q,
-              id: q.id || uuidv4(),
+              id: typeof q.id === 'string' ? parseInt(q.id, 10) || Number(new Date()) : q.id,
               explanation: q.explanation || ""
             }))
           };
           
           console.log("Loaded questions with explanations:", updatedQuestions);
-          
           loadedContent.questions = updatedQuestions;
         }
         

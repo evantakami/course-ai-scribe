@@ -48,6 +48,10 @@ const MainTabs = ({
   onSelectCourse,
   onViewCourses
 }: MainTabsProps) => {
+  // Add console log to see when tab changes
+  console.log("MainTabs - activeTab:", activeTab);
+  console.log("MainTabs - courseContent:", courseContent);
+  
   return (
     <Tabs
       value={activeTab}
