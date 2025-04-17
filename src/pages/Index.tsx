@@ -153,6 +153,39 @@ const Index = () => {
     }
   };
 
+  const generateAllSummaries = async (content: string, language: SummaryLanguage) => {
+    try {
+      const styles: SummaryStyle[] = ["casual", "academic", "basic"];
+      
+      // Create promises for all styles
+      const summaryPromises = styles.map(style => 
+        openaiService.generateSummary(content, style, language)
+      );
+      
+      // Process the casual style first for immediate display
+      const casualSummary = await summaryPromises[0];
+      
+      setCourseContent(prev => {
+        if (!prev) return null;
+        return { ...prev, summary: casualSummary };
+      });
+      
+      toast.success("通俗易懂摘要已生成");
+      
+      // Process the remaining styles
+      const [_, academicSummary, basicSummary] = await Promise.all(summaryPromises);
+      
+      // We don't need to update the UI with these since the CourseSummary component
+      // will handle displaying them when they're ready through the onStyleChange prop
+      
+      return true;
+    } catch (error) {
+      console.error("Error generating summaries:", error);
+      toast.error("生成摘要时出错");
+      return false;
+    }
+  };
+
   const handleContentLoaded = async (
     content: string, 
     generateQuiz: boolean = true,
@@ -175,26 +208,17 @@ const Index = () => {
 
     try {
       // Start both summary and quiz generation in parallel
-      const summaryPromise = openaiService.generateSummary(content, "casual", language);
+      const summaryPromise = generateAllSummaries(content, language);
       const quizPromise = generateQuiz ? generateAllQuestions(content, language) : null;
       
-      // Wait for summary to complete first
-      const summary = await summaryPromise;
+      // Start both processes but don't wait for them
+      summaryPromise;
+      quizPromise;
       
-      setCourseContent(prev => {
-        if (!prev) return null;
-        return { ...prev, summary };
-      });
-      
+      // Switch to summary tab immediately
       setActiveTab("summary");
-      toast.success("课程摘要已生成");
-      
-      // Continue with quiz generation in the background
-      if (quizPromise) {
-        await quizPromise;
-      }
     } catch (error) {
-      console.error("Error generating summary:", error);
+      console.error("Error processing content:", error);
       toast.error("处理内容时出错，请重试");
     } finally {
       setIsLoading(false);
@@ -230,16 +254,8 @@ const Index = () => {
     
     setIsLoading(true);
     try {
-      const summary = await openaiService.generateSummary(
-        courseContent.rawContent, 
-        courseContent.summary?.style || "casual",
-        language
-      );
-      
-      setCourseContent(prev => {
-        if (!prev) return null;
-        return { ...prev, summary };
-      });
+      // Generate all summaries in the new language
+      generateAllSummaries(courseContent.rawContent, language);
     } catch (error) {
       console.error("Error changing summary language:", error);
       toast.error("更改摘要语言时出错");

@@ -60,6 +60,11 @@ const QuizGenerator = ({
     }
   };
 
+  // Force re-render of Quiz component when difficulty changes
+  useEffect(() => {
+    setKey(prev => prev + 1);
+  }, [activeDifficulty]);
+
   return (
     <Card className="w-full mt-6">
       <CardHeader className="flex flex-row items-center justify-between">

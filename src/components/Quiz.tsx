@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -27,35 +28,38 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
     if (questions && questions.length > 0) {
       // Create a unique identifier for this set of questions
       const questionIds = questions.map(q => q.id).join('-');
-      setQuestionsKey(questionIds);
+      const difficulty = questions[0]?.difficulty || 'unknown';
+      setQuestionsKey(`${difficulty}-${questionIds}`);
       
       // Reset state when questions change
       setSelectedOption(null);
       setIsShowingExplanation(false);
       setCustomExplanation(null);
       setCurrentQuestionIndex(0);
-      setUserAnswers([]);
     }
   }, [questions]);
 
-  // Guard against empty questions array
-  if (!questions || questions.length === 0) {
-    return <div className="text-center py-8 text-gray-500">No questions available</div>;
-  }
-
+  // Load saved answers when questions change
   useEffect(() => {
+    if (!questionsKey) return;
+    
     // Only load user answers for the current set of questions
     const savedAnswers = localStorage.getItem(`quiz_answers_${questionsKey}`);
-    if (savedAnswers && questionsKey) {
+    if (savedAnswers) {
       try {
         const parsedAnswers = JSON.parse(savedAnswers);
         setUserAnswers(parsedAnswers);
       } catch (error) {
         console.error("Failed to load saved answers:", error);
+        setUserAnswers([]);
       }
+    } else {
+      // Clear answers if we have no saved answers for this quiz
+      setUserAnswers([]);
     }
   }, [questionsKey]);
 
+  // Save answers to localStorage and call the callback
   useEffect(() => {
     if (userAnswers.length > 0 && questionsKey) {
       localStorage.setItem(`quiz_answers_${questionsKey}`, JSON.stringify(userAnswers));
@@ -65,6 +69,11 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
       }
     }
   }, [userAnswers, saveUserAnswers, questionsKey]);
+
+  // Guard against empty questions array
+  if (!questions || questions.length === 0) {
+    return <div className="text-center py-8 text-gray-500">No questions available</div>;
+  }
 
   // Ensure we have a valid current question
   if (currentQuestionIndex >= questions.length) {

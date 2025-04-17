@@ -35,7 +35,11 @@ const CourseSummary = ({
 }: CourseSummaryProps) => {
   const [activeStyle, setActiveStyle] = useState<SummaryStyle>(summary?.style || "casual");
   const [savedSummaries, setSavedSummaries] = useState<StyleSummary>({});
-  const [localLoading, setLocalLoading] = useState<boolean>(false);
+  const [localLoading, setLocalLoading] = useState<{[key: string]: boolean}>({
+    casual: false,
+    academic: false,
+    basic: false
+  });
 
   // Update saved summaries when new summary is received
   useEffect(() => {
@@ -43,6 +47,12 @@ const CourseSummary = ({
       setSavedSummaries(prev => ({
         ...prev,
         [summary.style]: summary.content
+      }));
+      
+      // Reset loading state for this style
+      setLocalLoading(prev => ({
+        ...prev,
+        [summary.style]: false
       }));
     }
   }, [summary, isLoading]);
@@ -53,7 +63,10 @@ const CourseSummary = ({
     
     // Only call the API if we don't have this style saved yet
     if (!savedSummaries[style]) {
-      setLocalLoading(true);
+      setLocalLoading(prev => ({
+        ...prev,
+        [style]: true
+      }));
       onStyleChange(style);
     }
   };
@@ -62,7 +75,36 @@ const CourseSummary = ({
     onLanguageChange(value as SummaryLanguage);
     // Clear saved summaries when language changes
     setSavedSummaries({});
+    // Reset all loading states
+    setLocalLoading({
+      casual: false,
+      academic: false,
+      basic: false
+    });
   };
+
+  // Request all summary styles when content changes
+  useEffect(() => {
+    if (summary && Object.keys(savedSummaries).length === 1 && savedSummaries[summary.style]) {
+      const styles: SummaryStyle[] = ["casual", "academic", "basic"];
+      
+      // Filter out the style we already have
+      const missingStyles = styles.filter(style => style !== summary.style);
+      
+      // Set loading state for missing styles
+      missingStyles.forEach(style => {
+        setLocalLoading(prev => ({
+          ...prev,
+          [style]: true
+        }));
+      });
+      
+      // Request each missing style
+      missingStyles.forEach(style => {
+        onStyleChange(style);
+      });
+    }
+  }, [summary, savedSummaries]);
 
   const languageOptions = [
     { value: "chinese", label: "中文" },
@@ -71,15 +113,8 @@ const CourseSummary = ({
     { value: "french", label: "Français" }
   ];
 
-  // Determine if we should display loading state
-  const showLoading = isLoading || (localLoading && !savedSummaries[activeStyle]);
-
-  // Update local loading state when global loading changes
-  useEffect(() => {
-    if (!isLoading) {
-      setLocalLoading(false);
-    }
-  }, [isLoading]);
+  // Determine if we should display loading state for current style
+  const isCurrentStyleLoading = localLoading[activeStyle] || (isLoading && !savedSummaries[activeStyle]);
 
   return (
     <Card className="w-full">
@@ -119,12 +154,12 @@ const CourseSummary = ({
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="casual" disabled={showLoading}>通俗易懂</TabsTrigger>
-            <TabsTrigger value="academic" disabled={showLoading}>学术专业</TabsTrigger>
-            <TabsTrigger value="basic" disabled={showLoading}>基础概念</TabsTrigger>
+            <TabsTrigger value="casual" disabled={isLoading}>通俗易懂</TabsTrigger>
+            <TabsTrigger value="academic" disabled={isLoading}>学术专业</TabsTrigger>
+            <TabsTrigger value="basic" disabled={isLoading}>基础概念</TabsTrigger>
           </TabsList>
           
-          {showLoading ? (
+          {isCurrentStyleLoading ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
               <span className="ml-2 text-edu-600">正在生成摘要...</span>
