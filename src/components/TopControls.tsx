@@ -3,7 +3,7 @@ import ApiKeyInput from "@/components/ApiKeyInput";
 import UserAccount from "@/components/UserAccount";
 import CustomPromptSettings from "@/components/CustomPromptSettings";
 import { Button } from "@/components/ui/button";
-import { BookOpen, BookOpenCheck } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 interface TopControlsProps {
   onSelectHistoryContent: (content: string) => void;
@@ -19,7 +19,7 @@ const TopControls = ({ onSelectHistoryContent, onApiKeySet, onViewCourses }: Top
           variant="outline" 
           size="sm" 
           className="gap-2"
-          onClick={onViewCourses}
+          onClick={() => onViewCourses && onViewCourses()}
         >
           <BookOpen className="h-5 w-5" />
           我的课程

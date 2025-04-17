@@ -28,7 +28,7 @@ interface MainTabsProps {
   handleRegenerateQuiz?: (difficulty: QuestionDifficulty) => void;
   selectedCourseId: string;
   onSelectCourse: (courseId: string) => void;
-  onViewCourses?: () => void;
+  onViewCourses: () => void;
 }
 
 const MainTabs = ({
