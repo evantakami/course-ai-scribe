@@ -28,6 +28,20 @@ const QuizGenerator = ({
 }: QuizGeneratorProps) => {
   const [activeDifficulty, setActiveDifficulty] = useState<QuestionDifficulty>("medium");
   const [key, setKey] = useState<number>(0);
+  const [answersById, setAnswersById] = useState<{[id: string]: UserAnswer[]}>({});
+  
+  // Store answers separately by quiz batch
+  const getQuizBatchId = (difficulty: QuestionDifficulty) => {
+    if (!questions || !questions[difficulty] || questions[difficulty]?.length === 0) {
+      return `${difficulty}-empty`;
+    }
+    // Create ID based on first and last question IDs to identify this batch of questions
+    const questionSet = questions[difficulty] || [];
+    if (questionSet.length === 0) return `${difficulty}-empty`;
+    const firstId = questionSet[0]?.id;
+    const lastId = questionSet[questionSet.length - 1]?.id;
+    return `${difficulty}-${firstId}-${lastId}`;
+  };
 
   const handleDifficultyChange = (value: string) => {
     const difficulty = value as QuestionDifficulty;
@@ -39,8 +53,16 @@ const QuizGenerator = ({
 
   const handleRegenerateClick = () => {
     if (onRegenerateQuiz) {
+      // Clear existing answers for this difficulty when regenerating
+      const batchId = getQuizBatchId(activeDifficulty);
+      setAnswersById(prev => {
+        const updated = { ...prev };
+        delete updated[batchId]; // Remove answers for this batch
+        return updated;
+      });
+      
       onRegenerateQuiz(activeDifficulty);
-      // Also increment key to remount Quiz component with fresh state
+      // Increment key to remount Quiz component with fresh state
       setKey(prev => prev + 1);
     }
   };
@@ -53,17 +75,40 @@ const QuizGenerator = ({
   const currentQuestions = getCurrentQuestions();
   const isCurrentDifficultyGenerating = isGenerating && !currentQuestions?.length;
   
-  // Create a custom save function that includes the current difficulty
+  // Create a custom save function that includes the current difficulty and batch ID
   const handleSaveUserAnswers = (userAnswers: UserAnswer[]) => {
+    if (!userAnswers.length) return;
+    
+    const batchId = getQuizBatchId(activeDifficulty);
+    
+    // Store answers by batch ID
+    setAnswersById(prev => ({
+      ...prev,
+      [batchId]: userAnswers
+    }));
+    
     if (saveUserAnswers) {
       saveUserAnswers(userAnswers);
     }
+  };
+  
+  // Get answers for current batch
+  const getCurrentBatchAnswers = () => {
+    const batchId = getQuizBatchId(activeDifficulty);
+    return answersById[batchId] || [];
   };
 
   // Force re-render of Quiz component when difficulty changes
   useEffect(() => {
     setKey(prev => prev + 1);
   }, [activeDifficulty]);
+  
+  // Also force re-render when questions change for the current difficulty
+  useEffect(() => {
+    if (questions && questions[activeDifficulty]) {
+      setKey(prev => prev + 1);
+    }
+  }, [questions, activeDifficulty]);
 
   return (
     <Card className="w-full mt-6">
@@ -108,7 +153,8 @@ const QuizGenerator = ({
             <TabsContent value={activeDifficulty} className="mt-0">
               <Quiz 
                 key={`${activeDifficulty}-${key}`} 
-                questions={currentQuestions} 
+                questions={currentQuestions}
+                initialAnswers={getCurrentBatchAnswers()}
                 saveUserAnswers={handleSaveUserAnswers}
               />
             </TabsContent>

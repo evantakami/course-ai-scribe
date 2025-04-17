@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -11,71 +10,59 @@ import { toast } from "sonner";
 
 interface QuizProps {
   questions: Question[];
+  initialAnswers?: UserAnswer[];
   saveUserAnswers?: (userAnswers: UserAnswer[]) => void;
 }
 
-const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
+const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
+  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>(initialAnswers);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isShowingExplanation, setIsShowingExplanation] = useState(false);
   const [customExplanation, setCustomExplanation] = useState<string | null>(null);
   const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
-  const [questionsKey, setQuestionsKey] = useState<string>("");
 
-  // Generate a unique key for the current set of questions
   useEffect(() => {
     if (questions && questions.length > 0) {
-      // Create a unique identifier for this set of questions
-      const questionIds = questions.map(q => q.id).join('-');
-      const difficulty = questions[0]?.difficulty || 'unknown';
-      setQuestionsKey(`${difficulty}-${questionIds}`);
+      setUserAnswers(initialAnswers || []);
       
-      // Reset state when questions change
-      setSelectedOption(null);
+      const currentQuestion = questions[currentQuestionIndex];
+      if (currentQuestion) {
+        const existingAnswer = initialAnswers?.find(a => a.questionId === currentQuestion.id);
+        setSelectedOption(existingAnswer ? existingAnswer.selectedOption : null);
+      } else {
+        setSelectedOption(null);
+      }
+      
       setIsShowingExplanation(false);
       setCustomExplanation(null);
-      setCurrentQuestionIndex(0);
-    }
-  }, [questions]);
-
-  // Load saved answers when questions change
-  useEffect(() => {
-    if (!questionsKey) return;
-    
-    // Only load user answers for the current set of questions
-    const savedAnswers = localStorage.getItem(`quiz_answers_${questionsKey}`);
-    if (savedAnswers) {
-      try {
-        const parsedAnswers = JSON.parse(savedAnswers);
-        setUserAnswers(parsedAnswers);
-      } catch (error) {
-        console.error("Failed to load saved answers:", error);
-        setUserAnswers([]);
-      }
-    } else {
-      // Clear answers if we have no saved answers for this quiz
-      setUserAnswers([]);
-    }
-  }, [questionsKey]);
-
-  // Save answers to localStorage and call the callback
-  useEffect(() => {
-    if (userAnswers.length > 0 && questionsKey) {
-      localStorage.setItem(`quiz_answers_${questionsKey}`, JSON.stringify(userAnswers));
       
-      if (saveUserAnswers) {
-        saveUserAnswers(userAnswers);
+      if (currentQuestionIndex >= questions.length) {
+        setCurrentQuestionIndex(0);
       }
     }
-  }, [userAnswers, saveUserAnswers, questionsKey]);
+  }, [questions, initialAnswers]);
 
-  // Guard against empty questions array
+  useEffect(() => {
+    if (questions && questions.length > 0 && currentQuestionIndex < questions.length) {
+      const currentQuestion = questions[currentQuestionIndex];
+      const existingAnswer = userAnswers.find(a => a.questionId === currentQuestion.id);
+      setSelectedOption(existingAnswer ? existingAnswer.selectedOption : null);
+      setIsShowingExplanation(!!existingAnswer);
+      setCustomExplanation(null);
+    }
+  }, [currentQuestionIndex, questions, userAnswers]);
+
+  useEffect(() => {
+    if (userAnswers.length > 0 && saveUserAnswers) {
+      saveUserAnswers(userAnswers);
+    }
+  }, [userAnswers, saveUserAnswers]);
+
   if (!questions || questions.length === 0) {
     return <div className="text-center py-8 text-gray-500">No questions available</div>;
   }
 
-  // Ensure we have a valid current question
   if (currentQuestionIndex >= questions.length) {
     setCurrentQuestionIndex(0);
     return <div className="text-center py-8 text-gray-500">Loading questions...</div>;
@@ -83,7 +70,6 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
 
   const currentQuestion = questions[currentQuestionIndex];
   
-  // Safety check for currentQuestion
   if (!currentQuestion) {
     return <div className="text-center py-8 text-gray-500">Question not available</div>;
   }
