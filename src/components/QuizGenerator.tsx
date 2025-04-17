@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Question, QuestionDifficulty, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,16 +27,21 @@ const QuizGenerator = ({
   onRegenerateQuiz,
 }: QuizGeneratorProps) => {
   const [activeDifficulty, setActiveDifficulty] = useState<QuestionDifficulty>("medium");
+  const [key, setKey] = useState<number>(0);
 
   const handleDifficultyChange = (value: string) => {
     const difficulty = value as QuestionDifficulty;
     setActiveDifficulty(difficulty);
     onDifficultyChange(difficulty);
+    // Increment key to force Quiz component to remount when difficulty changes
+    setKey(prev => prev + 1);
   };
 
   const handleRegenerateClick = () => {
     if (onRegenerateQuiz) {
       onRegenerateQuiz(activeDifficulty);
+      // Also increment key to remount Quiz component with fresh state
+      setKey(prev => prev + 1);
     }
   };
 
@@ -47,6 +52,13 @@ const QuizGenerator = ({
 
   const currentQuestions = getCurrentQuestions();
   const isCurrentDifficultyGenerating = isGenerating && !currentQuestions?.length;
+  
+  // Create a custom save function that includes the current difficulty
+  const handleSaveUserAnswers = (userAnswers: UserAnswer[]) => {
+    if (saveUserAnswers) {
+      saveUserAnswers(userAnswers);
+    }
+  };
 
   return (
     <Card className="w-full mt-6">
@@ -89,7 +101,11 @@ const QuizGenerator = ({
             </div>
           ) : currentQuestions && currentQuestions.length > 0 ? (
             <TabsContent value={activeDifficulty} className="mt-0">
-              <Quiz questions={currentQuestions} saveUserAnswers={saveUserAnswers} />
+              <Quiz 
+                key={`${activeDifficulty}-${key}`} 
+                questions={currentQuestions} 
+                saveUserAnswers={handleSaveUserAnswers}
+              />
             </TabsContent>
           ) : (
             <div className="text-center py-10 text-gray-500">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -21,46 +20,51 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
   const [isShowingExplanation, setIsShowingExplanation] = useState(false);
   const [customExplanation, setCustomExplanation] = useState<string | null>(null);
   const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
+  const [questionsKey, setQuestionsKey] = useState<string>("");
+
+  // Generate a unique key for the current set of questions
+  useEffect(() => {
+    if (questions && questions.length > 0) {
+      // Create a unique identifier for this set of questions
+      const questionIds = questions.map(q => q.id).join('-');
+      setQuestionsKey(questionIds);
+      
+      // Reset state when questions change
+      setSelectedOption(null);
+      setIsShowingExplanation(false);
+      setCustomExplanation(null);
+      setCurrentQuestionIndex(0);
+      setUserAnswers([]);
+    }
+  }, [questions]);
 
   // Guard against empty questions array
   if (!questions || questions.length === 0) {
     return <div className="text-center py-8 text-gray-500">No questions available</div>;
   }
 
-  // Reset selected option when questions change
-  useEffect(() => {
-    setSelectedOption(null);
-    setIsShowingExplanation(false);
-    setCustomExplanation(null);
-    setCurrentQuestionIndex(0);
-  }, [questions]);
-
   useEffect(() => {
     // Only load user answers for the current set of questions
-    const savedAnswers = localStorage.getItem('current_quiz_answers');
-    if (savedAnswers) {
+    const savedAnswers = localStorage.getItem(`quiz_answers_${questionsKey}`);
+    if (savedAnswers && questionsKey) {
       try {
         const parsedAnswers = JSON.parse(savedAnswers);
-        // Filter only answers related to the current questions set
-        const relevantAnswers = parsedAnswers.filter((answer: UserAnswer) => 
-          questions.some(q => q.id === answer.questionId)
-        );
-        setUserAnswers(relevantAnswers);
+        setUserAnswers(parsedAnswers);
       } catch (error) {
         console.error("Failed to load saved answers:", error);
       }
     }
-  }, [questions]);
+  }, [questionsKey]);
 
   useEffect(() => {
-    if (userAnswers.length > 0) {
-      localStorage.setItem('current_quiz_answers', JSON.stringify(userAnswers));
+    if (userAnswers.length > 0 && questionsKey) {
+      localStorage.setItem(`quiz_answers_${questionsKey}`, JSON.stringify(userAnswers));
       
       if (saveUserAnswers) {
         saveUserAnswers(userAnswers);
       }
     }
-  }, [userAnswers, saveUserAnswers]);
+  }, [userAnswers, saveUserAnswers, questionsKey]);
 
   // Ensure we have a valid current question
   if (currentQuestionIndex >= questions.length) {
@@ -183,10 +187,7 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
   };
 
   const getProgress = () => {
-    const answeredQuestions = questions.filter(q => 
-      userAnswers.some(a => a.questionId === q.id)
-    );
-    const answeredCount = answeredQuestions.length;
+    const answeredCount = userAnswers.length;
     const totalCount = questions.length;
     const percentage = Math.round((answeredCount / totalCount) * 100);
     
@@ -194,9 +195,7 @@ const Quiz = ({ questions, saveUserAnswers }: QuizProps) => {
       answeredCount,
       totalCount,
       percentage,
-      correct: userAnswers.filter(a => 
-        a.isCorrect && questions.some(q => q.id === a.questionId)
-      ).length
+      correct: userAnswers.filter(a => a.isCorrect).length
     };
   };
 

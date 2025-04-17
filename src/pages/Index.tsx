@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
@@ -173,13 +174,11 @@ const Index = () => {
     });
 
     try {
+      // Start both summary and quiz generation in parallel
       const summaryPromise = openaiService.generateSummary(content, "casual", language);
-      let quizPromise;
+      const quizPromise = generateQuiz ? generateAllQuestions(content, language) : null;
       
-      if (generateQuiz) {
-        quizPromise = generateAllQuestions(content, language);
-      }
-      
+      // Wait for summary to complete first
       const summary = await summaryPromise;
       
       setCourseContent(prev => {
@@ -190,6 +189,7 @@ const Index = () => {
       setActiveTab("summary");
       toast.success("课程摘要已生成");
       
+      // Continue with quiz generation in the background
       if (quizPromise) {
         await quizPromise;
       }
