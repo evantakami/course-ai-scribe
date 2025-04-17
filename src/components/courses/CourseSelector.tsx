@@ -120,6 +120,11 @@ const CourseSelector = ({ selectedCourseId, onSelectCourse }: CourseSelectorProp
       const userProfileString = localStorage.getItem('user_profile') || '{"courses":[],"quizStats":{"totalQuizzes":0,"correctAnswers":0,"totalQuestions":0}}';
       const userProfile = JSON.parse(userProfileString);
       
+      // Ensure courses array exists
+      if (!userProfile.courses) {
+        userProfile.courses = [];
+      }
+      
       // Add or update course
       const existingIndex = userProfile.courses.findIndex((c: Course) => c.id === course.id);
       if (existingIndex >= 0) {
