@@ -27,12 +27,10 @@ const Index = () => {
     setIsKeySet(true);
   };
   
-  // Initialize user profile if not exists
   useEffect(() => {
     initializeUserProfile();
   }, []);
   
-  // Save content to history when summary or questions are generated
   useEffect(() => {
     if (courseContent?.rawContent && !isLoading) {
       saveToHistory(courseContent);
@@ -43,7 +41,6 @@ const Index = () => {
     try {
       const userProfileString = localStorage.getItem('user_profile');
       if (!userProfileString) {
-        // Create default user profile
         const defaultCourse: Course = {
           id: uuidv4(),
           name: "通用课程",
@@ -82,11 +79,9 @@ const Index = () => {
       
       const existingIndex = history.findIndex(item => item.rawContent === content.rawContent);
       
-      // Extract category and title
       const firstLine = content.rawContent.split('\n')[0] || '';
       let title = firstLine;
       
-      // Limit title length
       if (title.length > 60) {
         title = title.substring(0, 60) + '...';
       }
@@ -125,7 +120,6 @@ const Index = () => {
       
       localStorage.setItem('content_history', JSON.stringify(history));
       
-      // Update user stats whenever we save quiz answers
       updateUserStats();
     } catch (error) {
       console.error("Failed to save to history:", error);
@@ -134,12 +128,10 @@ const Index = () => {
 
   const updateUserStats = () => {
     try {
-      // Update user stats
       const userProfileString = localStorage.getItem('user_profile');
       if (userProfileString) {
         const userProfile = JSON.parse(userProfileString);
         
-        // Recalculate quiz stats
         const historyString = localStorage.getItem('content_history') || '[]';
         const history = JSON.parse(historyString);
         
@@ -151,7 +143,6 @@ const Index = () => {
           if (item.userAnswers && item.userAnswers.length) {
             totalQuizzes++;
             
-            // Count correct answers
             item.userAnswers.forEach(answer => {
               if (answer.isCorrect) {
                 correctAnswers++;
@@ -161,7 +152,6 @@ const Index = () => {
           }
         });
         
-        // Update user profile
         const updatedProfile = {
           ...userProfile,
           quizStats: {
@@ -187,7 +177,6 @@ const Index = () => {
       
       const existingIndex = history.findIndex(item => item.rawContent === courseContent.rawContent);
       
-      // Add courseId to user answers
       const updatedAnswers = userAnswers.map(answer => ({
         ...answer,
         courseId: selectedCourseId,
@@ -202,10 +191,8 @@ const Index = () => {
         
         localStorage.setItem('content_history', JSON.stringify(history));
         
-        // Also save incorrect answers to mistake collection
         saveIncorrectToMistakeCollection(updatedAnswers, courseContent);
         
-        // Update user stats whenever we save answers
         updateUserStats();
       }
     } catch (error) {
@@ -219,9 +206,7 @@ const Index = () => {
       
       if (incorrectAnswers.length === 0) return;
       
-      // Get detailed information about each incorrect answer
       const detailedIncorrectAnswers = incorrectAnswers.map(answer => {
-        // Find the question details
         let questionDetails: Question | undefined;
         
         if (content.questions?.easy) {
@@ -236,7 +221,6 @@ const Index = () => {
           questionDetails = content.questions.hard.find(q => q.id === answer.questionId);
         }
         
-        // Update the answer with question details
         return {
           ...answer,
           question: questionDetails?.text,
@@ -248,11 +232,9 @@ const Index = () => {
         };
       });
       
-      // Get existing collection
       const mistakesString = localStorage.getItem('mistake_collection') || '[]';
       const existingMistakes: UserAnswer[] = JSON.parse(mistakesString);
       
-      // Add new mistakes, avoiding duplicates
       const updatedMistakes = [...existingMistakes];
       
       detailedIncorrectAnswers.forEach(newMistake => {
@@ -264,9 +246,7 @@ const Index = () => {
         }
       });
       
-      // Save back to storage, limit to 100 items
       localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes.slice(0, 100)));
-      
     } catch (error) {
       console.error("Failed to save to mistake collection:", error);
     }
@@ -274,19 +254,16 @@ const Index = () => {
 
   const loadHistoryItem = () => {
     try {
-      // Try to load selected history item from session storage
       const historyItemString = sessionStorage.getItem('selected_history_item');
       if (historyItemString) {
         const historyItem: HistoryItem = JSON.parse(historyItemString);
         
-        // Construct the courseContent from history item
         const loadedContent: CourseContent = {
           rawContent: historyItem.rawContent,
           summary: null,
           questions: null
         };
         
-        // If the item has summaries, use the first one
         if (historyItem.summaries && Object.keys(historyItem.summaries).length > 0) {
           const style = Object.keys(historyItem.summaries)[0] as SummaryStyle;
           loadedContent.summary = {
@@ -297,20 +274,30 @@ const Index = () => {
           setCurrentLanguage(historyItem.language || "chinese");
         }
         
-        // If the item has questions
         if (historyItem.questions) {
-          loadedContent.questions = historyItem.questions;
+          const updatedQuestions = {
+            easy: historyItem.questions.easy?.map(q => ({
+              ...q,
+              explanation: q.explanation
+            })),
+            medium: historyItem.questions.medium?.map(q => ({
+              ...q,
+              explanation: q.explanation
+            })),
+            hard: historyItem.questions.hard?.map(q => ({
+              ...q,
+              explanation: q.explanation
+            }))
+          };
+          loadedContent.questions = updatedQuestions;
         }
         
-        // Set the course content
         setCourseContent(loadedContent);
         
-        // Set the selected course ID
         if (historyItem.courseId) {
           setSelectedCourseId(historyItem.courseId);
         }
         
-        // Clear session storage
         sessionStorage.removeItem('selected_history_item');
         
         return true;
@@ -376,12 +363,10 @@ const Index = () => {
     try {
       const styles: SummaryStyle[] = ["casual", "academic", "basic"];
       
-      // Create promises for all styles
       const summaryPromises = styles.map(style => 
         openaiService.generateSummary(content, style, language)
       );
       
-      // Process the casual style first for immediate display
       const casualSummary = await summaryPromises[0];
       
       setCourseContent(prev => {
@@ -391,7 +376,6 @@ const Index = () => {
       
       toast.success("通俗易懂摘要已生成");
       
-      // Process the remaining styles
       await Promise.all(summaryPromises);
       
       return true;
@@ -431,15 +415,12 @@ const Index = () => {
     });
 
     try {
-      // Start both summary and quiz generation in parallel
       const summaryPromise = generateAllSummaries(content, language);
       const quizPromise = generateQuiz ? generateAllQuestions(content, language) : null;
       
-      // Start both processes but don't wait for them
       summaryPromise;
       quizPromise;
       
-      // Switch to summary tab immediately
       setActiveTab("summary");
     } catch (error) {
       console.error("Error processing content:", error);
@@ -478,7 +459,6 @@ const Index = () => {
     
     setIsLoading(true);
     try {
-      // Generate all summaries in the new language
       generateAllSummaries(courseContent.rawContent, language);
     } catch (error) {
       console.error("Error changing summary language:", error);
@@ -581,7 +561,6 @@ const Index = () => {
       );
     }
 
-    // Default view: content
     return (
       <>
         <TopControls 
