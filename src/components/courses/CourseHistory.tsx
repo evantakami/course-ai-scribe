@@ -108,6 +108,13 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
     return { hasSummaries, hasQuiz, hasAnswers };
   };
 
+  const handleSelectItem = (item: HistoryItem) => {
+    // Store the selected item in session storage for later retrieval
+    sessionStorage.setItem('selected_history_item', JSON.stringify(item));
+    // Just pass the raw content to parent component
+    onSelectContent(item.rawContent);
+  };
+
   return (
     <div className="p-4">
       <div className="flex items-center mb-6">
@@ -218,7 +225,7 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
                     variant="default" 
                     size="sm" 
                     className="gap-1 ml-auto"
-                    onClick={() => onSelectContent(item.rawContent)}
+                    onClick={() => handleSelectItem(item)}
                   >
                     使用此内容
                     <ChevronRight className="h-4 w-4" />

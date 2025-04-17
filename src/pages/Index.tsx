@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer, Course } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
@@ -273,6 +272,56 @@ const Index = () => {
     }
   };
 
+  const loadHistoryItem = () => {
+    try {
+      // Try to load selected history item from session storage
+      const historyItemString = sessionStorage.getItem('selected_history_item');
+      if (historyItemString) {
+        const historyItem: HistoryItem = JSON.parse(historyItemString);
+        
+        // Construct the courseContent from history item
+        const loadedContent: CourseContent = {
+          rawContent: historyItem.rawContent,
+          summary: null,
+          questions: null
+        };
+        
+        // If the item has summaries, use the first one
+        if (historyItem.summaries && Object.keys(historyItem.summaries).length > 0) {
+          const style = Object.keys(historyItem.summaries)[0] as SummaryStyle;
+          loadedContent.summary = {
+            content: historyItem.summaries[style],
+            style: style,
+            language: historyItem.language || "chinese"
+          };
+          setCurrentLanguage(historyItem.language || "chinese");
+        }
+        
+        // If the item has questions
+        if (historyItem.questions) {
+          loadedContent.questions = historyItem.questions;
+        }
+        
+        // Set the course content
+        setCourseContent(loadedContent);
+        
+        // Set the selected course ID
+        if (historyItem.courseId) {
+          setSelectedCourseId(historyItem.courseId);
+        }
+        
+        // Clear session storage
+        sessionStorage.removeItem('selected_history_item');
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Failed to load history item:", error);
+      return false;
+    }
+  };
+
   const generateAllQuestions = async (content: string, language: SummaryLanguage) => {
     try {
       setIsGeneratingQuiz(true);
@@ -362,6 +411,12 @@ const Index = () => {
   ) => {
     if (!isKeySet) {
       toast.error("请先设置OpenAI API密钥");
+      return;
+    }
+
+    const loaded = loadHistoryItem();
+    if (loaded) {
+      setActiveTab("summary");
       return;
     }
 
