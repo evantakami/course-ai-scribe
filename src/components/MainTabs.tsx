@@ -1,7 +1,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
-import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle } from "@/types";
+import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
 import FileUpload from "./FileUpload";
 import CourseSummary from "./CourseSummary";
 import QuizGenerator from "./QuizGenerator";
@@ -23,6 +23,7 @@ interface MainTabsProps {
   handleLanguageChange: (language: SummaryLanguage) => void;
   handleGenerateQuiz: () => void;
   handleDifficultyChange: (difficulty: QuestionDifficulty) => void;
+  saveUserAnswersToHistory?: (userAnswers: UserAnswer[]) => void;
 }
 
 const MainTabs = ({
@@ -35,7 +36,8 @@ const MainTabs = ({
   handleStyleChange,
   handleLanguageChange,
   handleGenerateQuiz,
-  handleDifficultyChange
+  handleDifficultyChange,
+  saveUserAnswersToHistory
 }: MainTabsProps) => {
   return (
     <Tabs
@@ -92,6 +94,7 @@ const MainTabs = ({
           questions={courseContent?.questions || null}
           isGenerating={isGeneratingQuiz}
           onDifficultyChange={handleDifficultyChange}
+          saveUserAnswers={saveUserAnswersToHistory}
         />
       </TabsContent>
       

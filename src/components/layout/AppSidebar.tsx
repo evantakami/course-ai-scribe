@@ -21,12 +21,25 @@ interface AppSidebarProps {
   saveUserAnswersToHistory?: (userAnswers: UserAnswer[]) => void;
 }
 
-const AppSidebar = ({ onSelectContent }: AppSidebarProps) => {
+const AppSidebar = ({ onSelectContent, saveUserAnswersToHistory }: AppSidebarProps) => {
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
     loadHistoryItems();
+    
+    // Add event listener to reload history when storage changes
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
+
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === 'content_history') {
+      loadHistoryItems();
+    }
+  };
 
   const loadHistoryItems = () => {
     try {

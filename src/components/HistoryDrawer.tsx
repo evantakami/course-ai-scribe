@@ -10,7 +10,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Scroll, History, Clock, Trash2, ArrowRight, FileText, HelpCircle } from "lucide-react";
+import { Scroll, History, Clock, Trash2, ArrowRight, FileText, HelpCircle, Check } from "lucide-react";
 import { HistoryItem } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -34,6 +34,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface HistoryDrawerProps {
   onSelectContent: (content: string) => void;
@@ -174,7 +180,7 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
               <Clock className="h-12 w-12 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground mb-2">没有保存的历史内容</p>
               <p className="text-sm text-muted-foreground/70">
-                处理内容时点击"保存"按钮将内容保存到历史记录
+                处理内容时系统会自动保存到历史记录
               </p>
             </div>
           ) : (
@@ -208,23 +214,51 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
                       </p>
                       
                       {/* Content statistics */}
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex flex-wrap gap-2 mt-2">
                         {hasSummaries && (
-                          <Badge variant="outline" className="bg-blue-50">
-                            <FileText className="h-3 w-3 mr-1" />
-                            {summaryCount} 份摘要
-                          </Badge>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="bg-blue-50">
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  {summaryCount} 份摘要
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>已生成 {summaryCount} 种风格的摘要</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                         {hasQuiz && (
-                          <Badge variant="outline" className="bg-green-50">
-                            <HelpCircle className="h-3 w-3 mr-1" />
-                            {quizCount} 题测验
-                          </Badge>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="bg-green-50">
+                                  <HelpCircle className="h-3 w-3 mr-1" />
+                                  {quizCount} 题测验
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>包含 {quizCount} 道测试题</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                         {hasAnswers && (
-                          <Badge variant="outline" className="bg-orange-50">
-                            已答 {answersCount} 题
-                          </Badge>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="bg-orange-50">
+                                  <Check className="h-3 w-3 mr-1" />
+                                  已答 {answersCount} 题
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>已完成 {answersCount} 道题</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                     </CardContent>

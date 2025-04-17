@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { Edit2, X, FileText, HelpCircle, Pen } from "lucide-react";
+import { Edit2, X, FileText, HelpCircle, Check, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { HistoryItem } from "@/types";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface HistorySidebarItemProps {
   item: HistoryItem;
@@ -64,7 +65,7 @@ const HistorySidebarItem = ({
   return (
     <SidebarMenuItem>
       {editingTitle ? (
-        <div className="p-1 w-full">
+        <div className="p-1 w-full" onClick={(e) => e.stopPropagation()}>
           <Input
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
@@ -109,23 +110,51 @@ const HistorySidebarItem = ({
           </span>
           
           {/* Status indicators */}
-          <div className="flex gap-1 mt-1">
+          <div className="flex flex-wrap gap-1 mt-1">
             {hasSummaries && (
-              <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-blue-50">
-                <FileText className="h-3 w-3 mr-1" />
-                摘要
-              </Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-blue-50">
+                      <BookOpen className="h-3 w-3 mr-1" />
+                      摘要
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>已生成{Object.keys(item.summaries || {}).length}种风格的摘要</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {hasQuiz && (
-              <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-green-50">
-                <HelpCircle className="h-3 w-3 mr-1" />
-                测验
-              </Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-green-50">
+                      <HelpCircle className="h-3 w-3 mr-1" />
+                      测验
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{item.questions?.length || 0}道测试题</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {hasAnswers && (
-              <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-orange-50">
-                已答题
-              </Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-xs px-1 py-0 h-5 bg-orange-50">
+                      <Check className="h-3 w-3 mr-1" />
+                      已答题
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>已完成{item.userAnswers?.length || 0}道题</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
           
@@ -136,7 +165,7 @@ const HistorySidebarItem = ({
               className="h-6 w-6 p-0" 
               onClick={(e) => startEditTitle(e)}
             >
-              <Pen className="h-3 w-3" />
+              <Edit2 className="h-3 w-3" />
             </Button>
             <Button 
               size="sm" 
