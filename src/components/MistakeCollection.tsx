@@ -166,9 +166,13 @@ const MistakeCollection = () => {
                         onClick={() => setSelectedMistake(mistake)}
                       >
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="text-sm font-medium line-clamp-2">
-                            {mistake.question || `问题 #${mistake.questionId}`}
-                          </h4>
+                          <div className="text-sm font-medium line-clamp-2">
+                            {mistake.question ? (
+                              <ReactMarkdown>{mistake.question}</ReactMarkdown>
+                            ) : (
+                              `问题 #${mistake.questionId}`
+                            )}
+                          </div>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -196,9 +200,9 @@ const MistakeCollection = () => {
             <div className="md:col-span-1">
               {selectedMistake ? (
                 <div className="bg-white p-4 rounded-lg border h-[500px] overflow-auto">
-                  <h3 className="text-lg font-medium mb-4">
-                    {selectedMistake.question}
-                  </h3>
+                  <div className="text-lg font-medium mb-4">
+                    <ReactMarkdown>{selectedMistake.question || ""}</ReactMarkdown>
+                  </div>
                   
                   {selectedMistake.options && (
                     <div className="space-y-3 mb-6">
@@ -213,7 +217,7 @@ const MistakeCollection = () => {
                           `}
                         >
                           <div className="flex-grow font-normal">
-                            {option}
+                            <ReactMarkdown>{option}</ReactMarkdown>
                           </div>
                           {index === selectedMistake.correctAnswer ? (
                             <CheckCircle className="text-green-500 h-5 w-5 flex-shrink-0" />

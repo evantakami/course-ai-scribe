@@ -98,7 +98,7 @@ const CourseSummary = ({
           ) : summary ? (
             <TabsContent value={activeStyle} className="mt-0">
               <div className="prose max-w-none">
-                <ReactMarkdown className="whitespace-pre-wrap text-gray-700">
+                <ReactMarkdown>
                   {summary.content}
                 </ReactMarkdown>
               </div>

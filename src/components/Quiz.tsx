@@ -183,9 +183,9 @@ const Quiz = ({ questions }: QuizProps) => {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h3 className="text-lg font-medium mb-4">
-          {currentQuestion.text}
-        </h3>
+        <div className="text-lg font-medium mb-4">
+          <ReactMarkdown>{currentQuestion.text}</ReactMarkdown>
+        </div>
 
         <RadioGroup 
           value={selectedOption?.toString()} 
@@ -209,7 +209,7 @@ const Quiz = ({ questions }: QuizProps) => {
                 htmlFor={`option-${index}`} 
                 className="flex-grow font-normal cursor-pointer"
               >
-                {option}
+                <ReactMarkdown>{option}</ReactMarkdown>
               </Label>
               {isAnswerSubmitted && (
                 index === currentQuestion.correctAnswer ? (

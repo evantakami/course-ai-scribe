@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
@@ -86,14 +87,6 @@ const Index = () => {
     try {
       const summary = await openaiService.generateSummary(content, "casual", language);
       
-      setIsGeneratingQuiz(true);
-      const questionsPromise = openaiService.generateQuestions(
-        content,
-        quizDifficulty,
-        30,
-        language
-      );
-      
       setCourseContent(prev => {
         if (!prev) return null;
         return { ...prev, summary };
@@ -102,20 +95,28 @@ const Index = () => {
       setActiveTab("summary");
       toast.success("课程摘要已生成");
 
-      try {
-        const questions = await questionsPromise;
-        
-        setCourseContent(prev => {
-          if (!prev) return null;
-          return { ...prev, questions };
-        });
-        
-        toast.success("测验题已生成");
-      } catch (error) {
-        console.error("Error generating quiz:", error);
-        toast.error("生成测验题时出错");
-      } finally {
-        setIsGeneratingQuiz(false);
+      if (generateQuiz) {
+        setIsGeneratingQuiz(true);
+        try {
+          const questions = await openaiService.generateQuestions(
+            content,
+            quizDifficulty,
+            30,
+            language
+          );
+          
+          setCourseContent(prev => {
+            if (!prev) return null;
+            return { ...prev, questions };
+          });
+          
+          toast.success("测验题已生成");
+        } catch (error) {
+          console.error("Error generating quiz:", error);
+          toast.error("生成测验题时出错");
+        } finally {
+          setIsGeneratingQuiz(false);
+        }
       }
     } catch (error) {
       console.error("Error generating summary:", error);
@@ -223,20 +224,14 @@ const Index = () => {
   };
 
   const handleSelectHistoryContent = (content: string) => {
+    // Just load the content without processing
+    setCourseContent({ 
+      rawContent: content,
+      summary: null,
+      questions: null
+    });
     setActiveTab("upload");
-    
-    const historyString = localStorage.getItem('content_history') || '[]';
-    const history: HistoryItem[] = JSON.parse(historyString);
-    const historyItem = history.find(item => item.rawContent === content);
-    
-    if (historyItem) {
-      setCourseContent({ 
-        rawContent: content,
-        summary: null,
-        questions: null
-      });
-      toast.info("已从历史记录加载内容，请点击处理按钮继续");
-    }
+    toast.info("已从历史记录加载内容，请点击处理按钮继续");
   };
 
   return (
