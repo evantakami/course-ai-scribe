@@ -1,7 +1,12 @@
+
 export interface CourseContent {
   rawContent: string | null;
   summary: Summary | null;
-  questions: Question[] | null;
+  questions: {
+    easy?: Question[];
+    medium?: Question[];
+    hard?: Question[];
+  } | null;
 }
 
 export interface Summary {
@@ -43,7 +48,11 @@ export interface HistoryItem {
   title?: string;
   // New fields to store generated content
   summaries?: StyleSummaries;
-  questions?: Question[] | null;
+  questions?: {
+    easy?: Question[];
+    medium?: Question[];
+    hard?: Question[];
+  } | null;
   userAnswers?: UserAnswer[] | null;
   language?: SummaryLanguage;
 }
