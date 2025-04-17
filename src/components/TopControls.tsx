@@ -2,6 +2,7 @@
 import ApiKeyInput from "@/components/ApiKeyInput";
 import HistoryDrawer from "@/components/HistoryDrawer";
 import CustomPromptSettings from "@/components/CustomPromptSettings";
+import UserAccount from "@/components/UserAccount";
 
 interface TopControlsProps {
   onSelectHistoryContent: (content: string) => void;
@@ -15,7 +16,10 @@ const TopControls = ({ onSelectHistoryContent, onApiKeySet }: TopControlsProps) 
         <HistoryDrawer onSelectContent={onSelectHistoryContent} />
         <CustomPromptSettings />
       </div>
-      <ApiKeyInput onApiKeySet={onApiKeySet} />
+      <div className="flex space-x-2">
+        <UserAccount />
+        <ApiKeyInput onApiKeySet={onApiKeySet} />
+      </div>
     </div>
   );
 };

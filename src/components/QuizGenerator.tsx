@@ -106,7 +106,19 @@ const QuizGenerator = ({
   // Also force re-render when questions change for the current difficulty
   useEffect(() => {
     if (questions && questions[activeDifficulty]) {
-      setKey(prev => prev + 1);
+      // When questions change, we need to generate a new key
+      // but we want to preserve answers if they exist
+      const oldBatchId = getQuizBatchId(activeDifficulty);
+      
+      // After a short delay to ensure the new questions are loaded
+      setTimeout(() => {
+        const newBatchId = getQuizBatchId(activeDifficulty);
+        
+        // If the batch ID changed, it means we got new questions
+        if (newBatchId !== oldBatchId) {
+          setKey(prev => prev + 1);
+        }
+      }, 100);
     }
   }, [questions, activeDifficulty]);
 

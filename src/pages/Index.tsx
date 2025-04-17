@@ -41,15 +41,46 @@ const Index = () => {
       
       const existingIndex = history.findIndex(item => item.rawContent === content.rawContent);
       
-      let title = content.rawContent.split('\n')[0] || '';
-      if (title.length > 40) {
-        title = title.substring(0, 40) + '...';
+      // Extract category and title
+      const firstLine = content.rawContent.split('\n')[0] || '';
+      let title = firstLine;
+      
+      // Try to extract a category from the first line
+      let category = "";
+      if (title.includes(':')) {
+        const parts = title.split(':');
+        category = parts[0].trim();
+        title = parts.slice(1).join(':').trim();
+      } else if (title.includes('：')) {
+        const parts = title.split('：');
+        category = parts[0].trim();
+        title = parts.slice(1).join('：').trim();
+      } else if (title.includes('-')) {
+        const parts = title.split('-');
+        category = parts[0].trim();
+        title = parts.slice(1).join('-').trim();
+      } else if (title.length > 30) {
+        category = title.substring(0, 15).trim();
+        title = title;
+      } else {
+        category = "课程笔记";
+      }
+      
+      // Format the title with category
+      let formattedTitle = category;
+      if (title && title !== category) {
+        formattedTitle += " - " + title;
+      }
+      
+      if (formattedTitle.length > 60) {
+        formattedTitle = formattedTitle.substring(0, 60) + '...';
       }
       
       if (existingIndex !== -1) {
         history[existingIndex] = {
           ...history[existingIndex],
           timestamp: new Date(),
+          title: formattedTitle,
           summaries: content.summary ? {
             ...(history[existingIndex].summaries || {}),
             [content.summary.style]: content.summary.content
@@ -62,7 +93,7 @@ const Index = () => {
           id: uuidv4(),
           rawContent: content.rawContent,
           timestamp: new Date(),
-          title: title,
+          title: formattedTitle,
           summaries: content.summary ? { [content.summary.style]: content.summary.content } : undefined,
           questions: content.questions,
           language: content.summary?.language
@@ -76,8 +107,65 @@ const Index = () => {
       }
       
       localStorage.setItem('content_history', JSON.stringify(history));
+      
+      // Update user stats whenever we save quiz answers
+      updateUserStats();
     } catch (error) {
       console.error("Failed to save to history:", error);
+    }
+  };
+
+  const updateUserStats = () => {
+    try {
+      // Update user stats
+      const userProfileString = localStorage.getItem('user_profile');
+      if (userProfileString) {
+        const userProfile = JSON.parse(userProfileString);
+        
+        // Recalculate quiz stats
+        const historyString = localStorage.getItem('content_history') || '[]';
+        const history = JSON.parse(historyString);
+        
+        let totalQuizzes = 0;
+        let correctAnswers = 0;
+        let totalQuestions = 0;
+        const categories = new Set<string>();
+        
+        history.forEach(item => {
+          if (item.userAnswers && item.userAnswers.length) {
+            totalQuizzes++;
+            
+            // Count correct answers
+            item.userAnswers.forEach(answer => {
+              if (answer.isCorrect) {
+                correctAnswers++;
+              }
+              totalQuestions++;
+            });
+            
+            // Extract category
+            if (item.title) {
+              const category = item.title.split(' - ')[0];
+              if (category) categories.add(category);
+            }
+          }
+        });
+        
+        // Update user profile
+        const updatedProfile = {
+          ...userProfile,
+          quizStats: {
+            totalQuizzes,
+            correctAnswers,
+            totalQuestions
+          },
+          categories: Array.from(categories)
+        };
+        
+        localStorage.setItem('user_profile', JSON.stringify(updatedProfile));
+      }
+    } catch (error) {
+      console.error("Failed to update user stats:", error);
     }
   };
 
@@ -97,6 +185,9 @@ const Index = () => {
         };
         
         localStorage.setItem('content_history', JSON.stringify(history));
+        
+        // Update user stats whenever we save answers
+        updateUserStats();
       }
     } catch (error) {
       console.error("Failed to save user answers to history:", error);

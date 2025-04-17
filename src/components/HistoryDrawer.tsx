@@ -9,7 +9,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Scroll, History, Clock, Trash2, ArrowRight } from "lucide-react";
+import { Scroll, History, Clock, Trash2, ArrowRight, Filter } from "lucide-react";
 import { HistoryItem } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import QuizHistoryCategories from "./QuizHistoryCategories";
 
 interface HistoryDrawerProps {
   onSelectContent: (content: string) => void;
@@ -39,13 +40,19 @@ interface HistoryDrawerProps {
 
 const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<HistoryItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       loadHistoryItems();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    filterHistoryItems();
+  }, [historyItems, activeCategory]);
 
   const loadHistoryItems = () => {
     try {
@@ -56,6 +63,30 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
       console.error("Failed to load history:", error);
       setHistoryItems([]);
     }
+  };
+
+  const filterHistoryItems = () => {
+    if (!activeCategory) {
+      setFilteredItems(historyItems);
+      return;
+    }
+
+    const filtered = historyItems.filter(item => {
+      let itemCategory = "未分类";
+      if (item.title) {
+        const titleParts = item.title.split(' - ');
+        if (titleParts.length > 0) {
+          itemCategory = titleParts[0].trim();
+        }
+      }
+      return itemCategory === activeCategory;
+    });
+
+    setFilteredItems(filtered);
+  };
+
+  const handleCategorySelect = (category: string | null) => {
+    setActiveCategory(category);
   };
 
   const handleSelectContent = (content: string) => {
@@ -122,9 +153,9 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
           </SheetTitle>
         </SheetHeader>
         
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <p className="text-base text-muted-foreground">
-            {historyItems.length} 个保存的内容
+            {filteredItems.length} 个{activeCategory ? `"${activeCategory}"分类的` : ""}内容
           </p>
           
           {historyItems.length > 0 && (
@@ -153,18 +184,22 @@ const HistoryDrawer = ({ onSelectContent }: HistoryDrawerProps) => {
           )}
         </div>
         
-        <ScrollArea className="h-[calc(100vh-220px)]">
-          {historyItems.length === 0 ? (
+        <QuizHistoryCategories onSelectCategory={handleCategorySelect} />
+        
+        <ScrollArea className="h-[calc(100vh-320px)]">
+          {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Clock className="h-16 w-16 text-muted-foreground/50 mb-6" />
-              <p className="text-base text-muted-foreground mb-3">没有保存的历史内容</p>
+              <p className="text-base text-muted-foreground mb-3">
+                {activeCategory ? `"${activeCategory}"分类下没有历史内容` : "没有保存的历史内容"}
+              </p>
               <p className="text-sm text-muted-foreground/70">
                 处理内容时系统会自动保存到历史记录
               </p>
             </div>
           ) : (
             <div className="space-y-6">
-              {historyItems.map((item) => {
+              {filteredItems.map((item) => {
                 const { hasSummaries, hasQuiz, hasAnswers, summaryCount, quizCount, answersCount } = getHistoryItemStatus(item);
                 
                 return (
