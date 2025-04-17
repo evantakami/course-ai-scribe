@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
@@ -103,6 +102,52 @@ const Index = () => {
     }
   };
 
+  const generateAllQuestions = async (content: string, language: SummaryLanguage) => {
+    try {
+      const [easyQuestionsPromise, mediumQuestionsPromise, hardQuestionsPromise] = [
+        openaiService.generateQuestions(content, "easy", 10, language),
+        openaiService.generateQuestions(content, "medium", 10, language),
+        openaiService.generateQuestions(content, "hard", 10, language)
+      ];
+      
+      const mediumQuestions = await mediumQuestionsPromise;
+      
+      setCourseContent(prev => {
+        if (!prev) return null;
+        return { 
+          ...prev, 
+          questions: {
+            medium: mediumQuestions
+          }
+        };
+      });
+      
+      const [easyQuestions, hardQuestions] = await Promise.all([
+        easyQuestionsPromise,
+        hardQuestionsPromise
+      ]);
+      
+      setCourseContent(prev => {
+        if (!prev) return null;
+        return { 
+          ...prev, 
+          questions: {
+            easy: easyQuestions,
+            medium: mediumQuestions,
+            hard: hardQuestions
+          }
+        };
+      });
+      
+      toast.success("全部难度的测验题已生成");
+      return true;
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      toast.error("生成测验题时出错");
+      return false;
+    }
+  };
+
   const handleContentLoaded = async (
     content: string, 
     generateQuiz: boolean = true,
@@ -124,8 +169,15 @@ const Index = () => {
     });
 
     try {
-      // Generate summary
-      const summary = await openaiService.generateSummary(content, "casual", language);
+      const summaryPromise = openaiService.generateSummary(content, "casual", language);
+      let quizPromise;
+      
+      if (generateQuiz) {
+        setIsGeneratingQuiz(true);
+        quizPromise = generateAllQuestions(content, language);
+      }
+      
+      const summary = await summaryPromise;
       
       setCourseContent(prev => {
         if (!prev) return null;
@@ -135,89 +187,15 @@ const Index = () => {
       setActiveTab("summary");
       toast.success("课程摘要已生成");
 
-      // Generate quizzes for all difficulties if requested
-      if (generateQuiz) {
-        setIsGeneratingQuiz(true);
-        
-        try {
-          // Create an object to store all difficulty levels
-          const allQuestions: {
-            easy?: Question[];
-            medium?: Question[];
-            hard?: Question[];
-          } = {};
-          
-          // Generate medium difficulty questions first (most common)
-          const mediumQuestions = await openaiService.generateQuestions(
-            content,
-            "medium",
-            10,
-            language
-          );
-          allQuestions.medium = mediumQuestions;
-          
-          // Update with medium questions first
-          setCourseContent(prev => {
-            if (!prev) return null;
-            return { ...prev, questions: allQuestions };
-          });
-          
-          // Generate easy questions
-          const easyQuestions = await openaiService.generateQuestions(
-            content,
-            "easy",
-            10,
-            language
-          );
-          allQuestions.easy = easyQuestions;
-          
-          // Update with easy questions
-          setCourseContent(prev => {
-            if (!prev) return null;
-            return { 
-              ...prev, 
-              questions: {
-                ...(prev.questions || {}),
-                easy: easyQuestions
-              }
-            };
-          });
-          
-          // Generate hard questions
-          const hardQuestions = await openaiService.generateQuestions(
-            content,
-            "hard",
-            10,
-            language
-          );
-          allQuestions.hard = hardQuestions;
-          
-          // Final update with all questions
-          setCourseContent(prev => {
-            if (!prev) return null;
-            return { 
-              ...prev, 
-              questions: {
-                ...(prev.questions || {}),
-                hard: hardQuestions
-              }
-            };
-          });
-          
-          toast.success("全部难度的测验题已生成");
-        } catch (error) {
-          console.error("Error generating quiz:", error);
-          toast.error("生成测验题时出错");
-        } finally {
-          setIsGeneratingQuiz(false);
-        }
+      if (generateQuiz && quizPromise) {
+        await quizPromise;
       }
     } catch (error) {
       console.error("Error generating summary:", error);
       toast.error("处理内容时出错，请重试");
-      setIsGeneratingQuiz(false);
     } finally {
       setIsLoading(false);
+      setIsGeneratingQuiz(false);
     }
   };
 
@@ -275,72 +253,7 @@ const Index = () => {
     setActiveTab("quiz");
     
     try {
-      // Create an object to store all difficulty levels
-      const allQuestions: {
-        easy?: Question[];
-        medium?: Question[];
-        hard?: Question[];
-      } = {};
-      
-      // Generate medium difficulty questions first
-      const mediumQuestions = await openaiService.generateQuestions(
-        courseContent.rawContent,
-        "medium",
-        10,
-        currentLanguage
-      );
-      allQuestions.medium = mediumQuestions;
-      
-      // Update with medium questions first
-      setCourseContent(prev => {
-        if (!prev) return null;
-        return { ...prev, questions: allQuestions };
-      });
-      
-      // Generate easy questions
-      const easyQuestions = await openaiService.generateQuestions(
-        courseContent.rawContent,
-        "easy",
-        10,
-        currentLanguage
-      );
-      
-      // Update with easy questions
-      setCourseContent(prev => {
-        if (!prev) return null;
-        return { 
-          ...prev, 
-          questions: {
-            ...(prev.questions || {}),
-            easy: easyQuestions
-          }
-        };
-      });
-      
-      // Generate hard questions
-      const hardQuestions = await openaiService.generateQuestions(
-        courseContent.rawContent,
-        "hard",
-        10,
-        currentLanguage
-      );
-      
-      // Final update with all questions
-      setCourseContent(prev => {
-        if (!prev) return null;
-        return { 
-          ...prev, 
-          questions: {
-            ...(prev.questions || {}),
-            hard: hardQuestions
-          }
-        };
-      });
-      
-      toast.success("全部难度的测验题已生成");
-    } catch (error) {
-      console.error("Error generating quiz:", error);
-      toast.error("生成测验题时出错");
+      await generateAllQuestions(courseContent.rawContent, currentLanguage);
     } finally {
       setIsGeneratingQuiz(false);
     }
@@ -355,7 +268,6 @@ const Index = () => {
     
     setIsGeneratingQuiz(true);
     try {
-      // Generate new questions for the specified difficulty
       const newQuestions = await openaiService.generateQuestions(
         courseContent.rawContent,
         difficulty,
@@ -363,7 +275,6 @@ const Index = () => {
         currentLanguage
       );
       
-      // Update only the questions for the specified difficulty
       setCourseContent(prev => {
         if (!prev) return null;
         
