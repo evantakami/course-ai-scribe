@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer, Course } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
@@ -355,6 +356,7 @@ const Index = () => {
         };
       });
       
+      console.log("All difficulty questions generated:", { easyQuestions, mediumQuestions, hardQuestions });
       toast.success("全部难度的测验题已生成");
       return true;
     } catch (error) {
@@ -422,12 +424,18 @@ const Index = () => {
     });
 
     try {
+      // First generate the summary
       const summaryPromise = generateAllSummaries(content, language);
-      const quizPromise = generateQuiz ? generateAllQuestions(content, language) : null;
-      
       await summaryPromise;
-      if (quizPromise) await quizPromise;
       
+      // Continue to generate quiz questions after summary is done
+      if (generateQuiz) {
+        setIsGeneratingQuiz(true);
+        const quizPromise = generateAllQuestions(content, language);
+        await quizPromise;
+      }
+      
+      // Automatically navigate to summary tab
       setActiveTab("summary");
     } catch (error) {
       console.error("Error processing content:", error);

@@ -20,13 +20,15 @@ interface FileUploadProps {
   isLoading: boolean;
   selectedCourseId: string;
   onSelectCourse: (courseId: string) => void;
+  generateAllContent?: boolean;
 }
 
 const FileUpload = ({ 
   onContentLoaded, 
   isLoading, 
   selectedCourseId,
-  onSelectCourse 
+  onSelectCourse,
+  generateAllContent = false
 }: FileUploadProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState<string>("");
@@ -87,7 +89,13 @@ const FileUpload = ({
       toast.error("请先选择课程");
       return;
     }
-    onContentLoaded(textContent, generateQuiz, quizDifficulty, language, selectedCourseId);
+    
+    // Always generate quiz with all content
+    if (generateAllContent) {
+      onContentLoaded(textContent, true, quizDifficulty, language, selectedCourseId);
+    } else {
+      onContentLoaded(textContent, generateQuiz, quizDifficulty, language, selectedCourseId);
+    }
   };
 
   const handleUpload = () => {
@@ -100,7 +108,12 @@ const FileUpload = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;
-      onContentLoaded(content, generateQuiz, quizDifficulty, language, selectedCourseId);
+      // Always generate quiz with all content
+      if (generateAllContent) {
+        onContentLoaded(content, true, quizDifficulty, language, selectedCourseId);
+      } else {
+        onContentLoaded(content, generateQuiz, quizDifficulty, language, selectedCourseId);
+      }
     };
     reader.onerror = () => {
       toast.error("读取文件出错");

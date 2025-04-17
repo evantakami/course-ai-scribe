@@ -90,6 +90,7 @@ const MainTabs = ({
             isLoading={isLoading}
             selectedCourseId={selectedCourseId}
             onSelectCourse={onSelectCourse}
+            generateAllContent={true}
           />
         </div>
       </TabsContent>
