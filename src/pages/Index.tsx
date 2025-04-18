@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer, Course } from "@/types";
-import { Toaster } from "sonner";
-import { toast } from "sonner";
+import { Toaster, toast } from "sonner";
 import ApiKeyInput from "@/components/ApiKeyInput";
 import { openaiService } from "@/services/openaiService";
 import Header from "@/components/layout/Header";
