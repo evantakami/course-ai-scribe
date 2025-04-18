@@ -22,7 +22,8 @@ const App = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <Toaster />
+            {/* 注释掉顶部的 Toaster */}
+            {/* <Toaster /> */}
             <Sonner />
           </TooltipProvider>
         </BrowserRouter>
