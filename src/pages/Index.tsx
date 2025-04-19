@@ -22,6 +22,8 @@ const Index = () => {
     isGeneratingQuiz,
     summaryProgress,
     quizProgress,
+    activeTab,
+    setActiveTab,
     handleContentLoaded,
     handleStyleChange,
     handleLanguageChange,
@@ -35,8 +37,6 @@ const Index = () => {
     setSelectedCourseId,
     view,
     setView,
-    activeTab,
-    setActiveTab,
     handleSelectHistoryContent
   } = useCourseView();
 
