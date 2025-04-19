@@ -19,7 +19,7 @@ interface QuizProps {
 
 const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>(initialAnswers);
+  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>(initialAnswers || []);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isShowingExplanation, setIsShowingExplanation] = useState(false);
 
@@ -44,15 +44,17 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
   useEffect(() => {
     if (questions && questions.length > 0 && currentQuestionIndex < questions.length) {
       const currentQuestion = questions[currentQuestionIndex];
-      const existingAnswer = userAnswers.find(a => a.questionId === currentQuestion.id);
-      setSelectedOption(existingAnswer ? existingAnswer.selectedOption : null);
-      // Always show explanation if an answer exists for this question
-      setIsShowingExplanation(!!existingAnswer);
+      if (currentQuestion) {
+        const existingAnswer = userAnswers.find(a => a.questionId === currentQuestion.id);
+        setSelectedOption(existingAnswer ? existingAnswer.selectedOption : null);
+        // Always show explanation if an answer exists for this question
+        setIsShowingExplanation(!!existingAnswer);
+      }
     }
   }, [currentQuestionIndex, questions, userAnswers]);
 
   useEffect(() => {
-    if (userAnswers.length > 0 && saveUserAnswers) {
+    if (userAnswers && userAnswers.length > 0 && saveUserAnswers) {
       saveUserAnswers(userAnswers);
     }
   }, [userAnswers, saveUserAnswers]);
@@ -183,7 +185,11 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
               }
             }}
             onToggleExplanation={() => setIsShowingExplanation(!isShowingExplanation)}
-            onSubmitAnswer={() => handleSubmitAnswer(selectedOption)}
+            onSubmitAnswer={() => {
+              if (selectedOption !== null) {
+                handleSubmitAnswer(selectedOption);
+              }
+            }}
             onNextQuestion={handleNextQuestion}
             selectedOption={selectedOption}
             isLastQuestion={currentQuestionIndex === questions.length - 1}

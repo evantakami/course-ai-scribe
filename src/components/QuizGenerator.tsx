@@ -63,12 +63,12 @@ const QuizGenerator = ({
   };
 
   const getCurrentQuestions = () => {
-    if (!questions) return null;
+    if (!questions) return [];
     return questions[activeDifficulty] || [];
   };
 
   const currentQuestions = getCurrentQuestions();
-  const isCurrentDifficultyGenerating = isGenerating && !currentQuestions?.length;
+  const isCurrentDifficultyGenerating = isGenerating && (!currentQuestions || currentQuestions.length === 0);
   
   const handleSaveUserAnswers = (userAnswers: UserAnswer[]) => {
     if (!userAnswers.length) return;
