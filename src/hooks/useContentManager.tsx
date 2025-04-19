@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { CourseContent, SummaryStyle } from "@/types";
+import { CourseContent, SummaryStyle, SummaryLanguage, Question } from "@/types";
 import { toast } from "sonner";
 import { openaiService } from "@/services/openaiService";
 
@@ -35,7 +35,7 @@ export const useContentManager = () => {
       const summary = {
         content: "这是一个自动生成的摘要，展示了AI处理后的结果。",
         style: "casual" as SummaryStyle,
-        language: "chinese",
+        language: "chinese" as SummaryLanguage,
         allStyles: {
           casual: "这是通俗易懂的摘要版本。",
           academic: "这是学术风格的摘要版本。",
@@ -43,34 +43,28 @@ export const useContentManager = () => {
         }
       };
       
-      // Generate simple questions for testing
-      const questions = {
-        easy: [
-          {
-            id: "1",
-            question: "这是一个简单的测试问题?",
-            options: [
-              { id: "a", text: "选项A" },
-              { id: "b", text: "选项B" },
-              { id: "c", text: "选项C" },
-              { id: "d", text: "选项D" }
-            ],
-            correctOptionId: "a",
-            explanation: "这是问题的解释",
-            difficulty: "easy",
-            knowledge_point: "测试知识点"
-          }
-        ],
-        medium: [],
-        hard: []
-      };
+      // Generate simple questions for testing, ensuring they match the Question type
+      const easyQuestions: Question[] = [
+        {
+          id: 1,
+          text: "这是一个简单的测试问题?",
+          options: ["选项A", "选项B", "选项C", "选项D"],
+          correctAnswer: 0,
+          difficulty: "easy",
+          explanation: "这是问题的解释"
+        }
+      ];
       
       // Update state with the mock data
       setTimeout(() => {
         setCourseContent({
           rawContent: content,
           summary,
-          questions: generateQuiz ? questions : null
+          questions: generateQuiz ? {
+            easy: easyQuestions,
+            medium: [],
+            hard: []
+          } : null
         });
         
         // After processing, switch to summary tab
