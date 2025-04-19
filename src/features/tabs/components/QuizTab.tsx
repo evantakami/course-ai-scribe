@@ -1,6 +1,6 @@
 
 import { TabsContent } from "@/components/ui/tabs";
-import QuizGenerator from "@/components/QuizGenerator";
+import QuizGenerator from "@/features/quiz/QuizGenerator";
 import { Question, QuestionDifficulty, UserAnswer } from "@/types";
 
 interface QuizTabProps {

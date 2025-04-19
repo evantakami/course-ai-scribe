@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Tabs } from "@/components/ui/tabs";
 import UploadTab from "@/features/tabs/components/UploadTab";
 import SummaryTab from "@/features/tabs/components/SummaryTab";
@@ -6,7 +7,7 @@ import QuizTab from "@/features/tabs/components/QuizTab";
 import MistakesTab from "@/features/tabs/components/MistakesTab";
 import HistoryTab from "@/features/tabs/components/HistoryTab";
 import MainTabs from "./MainTabs";
-import { CourseContent, SummaryStyle } from "@/types";
+import { CourseContent, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
 
 interface MainContentProps {
   activeTab: string;
@@ -29,6 +30,22 @@ const MainContent = ({
   selectedCourseId,
   onSelectCourse
 }: MainContentProps) => {
+  const [activeDifficulty, setActiveDifficulty] = useState<QuestionDifficulty>("medium");
+  
+  const handleDifficultyChange = (difficulty: QuestionDifficulty) => {
+    setActiveDifficulty(difficulty);
+  };
+  
+  const handleSaveUserAnswers = (userAnswers: UserAnswer[]) => {
+    // Placeholder for future implementation
+    console.log("Saving user answers:", userAnswers);
+  };
+  
+  const handleRegenerateQuiz = (difficulty: QuestionDifficulty) => {
+    // Placeholder for future implementation
+    console.log("Regenerating quiz for difficulty:", difficulty);
+  };
+
   return (
     <div className="flex-1 space-y-4 px-4 md:px-8 py-4">
       <MainTabs 
@@ -52,7 +69,10 @@ const MainContent = ({
         />
         <QuizTab
           questions={courseContent?.questions}
-          isLoading={isLoading}
+          isGenerating={isLoading}
+          onDifficultyChange={handleDifficultyChange}
+          saveUserAnswers={handleSaveUserAnswers}
+          onRegenerateQuiz={handleRegenerateQuiz}
         />
         <MistakesTab />
         <HistoryTab />
