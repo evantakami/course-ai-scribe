@@ -53,8 +53,9 @@ const MainTabs = ({
   summaryProgress = 0,
   quizProgress = 0
 }: MainTabsProps) => {
-  // Simple tab change handler that doesn't trigger regeneration
+  // Simple tab change handler that doesn't trigger regeneration or processing
   const handleTabChange = (value: string) => {
+    // Just change the active tab without any side effects
     setActiveTab(value);
   };
 
@@ -89,6 +90,7 @@ const MainTabs = ({
         </TabsTrigger>
       </TabsList>
 
+      {/* Only show progress when actually generating, not when switching tabs */}
       <GenerationProgress 
         summaryProgress={summaryProgress}
         quizProgress={quizProgress}

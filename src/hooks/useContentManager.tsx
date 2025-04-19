@@ -62,7 +62,7 @@ export const useContentManager = () => {
     }
   };
 
-  // Modified to generate summary and quiz in parallel
+  // Generate summary and quiz in parallel
   const handleContentLoaded = async (
     content: string,
     generateQuiz: boolean = true,
@@ -111,7 +111,7 @@ export const useContentManager = () => {
     }
   };
 
-  // Modify handleLanguageChange to not trigger regeneration automatically
+  // Simply update the language setting without regenerating content
   const handleLanguageChange = (language: SummaryLanguage) => {
     setCurrentLanguage(language);
   };
