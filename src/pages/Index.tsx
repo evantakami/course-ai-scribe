@@ -1,32 +1,29 @@
 
 import { useState, useEffect } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import ApiKeyInput from "@/components/ApiKeyInput";
 import { openaiService } from "@/services/openaiService";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MainContent from "@/components/MainContent";
 import { CourseContent, SummaryStyle } from "@/types";
+import { useContentManager } from "@/hooks/useContentManager";
 
 const Index = () => {
   const [isKeySet, setIsKeySet] = useState<boolean>(!!openaiService.getApiKey());
-  const [activeTab, setActiveTab] = useState<string>("upload");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  
+  const {
+    courseContent,
+    isLoading,
+    activeTab,
+    setActiveTab,
+    handleContentLoaded,
+    handleStyleChange,
+  } = useContentManager();
   
   const handleApiKeySet = () => {
     setIsKeySet(true);
-  };
-  
-  const handleContentLoaded = (content: string, generateQuiz: boolean, courseId: string) => {
-    console.log("Content loaded:", { content, generateQuiz, courseId });
-    // Placeholder for future implementation
-  };
-  
-  const handleStyleChange = (style: SummaryStyle) => {
-    console.log("Style changed:", style);
-    // Placeholder for future implementation
   };
   
   const handleSelectCourse = (courseId: string) => {

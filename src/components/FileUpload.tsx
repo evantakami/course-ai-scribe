@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from "lucide-react";
 import CustomPromptSettings from '@/components/CustomPromptSettings';
 import CourseSelector from '@/components/courses/CourseSelector';
+import { toast } from 'sonner';
 
 interface FileUploadProps {
   isLoading: boolean;
@@ -30,16 +31,23 @@ const FileUpload = ({
 
   const handleProcess = () => {
     if (content.trim().length < 50) {
-      alert("请输入至少50个字符的内容");
+      toast.error("请输入至少50个字符的内容");
       return;
     }
-    onContentLoaded(content, true, selectedCourseId);
+    
+    console.log("Processing content:", {
+      content,
+      generateQuiz: generateAllContent,
+      courseId: selectedCourseId
+    });
+    
+    onContentLoaded(content, generateAllContent, selectedCourseId);
   };
 
   const handleSaveContent = () => {
     if (content.trim().length > 0) {
       localStorage.setItem('saved_content', content);
-      alert("内容已保存");
+      toast.success("内容已保存");
     }
   };
 
