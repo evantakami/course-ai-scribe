@@ -1,4 +1,3 @@
-
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
@@ -110,6 +109,7 @@ const MainTabs = ({
         onStyleChange={handleStyleChange}
         onLanguageChange={handleLanguageChange}
         onGenerateQuiz={handleGenerateQuiz}
+        showGenerateControls={true}
       />
 
       <QuizTab 

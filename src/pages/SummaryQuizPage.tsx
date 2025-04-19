@@ -121,6 +121,7 @@ const SummaryQuizPage = () => {
                 onStyleChange={handleStyleChange}
                 onLanguageChange={handleLanguageChange}
                 onGenerateQuiz={handleGenerateQuiz}
+                showGenerateControls={false}
               />
               
               <QuizTab 

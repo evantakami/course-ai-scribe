@@ -9,6 +9,7 @@ interface SummaryTabProps {
   onStyleChange: (style: SummaryStyle) => void;
   onLanguageChange: (language: SummaryLanguage) => void;
   onGenerateQuiz: () => void;
+  showGenerateControls?: boolean;
 }
 
 const SummaryTab = ({
@@ -16,7 +17,8 @@ const SummaryTab = ({
   isLoading,
   onStyleChange,
   onLanguageChange,
-  onGenerateQuiz
+  onGenerateQuiz,
+  showGenerateControls = false
 }: SummaryTabProps) => {
   return (
     <TabsContent value="summary" className="mt-4">
@@ -26,6 +28,7 @@ const SummaryTab = ({
         onStyleChange={onStyleChange}
         onLanguageChange={onLanguageChange}
         onGenerateQuiz={onGenerateQuiz}
+        showGenerateControls={showGenerateControls}
       />
     </TabsContent>
   );

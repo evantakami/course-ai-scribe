@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Summary, SummaryStyle, SummaryLanguage } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ interface CourseSummaryProps {
   onStyleChange: (style: SummaryStyle) => void;
   onLanguageChange: (language: SummaryLanguage) => void;
   onGenerateQuiz: () => void;
+  showGenerateControls?: boolean;
 }
 
 interface StyleSummary {
@@ -31,6 +33,7 @@ const CourseSummary = ({
   onStyleChange,
   onLanguageChange,
   onGenerateQuiz,
+  showGenerateControls = false
 }: CourseSummaryProps) => {
   const [activeStyle, setActiveStyle] = useState<SummaryStyle>(summary?.style || "casual");
   const [savedSummaries, setSavedSummaries] = useState<StyleSummary>({});
@@ -100,31 +103,33 @@ const CourseSummary = ({
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>课程摘要</CardTitle>
-        <div className="flex items-center space-x-2">
-          <Select 
-            value={summary?.language || "chinese"} 
-            onValueChange={handleLanguageChange}
-            disabled={isLoading}
-          >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="选择语言" />
-            </SelectTrigger>
-            <SelectContent>
-              {languageOptions.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button 
-            onClick={onGenerateQuiz} 
-            disabled={isLoading || !summary}
-            className="bg-edu-600 hover:bg-edu-700"
-          >
-            生成测验题
-          </Button>
-        </div>
+        {showGenerateControls && (
+          <div className="flex items-center space-x-2">
+            <Select 
+              value={summary?.language || "chinese"} 
+              onValueChange={handleLanguageChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="选择语言" />
+              </SelectTrigger>
+              <SelectContent>
+                {languageOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button 
+              onClick={onGenerateQuiz} 
+              disabled={isLoading || !summary}
+              className="bg-edu-600 hover:bg-edu-700"
+            >
+              生成测验题
+            </Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <Tabs 
@@ -142,7 +147,7 @@ const CourseSummary = ({
           {isCurrentStyleLoading ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
-              <span className="ml-2 text-edu-600">正在生成摘要...</span>
+              <span className="ml-2 text-edu-600">正在加载摘要...</span>
             </div>
           ) : savedSummaries[activeStyle] ? (
             <TabsContent value={activeStyle} className="mt-0">
