@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer, Course } from "@/types";
 import { Toaster, toast } from "sonner";
@@ -274,8 +275,6 @@ const Index = () => {
         }
         
         if (historyItem.questions) {
-          console.log("Original history item questions:", JSON.stringify(historyItem.questions));
-          
           const updatedQuestions = {
             easy: historyItem.questions.easy?.map(q => ({
               ...q,
@@ -294,7 +293,6 @@ const Index = () => {
             }))
           };
           
-          console.log("Loaded questions with explanations:", updatedQuestions);
           loadedContent.questions = updatedQuestions;
         }
         
@@ -354,7 +352,6 @@ const Index = () => {
         };
       });
       
-      console.log("All difficulty questions generated:", { easyQuestions, mediumQuestions, hardQuestions });
       toast.success("全部难度的测验题已生成");
       return true;
     } catch (error) {
