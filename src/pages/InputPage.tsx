@@ -7,6 +7,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { SummaryLanguage, QuestionDifficulty } from "@/types";
 import { useContentManager } from "@/hooks/useContentManager";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 const InputPage = () => {
   const navigate = useNavigate();
@@ -47,6 +49,17 @@ const InputPage = () => {
         <div className="flex-1">
           <Header />
           <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+            <div className="flex justify-between items-center mb-6">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/")}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                返回首页
+              </Button>
+            </div>
+            
             <h1 className="text-2xl font-bold mb-6">输入课程内容</h1>
             <div className="flex justify-center">
               <FileUpload 

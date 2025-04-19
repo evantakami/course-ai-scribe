@@ -59,6 +59,15 @@ const SummaryQuizPage = () => {
     saveUserAnswersToHistory(answers, courseContent, currentCourseId);
   };
 
+  const handleBackToCoursePage = () => {
+    const currentCourseId = sessionStorage.getItem('current_course_id');
+    if (currentCourseId) {
+      navigate(`/course/${currentCourseId}`);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen w-full">
@@ -68,21 +77,30 @@ const SummaryQuizPage = () => {
             <div className="flex justify-between items-center mb-6">
               <Button 
                 variant="ghost" 
-                onClick={() => navigate("/")}
+                onClick={handleBackToCoursePage}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                返回首页
+                返回课程
               </Button>
               
-              <Button 
-                variant="outline" 
-                onClick={() => navigate("/mistakes")}
-                className="flex items-center gap-2"
-              >
-                <BookOpen className="h-4 w-4" />
-                错题本
-              </Button>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/")}
+                  className="flex items-center gap-2 mr-2"
+                >
+                  返回首页
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/mistakes")}
+                  className="flex items-center gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  错题本
+                </Button>
+              </div>
             </div>
             
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

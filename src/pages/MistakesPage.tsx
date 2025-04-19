@@ -4,7 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MistakeCollection from "@/components/MistakeCollection";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, Pencil } from "lucide-react";
 
 const MistakesPage = () => {
   const navigate = useNavigate();
@@ -24,6 +24,17 @@ const MistakesPage = () => {
                 <ArrowLeft className="h-4 w-4" />
                 返回首页
               </Button>
+              
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/input")}
+                  className="flex items-center gap-2"
+                >
+                  <Pencil className="h-4 w-4" />
+                  新增笔记
+                </Button>
+              </div>
             </div>
             
             <h1 className="text-2xl font-bold mb-6">错题本</h1>
