@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CourseContent, SummaryLanguage, SummaryStyle, QuestionDifficulty, UserAnswer } from "@/types";
 import { openaiService } from "@/services/openaiService";
@@ -12,6 +11,7 @@ export const useContentManager = () => {
   const [currentQuizDifficulty, setCurrentQuizDifficulty] = useState<QuestionDifficulty>("medium");
   const [summaryProgress, setSummaryProgress] = useState<number>(0);
   const [quizProgress, setQuizProgress] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<string>("upload");
 
   const generateAllQuestions = async (content: string, language: SummaryLanguage) => {
     try {
@@ -220,6 +220,8 @@ export const useContentManager = () => {
     currentQuizDifficulty,
     summaryProgress,
     quizProgress,
+    activeTab,
+    setActiveTab,
     handleContentLoaded,
     handleStyleChange,
     handleLanguageChange,

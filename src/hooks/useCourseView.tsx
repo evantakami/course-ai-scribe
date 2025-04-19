@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Course } from '@/types';
+import { Course, CourseContent } from '@/types';
 import { toast } from "sonner";
 
 export const useCourseView = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [view, setView] = useState<"catalog" | "history" | "content">("content");
   const [activeTab, setActiveTab] = useState<string>("upload");
+  const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
 
   useEffect(() => {
     initializeUserProfile();
@@ -64,6 +65,8 @@ export const useCourseView = () => {
     setView,
     activeTab,
     setActiveTab,
+    courseContent,
+    setCourseContent,
     handleSelectHistoryContent
   };
 };
