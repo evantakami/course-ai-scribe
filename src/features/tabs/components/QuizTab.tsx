@@ -1,7 +1,7 @@
 
 import { TabsContent } from "@/components/ui/tabs";
-import Quiz from "@/components/Quiz";
-import { Question } from "@/types";
+import QuizGenerator from "@/components/QuizGenerator";
+import { Question, QuestionDifficulty, UserAnswer } from "@/types";
 
 interface QuizTabProps {
   questions: {
@@ -9,26 +9,28 @@ interface QuizTabProps {
     medium?: Question[];
     hard?: Question[];
   } | null;
+  isGenerating: boolean;
+  onDifficultyChange: (difficulty: QuestionDifficulty) => void;
+  saveUserAnswers?: (userAnswers: UserAnswer[]) => void;
+  onRegenerateQuiz?: (difficulty: QuestionDifficulty) => void;
 }
 
-const QuizTab = ({ questions }: QuizTabProps) => {
-  // Convert the questions object to an array for the Quiz component
-  const flattenQuestions = (): Question[] => {
-    if (!questions) return [];
-    
-    // Combine all difficulty levels and filter out undefined
-    const allQuestions = [
-      ...(questions.easy || []),
-      ...(questions.medium || []),
-      ...(questions.hard || [])
-    ];
-    
-    return allQuestions;
-  };
-  
+const QuizTab = ({
+  questions,
+  isGenerating,
+  onDifficultyChange,
+  saveUserAnswers,
+  onRegenerateQuiz
+}: QuizTabProps) => {
   return (
-    <TabsContent value="quiz" className="mt-4 space-y-8">
-      <Quiz questions={flattenQuestions()} />
+    <TabsContent value="quiz" className="mt-4">
+      <QuizGenerator 
+        questions={questions}
+        isGenerating={isGenerating}
+        onDifficultyChange={onDifficultyChange}
+        saveUserAnswers={saveUserAnswers}
+        onRegenerateQuiz={onRegenerateQuiz}
+      />
     </TabsContent>
   );
 };

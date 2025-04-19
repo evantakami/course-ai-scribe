@@ -6,19 +6,10 @@ import { openaiService } from "@/services/openaiService";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MainContent from "@/components/MainContent";
-import { useContentManager } from "@/hooks/useContentManager";
 
 const Index = () => {
   const [isKeySet, setIsKeySet] = useState<boolean>(!!openaiService.getApiKey());
-  const {
-    courseContent,
-    isLoading,
-    activeTab,
-    setActiveTab,
-    handleContentLoaded,
-    handleStyleChange,
-  } = useContentManager();
-
+  
   const handleApiKeySet = () => {
     setIsKeySet(true);
   };
@@ -34,14 +25,7 @@ const Index = () => {
                 <ApiKeyInput onApiKeySet={handleApiKeySet} />
               </div>
             ) : (
-              <MainContent 
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                isLoading={isLoading}
-                courseContent={courseContent}
-                handleContentLoaded={handleContentLoaded}
-                handleStyleChange={handleStyleChange}
-              />
+              <MainContent />
             )}
           </main>
           <Footer />

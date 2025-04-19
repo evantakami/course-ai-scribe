@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { HistoryItem, Course } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -109,11 +110,32 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
 
   const handleSelectItem = (item: HistoryItem) => {
     try {
-      // Store the complete history item in session storage
-      sessionStorage.setItem('selected_history_item', JSON.stringify(item));
+      // Deep clone the item to prevent reference issues
+      const clonedItem = JSON.parse(JSON.stringify(item));
       
-      // Pass the raw content to the parent component
+      // Make sure to preserve all properties of the history item, especially questions and explanations
+      console.log("Storing history item:", JSON.stringify(clonedItem));
+      
+      // Ensure questions have all required fields
+      if (clonedItem.questions) {
+        ['easy', 'medium', 'hard'].forEach(difficulty => {
+          if (clonedItem.questions[difficulty]) {
+            clonedItem.questions[difficulty] = clonedItem.questions[difficulty].map(q => ({
+              ...q,
+              explanation: q.explanation || "",
+              difficulty: difficulty
+            }));
+          }
+        });
+      }
+      
+      // Store the complete item in session storage for later retrieval
+      sessionStorage.setItem('selected_history_item', JSON.stringify(clonedItem));
+      
+      // Just pass the raw content to parent component
       onSelectContent(item.rawContent);
+      
+      toast.success("已加载历史内容");
     } catch (error) {
       console.error("Failed to select history item:", error);
       toast.error("加载历史内容失败");

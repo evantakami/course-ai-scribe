@@ -27,22 +27,24 @@ const FileUpload = ({
   generateAllContent = true
 }: FileUploadProps) => {
   const [content, setContent] = useState<string>("");
-  const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
 
   const handleProcess = () => {
     if (content.trim().length < 50) {
       alert("请输入至少50个字符的内容");
       return;
     }
-    onContentLoaded(content, generateQuiz, selectedCourseId);
+    onContentLoaded(content, true, selectedCourseId);
   };
 
-  const handleClear = () => {
-    setContent("");
+  const handleSaveContent = () => {
+    if (content.trim().length > 0) {
+      localStorage.setItem('saved_content', content);
+      alert("内容已保存");
+    }
   };
 
   return (
-    <div className="space-y-4 w-full max-w-3xl mx-auto">
+    <div className="space-y-4 w-full max-w-3xl">
       <div className="flex justify-between items-center">
         <CourseSelector 
           selectedCourseId={selectedCourseId}
@@ -54,44 +56,33 @@ const FileUpload = ({
       <Card className="p-6">
         <div className="space-y-4">
           <Textarea 
-            placeholder="请在此输入或粘贴需要处理的内容..." 
-            className="min-h-[300px] font-mono text-sm"
+            placeholder="请输入或粘贴课程内容..." 
+            className="min-h-[300px]"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
           
-          <div className="flex justify-between items-center space-x-2">
+          <div className="flex justify-end space-x-2">
             <Button
               variant="outline"
-              onClick={handleClear}
+              onClick={handleSaveContent}
               disabled={content.trim().length === 0 || isLoading}
             >
-              清空内容
+              保存
             </Button>
-            
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setGenerateQuiz(!generateQuiz)}
-                className={generateQuiz ? "bg-primary/10" : ""}
-              >
-                {generateQuiz ? "✓ 生成测验题" : "生成测验题"}
-              </Button>
-              
-              <Button
-                onClick={handleProcess}
-                disabled={isLoading || content.trim().length < 50}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    处理中...
-                  </>
-                ) : (
-                  "开始处理"
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={handleProcess}
+              disabled={isLoading || content.trim().length < 50}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  处理中...
+                </>
+              ) : (
+                "处理内容"
+              )}
+            </Button>
           </div>
         </div>
       </Card>

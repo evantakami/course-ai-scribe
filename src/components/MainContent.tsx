@@ -7,8 +7,6 @@ import MistakesTab from "@/features/tabs/components/MistakesTab";
 import HistoryTab from "@/features/tabs/components/HistoryTab";
 import MainTabs from "./MainTabs";
 import { CourseContent, SummaryStyle } from "@/types";
-import CourseCatalog from "./courses/CourseCatalog";
-import { useCourseView } from "@/hooks/useCourseView";
 
 interface MainContentProps {
   activeTab: string;
@@ -17,6 +15,8 @@ interface MainContentProps {
   courseContent: CourseContent | null;
   handleContentLoaded: (content: string, generateQuiz: boolean, courseId: string) => void;
   handleStyleChange: (style: SummaryStyle) => void;
+  selectedCourseId: string;
+  onSelectCourse: (courseId: string) => void;
 }
 
 const MainContent = ({
@@ -26,18 +26,9 @@ const MainContent = ({
   courseContent,
   handleContentLoaded,
   handleStyleChange,
+  selectedCourseId,
+  onSelectCourse
 }: MainContentProps) => {
-  const { 
-    view, 
-    selectedCourseId,
-    handleSelectCourse,
-    handleSelectHistoryContent 
-  } = useCourseView();
-
-  if (view === "catalog") {
-    return <CourseCatalog onCourseSelect={handleSelectCourse} />;
-  }
-
   return (
     <div className="flex-1 space-y-4 px-4 md:px-8 py-4">
       <MainTabs 
@@ -51,7 +42,7 @@ const MainContent = ({
           isLoading={isLoading}
           handleContentLoaded={handleContentLoaded}
           selectedCourseId={selectedCourseId}
-          onSelectCourse={handleSelectCourse}
+          onSelectCourse={onSelectCourse}
         />
         <SummaryTab
           summary={courseContent?.summary}
@@ -61,12 +52,10 @@ const MainContent = ({
         />
         <QuizTab
           questions={courseContent?.questions}
+          isLoading={isLoading}
         />
         <MistakesTab />
-        <HistoryTab
-          courseId={selectedCourseId}
-          onSelectContent={handleSelectHistoryContent}
-        />
+        <HistoryTab />
       </Tabs>
     </div>
   );
