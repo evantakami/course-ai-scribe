@@ -1,3 +1,4 @@
+
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
@@ -54,7 +55,7 @@ const MainTabs = ({
 }: MainTabsProps) => {
   // Simple tab change handler that doesn't trigger regeneration or processing
   const handleTabChange = (value: string) => {
-    // Just change the active tab without any side effects
+    console.log("Tab changed to:", value);
     setActiveTab(value);
   };
 
@@ -90,11 +91,13 @@ const MainTabs = ({
       </TabsList>
 
       {/* Only show progress when actually generating, not when switching tabs */}
-      <GenerationProgress 
-        summaryProgress={summaryProgress}
-        quizProgress={quizProgress}
-        isGenerating={isLoading || isGeneratingQuiz}
-      />
+      {(isLoading || isGeneratingQuiz) && (
+        <GenerationProgress 
+          summaryProgress={summaryProgress}
+          quizProgress={quizProgress}
+          isGenerating={isLoading || isGeneratingQuiz}
+        />
+      )}
 
       <UploadTab 
         isLoading={isLoading}

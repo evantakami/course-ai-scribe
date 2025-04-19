@@ -186,10 +186,13 @@ class OpenAIService {
     const model = this.getModel();
     
     if (!apiKey) {
+      console.error("API key not set");
       throw new Error("API key not set. Please enter your OpenAI API key.");
     }
 
     try {
+      console.log(`Calling OpenAI API with model: ${model}`);
+      
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -214,10 +217,12 @@ class OpenAIService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error?.message || "API call failed");
+        console.error("OpenAI API error:", error);
+        throw new Error(error.error?.message || `API call failed with status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log("API call successful");
       return data.choices[0]?.message?.content || "";
     } catch (error) {
       console.error("Error calling OpenAI API:", error);

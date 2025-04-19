@@ -45,6 +45,8 @@ const CourseSummary = ({
 
   useEffect(() => {
     if (summary && !isLoading) {
+      console.log("Summary updated:", summary.style, "with all styles:", !!summary.allStyles);
+      
       if (summary.allStyles) {
         setSavedSummaries(summary.allStyles as StyleSummary);
         
@@ -71,17 +73,23 @@ const CourseSummary = ({
     const style = value as SummaryStyle;
     setActiveStyle(style);
     
+    // Only trigger API call if we don't already have this style saved
     if (!savedSummaries[style]) {
+      console.log("Requesting new summary style:", style);
       setLocalLoading(prev => ({
         ...prev,
         [style]: true
       }));
       onStyleChange(style);
+    } else {
+      console.log("Using cached summary for style:", style);
     }
   };
 
   const handleLanguageChange = (value: string) => {
+    console.log("Changing language to:", value);
     onLanguageChange(value as SummaryLanguage);
+    // Reset saved summaries when language changes
     setSavedSummaries({});
     setLocalLoading({
       casual: false,
@@ -97,7 +105,8 @@ const CourseSummary = ({
     { value: "french", label: "Français" }
   ];
 
-  const isCurrentStyleLoading = localLoading[activeStyle] || (isLoading && !savedSummaries[activeStyle]);
+  // Only show loading if we're actually fetching this specific style
+  const isCurrentStyleLoading = localLoading[activeStyle] && isLoading;
 
   return (
     <Card className="w-full">

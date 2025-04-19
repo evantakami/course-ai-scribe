@@ -39,8 +39,11 @@ const SummaryQuizPage = () => {
     const currentCourseId = sessionStorage.getItem('current_course_id');
     
     if (!contentId || !storedContent) {
+      console.log("No content found in session storage, redirecting to home");
       toast.error("没有找到内容，请返回重试");
       navigate('/');
+    } else {
+      console.log("Content found in session storage:", storedContent.substring(0, 50) + "...");
     }
     
     // Sync tabs
@@ -48,6 +51,7 @@ const SummaryQuizPage = () => {
   }, [contentId, activeTab, navigate, setContentManagerActiveTab]);
 
   const handleTabChange = (value: string) => {
+    console.log("Tab changed to:", value);
     setActiveTab(value);
     setContentManagerActiveTab(value);
   };
@@ -56,6 +60,7 @@ const SummaryQuizPage = () => {
     if (!courseContent || answers.length === 0) return;
     
     const currentCourseId = sessionStorage.getItem('current_course_id') || '';
+    console.log("Saving user answers for course:", currentCourseId);
     saveUserAnswersToHistory(answers, courseContent, currentCourseId);
   };
 

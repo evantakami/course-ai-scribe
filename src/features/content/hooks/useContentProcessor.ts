@@ -12,6 +12,8 @@ export const useContentProcessor = () => {
     language: SummaryLanguage
   ) => {
     try {
+      console.log("Generating all summary styles for content:", content.substring(0, 100) + "...");
+      
       // Generate all three styles in parallel
       const [casualSummaryPromise, academicSummaryPromise, basicSummaryPromise] = [
         openaiService.generateSummary(content, "casual", language),
@@ -25,6 +27,8 @@ export const useContentProcessor = () => {
         basicSummaryPromise
       ]);
       
+      console.log("Successfully generated all summary styles");
+      
       return {
         style: "casual" as SummaryStyle,
         content: casualSummary.content,
@@ -37,7 +41,7 @@ export const useContentProcessor = () => {
       };
     } catch (error) {
       console.error("Error generating summaries:", error);
-      toast.error("生成摘要时出错");
+      toast.error("生成摘要时出错，请检查API密钥或网络连接");
       return null;
     }
   };
@@ -47,6 +51,8 @@ export const useContentProcessor = () => {
     language: SummaryLanguage
   ) => {
     try {
+      console.log("Generating all question difficulty levels");
+      
       // Generate all difficulty levels in parallel
       const [easyQuestionsPromise, mediumQuestionsPromise, hardQuestionsPromise] = [
         openaiService.generateQuestions(content, "easy", 10, language),
@@ -60,6 +66,8 @@ export const useContentProcessor = () => {
         hardQuestionsPromise
       ]);
 
+      console.log("Successfully generated all question difficulty levels");
+      
       return {
         easy: easyQuestions,
         medium: mediumQuestions,
@@ -67,7 +75,7 @@ export const useContentProcessor = () => {
       };
     } catch (error) {
       console.error("Error generating quiz:", error);
-      toast.error("生成测验题时出错");
+      toast.error("生成测验题时出错，请检查API密钥或网络连接");
       return null;
     }
   };
@@ -78,6 +86,8 @@ export const useContentProcessor = () => {
   ): Promise<CourseContent> => {
     setIsProcessing(true);
     try {
+      console.log("Processing content: Generating summaries and questions");
+      
       // Generate both summaries and questions in parallel
       const [summaryPromise, questionsPromise] = [
         generateAllSummaryStyles(content, language),
@@ -89,6 +99,8 @@ export const useContentProcessor = () => {
         questionsPromise
       ]);
       
+      console.log("Content processing complete:", !!summary, !!questions);
+      
       return {
         rawContent: content,
         summary,
@@ -96,7 +108,7 @@ export const useContentProcessor = () => {
       };
     } catch (error) {
       console.error("Error processing content:", error);
-      toast.error("处理内容时出错");
+      toast.error("处理内容时出错，请检查API密钥或网络连接");
       return {
         rawContent: content,
         summary: null,
@@ -114,11 +126,13 @@ export const useContentProcessor = () => {
   ) => {
     setIsProcessing(true);
     try {
+      console.log(`Generating ${style} summary in ${language}`);
       const summary = await generateAllSummaryStyles(content, language);
+      console.log("Summary generation complete:", !!summary);
       return summary;
     } catch (error) {
       console.error("Error generating summary:", error);
-      toast.error("生成摘要时出错");
+      toast.error("生成摘要时出错，请检查API密钥或网络连接");
       return null;
     } finally {
       setIsProcessing(false);
