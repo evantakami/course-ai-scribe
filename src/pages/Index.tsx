@@ -604,6 +604,8 @@ const Index = () => {
           selectedCourseId={selectedCourseId}
           onSelectCourse={setSelectedCourseId}
           onViewCourses={() => setView("catalog")}
+          summaryProgress={summaryProgress}
+          quizProgress={quizProgress}
         />
       </>
     );

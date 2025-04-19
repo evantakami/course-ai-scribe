@@ -14,6 +14,7 @@ const GenerationProgress = ({
   quizProgress, 
   isGenerating 
 }: GenerationProgressProps) => {
+  // Calculate total progress as average of both progresses
   const totalProgress = Math.round((summaryProgress + quizProgress) / 2);
   
   if (!isGenerating) return null;
