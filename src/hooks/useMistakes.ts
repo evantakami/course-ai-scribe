@@ -1,23 +1,28 @@
-
 import { useState, useEffect } from 'react';
 import { UserAnswer } from "@/types";
 import { toast } from "sonner";
 
-export const useMistakes = () => {
+export const useMistakes = (courseId?: string) => {
   const [mistakes, setMistakes] = useState<UserAnswer[]>([]);
   const [isPracticing, setIsPracticing] = useState(false);
 
-  // Load mistakes when component mounts
+  // Load mistakes when component mounts or courseId changes
   useEffect(() => {
     loadMistakes();
-  }, []);
+  }, [courseId]);
 
-  // Load mistakes from localStorage
+  // Load mistakes from localStorage and filter by course if specified
   const loadMistakes = () => {
     try {
       const mistakesString = localStorage.getItem('mistake_collection') || '[]';
-      const parsed = JSON.parse(mistakesString);
-      setMistakes(parsed);
+      const allMistakes = JSON.parse(mistakesString);
+      
+      if (courseId) {
+        // Filter mistakes by courseId if specified
+        setMistakes(allMistakes.filter((m: UserAnswer) => m.courseId === courseId));
+      } else {
+        setMistakes(allMistakes);
+      }
     } catch (error) {
       console.error("Failed to load mistakes:", error);
       setMistakes([]);
@@ -50,22 +55,42 @@ export const useMistakes = () => {
     }
   };
 
-  // Update mistakes after practice
   const updateMistakes = (newAnswers: UserAnswer[]) => {
     try {
-      // Filter out correctly answered questions
-      const correctAnswers = newAnswers.filter(answer => answer.isCorrect);
+      const mistakesString = localStorage.getItem('mistake_collection') || '[]';
+      const allMistakes = JSON.parse(mistakesString);
       
-      if (correctAnswers.length > 0) {
-        // Remove correct answers from mistake collection
-        const updatedMistakes = mistakes.filter(
-          mistake => !correctAnswers.some(a => a.questionId === mistake.questionId)
-        );
+      // Update attempts for existing mistakes
+      const updatedAllMistakes = allMistakes.map((mistake: UserAnswer) => {
+        const newAnswer = newAnswers.find(a => a.questionId === mistake.questionId);
+        if (!newAnswer) return mistake;
         
-        setMistakes(updatedMistakes);
-        localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
+        // Update attempts
+        const attempts = mistake.attempts || [];
+        attempts.push({
+          isCorrect: newAnswer.isCorrect,
+          timestamp: new Date()
+        });
         
-        toast.success(`恭喜！已掌握 ${correctAnswers.length} 道题目`);
+        return {
+          ...mistake,
+          attempts
+        };
+      });
+      
+      // Save all mistakes back to localStorage
+      localStorage.setItem('mistake_collection', JSON.stringify(updatedAllMistakes));
+      
+      // Update state with filtered mistakes if courseId is specified
+      if (courseId) {
+        setMistakes(updatedAllMistakes.filter(m => m.courseId === courseId));
+      } else {
+        setMistakes(updatedAllMistakes);
+      }
+      
+      const correctCount = newAnswers.filter(a => a.isCorrect).length;
+      if (correctCount > 0) {
+        toast.success(`本次练习正确: ${correctCount} 道题`);
       }
     } catch (error) {
       console.error("Failed to update mistakes:", error);

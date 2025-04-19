@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { UserAnswer } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
@@ -7,15 +7,19 @@ import { toast } from "sonner";
 import MistakeList from "@/features/mistakes/components/MistakeList";
 import MistakePractice from "@/features/mistakes/components/MistakePractice";
 import { useMistakeCollection } from "@/features/mistakes/hooks/useMistakeCollection";
+import { useQuiz } from "@/hooks/useQuiz";
+import { useContentHistory } from "@/hooks/useContentHistory";
 
 const MistakeCollection = () => {
+  const { selectedCourseId } = useQuiz();
   const { 
     mistakes, 
     deleteMistake, 
     clearAllMistakes
-  } = useMistakeCollection();
+  } = useMistakeCollection(selectedCourseId);
   
   const [isPracticing, setIsPracticing] = useState(false);
+  const { saveToHistory } = useContentHistory();
 
   const handleUpdateMistakes = (newAnswers: UserAnswer[]) => {
     try {
@@ -28,6 +32,26 @@ const MistakeCollection = () => {
       
       // Save to localStorage
       localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
+      
+      // Save to history
+      if (selectedCourseId) {
+        saveToHistory({ 
+          rawContent: "错题练习",
+          summary: null,
+          questions: {
+            easy: [], 
+            medium: updatedMistakes.map(m => ({
+              id: m.questionId,
+              text: m.question,
+              options: m.options,
+              correctAnswer: m.correctAnswer,
+              explanation: m.explanation,
+              difficulty: "medium"
+            })),
+            hard: []
+          }
+        }, selectedCourseId);
+      }
       
       // Show toast about practice results
       const correctCount = newAnswers.filter(a => a.isCorrect).length;
