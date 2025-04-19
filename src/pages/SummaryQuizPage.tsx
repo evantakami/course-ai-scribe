@@ -4,8 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { TabsContent } from "@/components/ui/tabs";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, HelpCircle } from "lucide-react";
 import { useContentManager } from "@/hooks/useContentManager";
@@ -31,24 +30,39 @@ const SummaryQuizPage = () => {
     setActiveTab: setContentManagerActiveTab
   } = useContentManager();
 
-  const { saveUserAnswersToHistory } = useContentHistory();
+  const { saveUserAnswersToHistory, getHistoryItemById } = useContentHistory();
 
   useEffect(() => {
     // Check if there is content in session storage
     const storedContent = sessionStorage.getItem('current_content');
     const currentCourseId = sessionStorage.getItem('current_course_id');
     
-    if (!contentId || !storedContent) {
-      console.log("No content found in session storage, redirecting to home");
+    if (!contentId) {
+      console.log("No content ID found, redirecting to home");
       toast.error("没有找到内容，请返回重试");
       navigate('/');
+      return;
+    }
+    
+    // Try to load content from history if not in session storage
+    if (!storedContent && contentId) {
+      const historyItem = getHistoryItemById(contentId);
+      if (historyItem) {
+        console.log("Content found in history:", historyItem.id);
+        sessionStorage.setItem('current_content', historyItem.rawContent);
+        sessionStorage.setItem('current_course_id', historyItem.courseId);
+      } else {
+        console.log("Content not found in history or session storage");
+        toast.error("没有找到内容，请返回重试");
+        navigate('/');
+      }
     } else {
-      console.log("Content found in session storage:", storedContent.substring(0, 50) + "...");
+      console.log("Content found in session storage");
     }
     
     // Sync tabs
     setContentManagerActiveTab(activeTab);
-  }, [contentId, activeTab, navigate, setContentManagerActiveTab]);
+  }, [contentId, activeTab, navigate, setContentManagerActiveTab, getHistoryItemById]);
 
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
@@ -120,22 +134,26 @@ const SummaryQuizPage = () => {
                 </TabsTrigger>
               </TabsList>
               
-              <SummaryTab 
-                summary={courseContent?.summary}
-                isLoading={isLoading}
-                onStyleChange={handleStyleChange}
-                onLanguageChange={handleLanguageChange}
-                onGenerateQuiz={handleGenerateQuiz}
-                showGenerateControls={false}
-              />
+              <TabsContent value="summary">
+                <SummaryTab 
+                  summary={courseContent?.summary}
+                  isLoading={isLoading}
+                  onStyleChange={handleStyleChange}
+                  onLanguageChange={handleLanguageChange}
+                  onGenerateQuiz={handleGenerateQuiz}
+                  showGenerateControls={false}
+                />
+              </TabsContent>
               
-              <QuizTab 
-                questions={courseContent?.questions}
-                isGenerating={isGeneratingQuiz}
-                onDifficultyChange={setCurrentQuizDifficulty}
-                saveUserAnswers={handleSaveUserAnswers}
-                onRegenerateQuiz={handleRegenerateQuiz}
-              />
+              <TabsContent value="quiz">
+                <QuizTab 
+                  questions={courseContent?.questions}
+                  isGenerating={isGeneratingQuiz}
+                  onDifficultyChange={setCurrentQuizDifficulty}
+                  saveUserAnswers={handleSaveUserAnswers}
+                  onRegenerateQuiz={handleRegenerateQuiz}
+                />
+              </TabsContent>
             </Tabs>
           </main>
           <Footer />

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 
 export const useContentProcessor = () => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [summaryProgress, setSummaryProgress] = useState(0);
+  const [quizProgress, setQuizProgress] = useState(0);
 
   const generateAllSummaryStyles = async (
     content: string,
@@ -13,6 +15,7 @@ export const useContentProcessor = () => {
   ) => {
     try {
       console.log("Generating all summary styles for content:", content.substring(0, 100) + "...");
+      setSummaryProgress(10);
       
       // Generate all three styles in parallel
       const [casualSummaryPromise, academicSummaryPromise, basicSummaryPromise] = [
@@ -21,13 +24,17 @@ export const useContentProcessor = () => {
         openaiService.generateSummary(content, "basic", language)
       ];
       
+      setSummaryProgress(50);
+      
       const [casualSummary, academicSummary, basicSummary] = await Promise.all([
         casualSummaryPromise,
         academicSummaryPromise,
         basicSummaryPromise
       ]);
       
+      setSummaryProgress(100);
       console.log("Successfully generated all summary styles");
+      toast.success("所有风格的摘要已生成");
       
       return {
         style: "casual" as SummaryStyle,
@@ -52,6 +59,7 @@ export const useContentProcessor = () => {
   ) => {
     try {
       console.log("Generating all question difficulty levels");
+      setQuizProgress(10);
       
       // Generate all difficulty levels in parallel
       const [easyQuestionsPromise, mediumQuestionsPromise, hardQuestionsPromise] = [
@@ -60,13 +68,17 @@ export const useContentProcessor = () => {
         openaiService.generateQuestions(content, "hard", 10, language)
       ];
       
+      setQuizProgress(50);
+      
       const [easyQuestions, mediumQuestions, hardQuestions] = await Promise.all([
         easyQuestionsPromise,
         mediumQuestionsPromise,
         hardQuestionsPromise
       ]);
 
+      setQuizProgress(100);
       console.log("Successfully generated all question difficulty levels");
+      toast.success("全部难度的测验题已生成");
       
       return {
         easy: easyQuestions,
@@ -141,6 +153,8 @@ export const useContentProcessor = () => {
 
   return {
     isProcessing,
+    summaryProgress,
+    quizProgress,
     processContent,
     generateSummary
   };

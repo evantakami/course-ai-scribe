@@ -74,15 +74,11 @@ const CourseSummary = ({
     setActiveStyle(style);
     
     // Only trigger API call if we don't already have this style saved
-    if (!savedSummaries[style]) {
-      console.log("Requesting new summary style:", style);
-      setLocalLoading(prev => ({
-        ...prev,
-        [style]: true
-      }));
-      onStyleChange(style);
-    } else {
+    if (summary?.allStyles && summary.allStyles[style]) {
       console.log("Using cached summary for style:", style);
+    } else {
+      console.log("Requesting new summary style:", style);
+      onStyleChange(style);
     }
   };
 
@@ -91,11 +87,6 @@ const CourseSummary = ({
     onLanguageChange(value as SummaryLanguage);
     // Reset saved summaries when language changes
     setSavedSummaries({});
-    setLocalLoading({
-      casual: false,
-      academic: false,
-      basic: false
-    });
   };
 
   const languageOptions = [
@@ -104,9 +95,6 @@ const CourseSummary = ({
     { value: "spanish", label: "Español" },
     { value: "french", label: "Français" }
   ];
-
-  // Only show loading if we're actually fetching this specific style
-  const isCurrentStyleLoading = localLoading[activeStyle] && isLoading;
 
   return (
     <Card className="w-full">
@@ -153,12 +141,12 @@ const CourseSummary = ({
             <TabsTrigger value="basic" disabled={isLoading}>基础概念</TabsTrigger>
           </TabsList>
           
-          {isCurrentStyleLoading ? (
+          {isLoading ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
               <span className="ml-2 text-edu-600">正在加载摘要...</span>
             </div>
-          ) : savedSummaries[activeStyle] ? (
+          ) : summary && savedSummaries[activeStyle] ? (
             <TabsContent value={activeStyle} className="mt-0">
               <div className="prose max-w-none">
                 <ReactMarkdown>

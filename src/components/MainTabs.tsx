@@ -1,5 +1,5 @@
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
 import UploadTab from "@/features/tabs/components/UploadTab";
@@ -58,6 +58,10 @@ const MainTabs = ({
     console.log("Tab changed to:", value);
     setActiveTab(value);
   };
+  
+  // Check if we have content in course for specific tabs
+  const hasSummary = courseContent?.summary !== null && courseContent?.summary !== undefined;
+  const hasQuestions = courseContent?.questions !== null && courseContent?.questions !== undefined;
 
   return (
     <Tabs
@@ -72,14 +76,14 @@ const MainTabs = ({
         </TabsTrigger>
         <TabsTrigger 
           value="summary" 
-          disabled={isLoading || !courseContent?.summary}
+          disabled={isLoading || !hasSummary}
         >
           <BookOpen className="mr-2 h-4 w-4" />
           总结
         </TabsTrigger>
         <TabsTrigger 
           value="quiz" 
-          disabled={isLoading || isGeneratingQuiz || !courseContent?.questions}
+          disabled={isLoading || isGeneratingQuiz || !hasQuestions}
         >
           <HelpCircle className="mr-2 h-4 w-4" />
           知识测验
@@ -99,31 +103,39 @@ const MainTabs = ({
         />
       )}
 
-      <UploadTab 
-        isLoading={isLoading}
-        handleContentLoaded={handleContentLoaded}
-        selectedCourseId={selectedCourseId}
-        onSelectCourse={onSelectCourse}
-      />
+      <TabsContent value="upload">
+        <UploadTab 
+          isLoading={isLoading}
+          handleContentLoaded={handleContentLoaded}
+          selectedCourseId={selectedCourseId}
+          onSelectCourse={onSelectCourse}
+        />
+      </TabsContent>
 
-      <SummaryTab 
-        summary={courseContent?.summary || null}
-        isLoading={isLoading}
-        onStyleChange={handleStyleChange}
-        onLanguageChange={handleLanguageChange}
-        onGenerateQuiz={handleGenerateQuiz}
-        showGenerateControls={true}
-      />
+      <TabsContent value="summary">
+        <SummaryTab 
+          summary={courseContent?.summary || null}
+          isLoading={isLoading}
+          onStyleChange={handleStyleChange}
+          onLanguageChange={handleLanguageChange}
+          onGenerateQuiz={handleGenerateQuiz}
+          showGenerateControls={true}
+        />
+      </TabsContent>
 
-      <QuizTab 
-        questions={courseContent?.questions || null}
-        isGenerating={isGeneratingQuiz}
-        onDifficultyChange={handleDifficultyChange}
-        saveUserAnswers={saveUserAnswersToHistory}
-        onRegenerateQuiz={handleRegenerateQuiz}
-      />
+      <TabsContent value="quiz">
+        <QuizTab 
+          questions={courseContent?.questions || null}
+          isGenerating={isGeneratingQuiz}
+          onDifficultyChange={handleDifficultyChange}
+          saveUserAnswers={saveUserAnswersToHistory}
+          onRegenerateQuiz={handleRegenerateQuiz}
+        />
+      </TabsContent>
 
-      <MistakesTab />
+      <TabsContent value="mistakes">
+        <MistakesTab />
+      </TabsContent>
     </Tabs>
   );
 };
