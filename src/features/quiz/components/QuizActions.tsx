@@ -61,16 +61,14 @@ const QuizActions = ({
               </Button>
             )}
             
-            {(isCorrect || customExplanation) && (
-              <Button
-                variant="outline"
-                onClick={onToggleExplanation}
-                className="flex items-center gap-1"
-              >
-                <HelpCircle className="h-4 w-4" />
-                {isShowingExplanation ? "隐藏解析" : "显示解析"}
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              onClick={onToggleExplanation}
+              className="flex items-center gap-1"
+            >
+              <HelpCircle className="h-4 w-4" />
+              {isShowingExplanation ? "隐藏解析" : "显示解析"}
+            </Button>
           </>
         )}
       </div>

@@ -46,6 +46,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
       const currentQuestion = questions[currentQuestionIndex];
       const existingAnswer = userAnswers.find(a => a.questionId === currentQuestion.id);
       setSelectedOption(existingAnswer ? existingAnswer.selectedOption : null);
+      // Always show explanation if an answer exists for this question
       setIsShowingExplanation(!!existingAnswer);
     }
   }, [currentQuestionIndex, questions, userAnswers]);
@@ -87,6 +88,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
       ...prev.filter(a => a.questionId !== currentQuestion.id),
       newAnswer
     ]);
+    // Automatically show explanation after submitting an answer
     setIsShowingExplanation(true);
     setCustomExplanation(null);
   });
