@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import UploadTab from "@/features/tabs/UploadTab";
+import UploadTab from "@/features/tabs/components/UploadTab";
 import SummaryTab from "@/features/tabs/SummaryTab";
 import QuizTab from "@/features/tabs/QuizTab";
 import MistakesTab from "@/features/tabs/MistakesTab";
@@ -22,7 +22,7 @@ const MainContent = () => {
     handleStyleChange,
     handleLanguageChange,
     handleGenerateQuiz,
-    setCurrentQuizDifficulty,  // This is what we use instead of handleDifficultyChange
+    setCurrentQuizDifficulty,
     saveUserAnswersToHistory,
     handleRegenerateQuiz,
     selectedCourseId,
@@ -90,7 +90,7 @@ const MainContent = () => {
       <QuizTab 
         questions={courseContent?.questions || null}
         isGenerating={isGeneratingQuiz}
-        onDifficultyChange={setCurrentQuizDifficulty}  // Use setCurrentQuizDifficulty here
+        onDifficultyChange={setCurrentQuizDifficulty}
         saveUserAnswers={saveUserAnswersToHistory}
         onRegenerateQuiz={handleRegenerateQuiz}
       />

@@ -1,15 +1,13 @@
 
-import { FileText } from "lucide-react";
 import { TabsContent } from "@/components/ui/tabs";
 import FileUpload from "@/components/FileUpload";
-import { SummaryLanguage, QuestionDifficulty } from "@/types";
+import { SummaryLanguage } from "@/types";
 
 interface UploadTabProps {
   isLoading: boolean;
   handleContentLoaded: (
     content: string,
     generateQuiz: boolean,
-    quizDifficulty: QuestionDifficulty,
     language: SummaryLanguage,
     courseId: string
   ) => void;
