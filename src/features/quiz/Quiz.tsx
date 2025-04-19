@@ -6,10 +6,11 @@ import { RadioGroup } from "@/components/ui/radio-group";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useQuiz } from "@/hooks/useQuiz";
-import QuizOption from "./QuizOption";
-import QuizExplanation from "./QuizExplanation";
-import QuizProgress from "./QuizProgress";
-import QuizActions from "./QuizActions";
+import QuizOption from "./components/QuizOption";
+import QuizExplanation from "./components/QuizExplanation";
+import QuizProgress from "./components/QuizProgress";
+import QuizActions from "./components/QuizActions";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface QuizProps {
   questions: Question[];
@@ -36,11 +37,19 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
   } = useQuiz(questions, initialAnswers, saveUserAnswers);
 
   if (!questions || questions.length === 0) {
-    return <div className="text-center py-8 text-gray-500">没有可用的问题</div>;
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        没有可用的题目
+      </div>
+    );
   }
 
   if (!currentQuestion) {
-    return <div className="text-center py-8 text-gray-500">加载问题中...</div>;
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        加载题目中...
+      </div>
+    );
   }
   
   const userAnswer = userAnswers.find(answer => answer.questionId === currentQuestion?.id);
@@ -48,6 +57,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
   const isCorrect = userAnswer?.isCorrect;
 
   const handleSelectOption = (value: string) => {
+    if (isAnswerSubmitted) return;
     setSelectedOption(parseInt(value));
   };
 
@@ -66,8 +76,13 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
         userAnswers={userAnswers}
       />
 
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <div className="text-lg font-medium mb-4">
+      <motion.div 
+        className="bg-white p-6 rounded-lg shadow-sm"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="text-lg font-medium mb-6 prose max-w-none">
           <ReactMarkdown>{currentQuestion.text}</ReactMarkdown>
         </div>
 
@@ -77,32 +92,50 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
           className="space-y-3"
           disabled={isAnswerSubmitted}
         >
-          {currentQuestion.options.map((option, index) => (
-            <QuizOption
-              key={index}
-              index={index}
-              option={option}
-              isSubmitted={isAnswerSubmitted}
-              isSelected={selectedOption === index || userAnswer?.selectedOption === index}
-              isCorrect={index === currentQuestion.correctAnswer}
-              disabled={isAnswerSubmitted}
-            />
-          ))}
+          <AnimatePresence mode="wait">
+            {currentQuestion.options.map((option, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <QuizOption
+                  index={index}
+                  option={option}
+                  isSubmitted={isAnswerSubmitted}
+                  isSelected={selectedOption === index || userAnswer?.selectedOption === index}
+                  isCorrect={index === currentQuestion.correctAnswer}
+                  disabled={isAnswerSubmitted}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </RadioGroup>
 
-        {isAnswerSubmitted && isShowingExplanation && (
-          <QuizExplanation
-            isLoading={isLoadingExplanation}
-            explanation={currentQuestion.explanation}
-            customExplanation={customExplanation}
-          />
-        )}
+        <AnimatePresence>
+          {isAnswerSubmitted && isShowingExplanation && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <QuizExplanation
+                isLoading={isLoadingExplanation}
+                explanation={currentQuestion.explanation}
+                customExplanation={customExplanation}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="mt-6 flex justify-between">
           <Button
             variant="outline"
             onClick={handlePrevQuestion}
             disabled={currentIndex === 0}
+            className="hover:shadow-md transition-all duration-200"
           >
             上一题
           </Button>
@@ -122,7 +155,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
             isLastQuestion={currentIndex === questions.length - 1}
           />
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -4,8 +4,11 @@ import { Question, QuestionDifficulty, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
+import { toast } from "sonner";
 import Quiz from "./Quiz";
+import { motion } from "framer-motion";
 
 interface QuizGeneratorProps {
   questions: {
@@ -30,7 +33,6 @@ const QuizGenerator = ({
   const [key, setKey] = useState<number>(0);
   const [answersById, setAnswersById] = useState<{[id: string]: UserAnswer[]}>({});
   
-  // Generate a unique ID for each batch of questions
   const getQuizBatchId = (difficulty: QuestionDifficulty) => {
     if (!questions || !questions[difficulty] || questions[difficulty]?.length === 0) {
       return `${difficulty}-empty`;
@@ -42,19 +44,16 @@ const QuizGenerator = ({
     return `${difficulty}-${firstId}-${lastId}`;
   };
 
-  // Handle difficulty change
   const handleDifficultyChange = (value: string) => {
     const difficulty = value as QuestionDifficulty;
     setActiveDifficulty(difficulty);
     onDifficultyChange(difficulty);
-    setKey(prev => prev + 1); // Force Quiz component to reset
+    setKey(prev => prev + 1);
   };
 
-  // Handle quiz regeneration
   const handleRegenerateClick = () => {
     if (onRegenerateQuiz) {
       const batchId = getQuizBatchId(activeDifficulty);
-      // Remove answers for this batch when regenerating
       setAnswersById(prev => {
         const updated = { ...prev };
         delete updated[batchId];
@@ -62,11 +61,11 @@ const QuizGenerator = ({
       });
       
       onRegenerateQuiz(activeDifficulty);
-      setKey(prev => prev + 1); // Force Quiz component to reset
+      setKey(prev => prev + 1);
+      toast.info("正在重新生成测验题...");
     }
   };
 
-  // Get current questions for active difficulty
   const getCurrentQuestions = () => {
     if (!questions) return [];
     return questions[activeDifficulty] || [];
@@ -75,7 +74,6 @@ const QuizGenerator = ({
   const currentQuestions = getCurrentQuestions();
   const isCurrentDifficultyGenerating = isGenerating && !currentQuestions?.length;
   
-  // Save user answers with batch ID
   const handleSaveUserAnswers = (userAnswers: UserAnswer[]) => {
     if (!userAnswers.length) return;
     
@@ -91,18 +89,15 @@ const QuizGenerator = ({
     }
   };
   
-  // Get answers for current batch
   const getCurrentBatchAnswers = () => {
     const batchId = getQuizBatchId(activeDifficulty);
     return answersById[batchId] || [];
   };
 
-  // Reset key when difficulty changes
   useEffect(() => {
     setKey(prev => prev + 1);
   }, [activeDifficulty]);
   
-  // Reset key when questions change
   useEffect(() => {
     if (questions && questions[activeDifficulty]) {
       setTimeout(() => {
@@ -117,61 +112,67 @@ const QuizGenerator = ({
   }, [questions, activeDifficulty, answersById]);
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>知识测验</CardTitle>
-        {onRegenerateQuiz && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRegenerateClick}
-            disabled={isGenerating}
-            className="space-x-1"
-          >
-            {isGenerating && activeDifficulty ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-1" />
-            )}
-            <span>重新生成</span>
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent>
-        <Tabs 
-          defaultValue="medium" 
-          value={activeDifficulty}
-          onValueChange={handleDifficultyChange}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="easy">简单</TabsTrigger>
-            <TabsTrigger value="medium">普通</TabsTrigger>
-            <TabsTrigger value="hard">困难</TabsTrigger>
-          </TabsList>
-          
-          {isCurrentDifficultyGenerating ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
-              <span className="ml-3 text-lg text-edu-600">正在生成测验题...</span>
-            </div>
-          ) : currentQuestions && currentQuestions.length > 0 ? (
-            <TabsContent value={activeDifficulty} className="mt-0">
-              <Quiz 
-                key={`${activeDifficulty}-${key}`} 
-                questions={currentQuestions}
-                initialAnswers={getCurrentBatchAnswers()}
-                saveUserAnswers={handleSaveUserAnswers}
-              />
-            </TabsContent>
-          ) : (
-            <div className="text-center py-10 text-gray-500">
-              当前难度尚未生成测验题
-            </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-2xl font-bold">知识测验</CardTitle>
+          {onRegenerateQuiz && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRegenerateClick}
+              disabled={isGenerating}
+              className="space-x-2 hover:shadow-md transition-all duration-200"
+            >
+              <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+              <span>重新生成</span>
+            </Button>
           )}
-        </Tabs>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          <Tabs 
+            defaultValue="medium" 
+            value={activeDifficulty}
+            onValueChange={handleDifficultyChange}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="easy" className="data-[state=active]:bg-green-100">简单</TabsTrigger>
+              <TabsTrigger value="medium" className="data-[state=active]:bg-yellow-100">普通</TabsTrigger>
+              <TabsTrigger value="hard" className="data-[state=active]:bg-red-100">困难</TabsTrigger>
+            </TabsList>
+            
+            {isCurrentDifficultyGenerating ? (
+              <LoadingState message="正在生成测验题..." />
+            ) : currentQuestions && currentQuestions.length > 0 ? (
+              <motion.div
+                key={key}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <TabsContent value={activeDifficulty} className="mt-0">
+                  <Quiz 
+                    key={`${activeDifficulty}-${key}`} 
+                    questions={currentQuestions}
+                    initialAnswers={getCurrentBatchAnswers()}
+                    saveUserAnswers={handleSaveUserAnswers}
+                  />
+                </TabsContent>
+              </motion.div>
+            ) : (
+              <div className="text-center py-10 text-muted-foreground">
+                当前难度尚未生成测验题
+              </div>
+            )}
+          </Tabs>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
