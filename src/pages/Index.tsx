@@ -1,121 +1,25 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import ApiKeyInput from "@/components/ApiKeyInput";
 import { openaiService } from "@/services/openaiService";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import TopControls from "@/components/TopControls";
-import MainTabs from "@/components/MainTabs";
 import CourseCatalog from "@/components/courses/CourseCatalog";
-import CourseHistory from "@/components/courses/CourseHistory";
-import { useContentManager } from "@/hooks/useContentManager";
-import { useCourseView } from "@/hooks/useCourseView";
-import { useContentHistory } from "@/hooks/useContentHistory";
+import { Button } from "@/components/ui/button";
+import { Plus, BookOpen } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isKeySet, setIsKeySet] = useState<boolean>(!!openaiService.getApiKey());
   
-  const {
-    courseContent,
-    isLoading,
-    isGeneratingQuiz,
-    summaryProgress,
-    quizProgress,
-    activeTab,
-    setActiveTab,
-    handleContentLoaded,
-    handleStyleChange,
-    handleLanguageChange,
-    handleGenerateQuiz,
-    handleRegenerateQuiz,
-    setCurrentQuizDifficulty
-  } = useContentManager();
-
-  const {
-    selectedCourseId,
-    setSelectedCourseId,
-    view,
-    setView,
-    handleSelectHistoryContent
-  } = useCourseView();
-
-  const {
-    saveToHistory,
-    saveUserAnswersToHistory
-  } = useContentHistory();
-
-  useEffect(() => {
-    if (courseContent?.rawContent && !isLoading) {
-      saveToHistory(courseContent, selectedCourseId);
-    }
-  }, [courseContent?.summary, courseContent?.questions, selectedCourseId]);
-
   const handleApiKeySet = () => {
     setIsKeySet(true);
   };
 
   const handleCourseSelect = (courseId: string) => {
-    setSelectedCourseId(courseId);
-    setView("history");
-  };
-
-  const renderContent = () => {
-    if (!isKeySet) {
-      return (
-        <div className="flex justify-center my-8">
-          <ApiKeyInput onApiKeySet={handleApiKeySet} />
-        </div>
-      );
-    }
-
-    if (view === "catalog") {
-      return (
-        <CourseCatalog onCourseSelect={handleCourseSelect} />
-      );
-    }
-
-    if (view === "history") {
-      return (
-        <CourseHistory 
-          courseId={selectedCourseId}
-          onBackClick={() => setView("catalog")}
-          onSelectContent={handleSelectHistoryContent}
-        />
-      );
-    }
-
-    return (
-      <>
-        <TopControls 
-          onSelectHistoryContent={handleSelectHistoryContent} 
-          onApiKeySet={handleApiKeySet} 
-          onViewCourses={() => setView("catalog")}
-        />
-        
-        <MainTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          courseContent={courseContent}
-          isLoading={isLoading}
-          isGeneratingQuiz={isGeneratingQuiz}
-          handleContentLoaded={handleContentLoaded}
-          handleStyleChange={handleStyleChange}
-          handleLanguageChange={handleLanguageChange}
-          handleGenerateQuiz={handleGenerateQuiz}
-          handleDifficultyChange={setCurrentQuizDifficulty}
-          saveUserAnswersToHistory={(answers) => 
-            saveUserAnswersToHistory(answers, courseContent!, selectedCourseId)
-          }
-          handleRegenerateQuiz={handleRegenerateQuiz}
-          selectedCourseId={selectedCourseId}
-          onSelectCourse={setSelectedCourseId}
-          onViewCourses={() => setView("catalog")}
-          summaryProgress={summaryProgress}
-          quizProgress={quizProgress}
-        />
-      </>
-    );
+    navigate(`/course/${courseId}`);
   };
 
   return (
@@ -124,7 +28,37 @@ const Index = () => {
         <div className="flex-1">
           <Header />
           <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
-            {renderContent()}
+            {!isKeySet ? (
+              <div className="flex justify-center my-8">
+                <ApiKeyInput onApiKeySet={handleApiKeySet} />
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h1 className="text-2xl font-bold">我的课程</h1>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate("/mistakes")}
+                      className="flex items-center gap-2"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      错题本
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      onClick={() => navigate("/input")}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      新建课程笔记
+                    </Button>
+                  </div>
+                </div>
+                
+                <CourseCatalog onCourseSelect={handleCourseSelect} />
+              </>
+            )}
           </main>
           <Footer />
         </div>
