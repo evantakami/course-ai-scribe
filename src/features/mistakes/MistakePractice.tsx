@@ -28,8 +28,27 @@ const MistakePractice = ({ mistakes, onBackToList, onUpdateMistakes }: MistakePr
   const handleSaveAnswers = (answers: UserAnswer[]) => {
     if (answers.length > 0) {
       setPracticeAnswers(answers);
-      // Update parent with new attempt stats but don't delete correct answers
-      onUpdateMistakes(answers);
+      
+      // Update attempts history but don't remove correct answers
+      const updatedMistakes = mistakes.map(mistake => {
+        const newAnswer = answers.find(a => a.questionId === mistake.questionId);
+        if (!newAnswer) return mistake;
+        
+        // Create or update attempts array
+        const attempts = mistake.attempts || [];
+        attempts.push({
+          isCorrect: newAnswer.isCorrect,
+          timestamp: new Date()
+        });
+        
+        return {
+          ...mistake,
+          attempts
+        };
+      });
+      
+      // Pass updated mistakes with attempt history to parent
+      onUpdateMistakes(updatedMistakes);
     }
   };
 

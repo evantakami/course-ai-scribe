@@ -1,6 +1,6 @@
 
 import { TabsContent } from "@/components/ui/tabs";
-import MistakeCollection from "@/features/mistakes/MistakeCollection";
+import MistakeCollection from "@/components/MistakeCollection";
 
 const MistakesTab = () => {
   return (

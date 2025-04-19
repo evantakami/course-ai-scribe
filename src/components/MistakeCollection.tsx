@@ -19,16 +19,20 @@ const MistakeCollection = () => {
 
   const handleUpdateMistakes = (newAnswers: UserAnswer[]) => {
     try {
-      // Only update correctly answered questions
-      const correctAnswers = newAnswers.filter(answer => answer.isCorrect);
+      // Update the mistake collection with new answers (including attempts)
+      // but DO NOT remove correct answers
+      const updatedMistakes = mistakes.map(mistake => {
+        const updatedMistake = newAnswers.find(a => a.questionId === mistake.questionId);
+        return updatedMistake || mistake;
+      });
       
-      if (correctAnswers.length > 0) {
-        // Remove correct answers from mistake collection
-        correctAnswers.forEach(answer => {
-          deleteMistake(answer.questionId);
-        });
-        
-        toast.success(`恭喜！已掌握 ${correctAnswers.length} 道题目`);
+      // Save to localStorage
+      localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
+      
+      // Show toast about practice results
+      const correctCount = newAnswers.filter(a => a.isCorrect).length;
+      if (correctCount > 0) {
+        toast.success(`本次练习正确: ${correctCount} 道题`);
       }
     } catch (error) {
       console.error("Failed to update mistakes:", error);
