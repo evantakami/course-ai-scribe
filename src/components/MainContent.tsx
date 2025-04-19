@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UploadTab from "@/features/tabs/components/UploadTab";
@@ -79,11 +78,10 @@ const MainContent = () => {
         onSelectCourse={onSelectCourse}
       />
 
-      <SummaryTab 
-        summary={courseContent?.summary || null}
+      <SummaryTab
+        summary={courseContent?.summary}
         isLoading={isLoading}
         onStyleChange={handleStyleChange}
-        onLanguageChange={handleLanguageChange}
         onGenerateQuiz={handleGenerateQuiz}
       />
 

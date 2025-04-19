@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserAnswer, Question } from "@/types";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -13,6 +13,7 @@ interface MistakePracticeProps {
 
 const MistakePractice = ({ mistakes, onBackToList, onUpdateMistakes }: MistakePracticeProps) => {
   const [practiceAnswers, setPracticeAnswers] = useState<UserAnswer[]>([]);
+  const [processedAnswerIds, setProcessedAnswerIds] = useState<number[]>([]);
   
   // Convert mistakes to questions format for the Quiz component
   const questions: Question[] = mistakes.map((mistake) => ({
@@ -27,8 +28,25 @@ const MistakePractice = ({ mistakes, onBackToList, onUpdateMistakes }: MistakePr
   // Handle saving answers from Quiz component
   const handleSaveAnswers = (answers: UserAnswer[]) => {
     if (answers.length > 0) {
+      // Filter to only include answers that haven't been processed yet
+      const newCorrectAnswers = answers.filter(answer => 
+        answer.isCorrect && 
+        !processedAnswerIds.includes(answer.questionId)
+      );
+      
+      if (newCorrectAnswers.length > 0) {
+        // Update our tracking of processed answers
+        setProcessedAnswerIds(prev => [
+          ...prev,
+          ...newCorrectAnswers.map(a => a.questionId)
+        ]);
+        
+        // Only update with answers that weren't previously processed
+        onUpdateMistakes(newCorrectAnswers);
+      }
+      
+      // Always update the practice answers state
       setPracticeAnswers(answers);
-      onUpdateMistakes(answers);
     }
   };
 
