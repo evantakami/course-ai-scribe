@@ -11,10 +11,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { SummaryLanguage } from "@/types";
 import { Loader2 } from "lucide-react";
 import CourseSelector from "@/components/courses/CourseSelector";
-import FileUploader from "@/components/FileUploader";
 import CustomPromptSettings from "@/components/CustomPromptSettings";
 
 interface UploadTabProps {
@@ -22,7 +20,6 @@ interface UploadTabProps {
   handleContentLoaded: (
     content: string,
     generateQuiz: boolean,
-    language: SummaryLanguage,
     courseId: string
   ) => void;
   selectedCourseId: string;
@@ -36,15 +33,10 @@ const UploadTab = ({
   onSelectCourse
 }: UploadTabProps) => {
   const [content, setContent] = useState<string>("");
-  const [language, setLanguage] = useState<SummaryLanguage>("chinese");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
-  };
-
-  const handleLanguageChange = (value: string) => {
-    setLanguage(value as SummaryLanguage);
   };
 
   const handleGenerateQuizChange = (value: string) => {
@@ -56,11 +48,7 @@ const UploadTab = ({
       alert("请输入至少50个字符的内容");
       return;
     }
-    handleContentLoaded(content, generateQuiz, language, selectedCourseId);
-  };
-
-  const handleUploadSuccess = (text: string) => {
-    setContent(text);
+    handleContentLoaded(content, generateQuiz, selectedCourseId);
   };
 
   return (
@@ -75,73 +63,30 @@ const UploadTab = ({
       
       <Card className="p-6">
         <div className="space-y-4">
-          <FileUploader 
-            onDrop={(files) => {
-              const file = files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  const text = e.target?.result as string;
-                  handleUploadSuccess(text);
-                };
-                reader.readAsText(file);
-              }
-            }}
-            selectedFile={null}
-            onHandleManualTextInput={() => {}}
-            onHandleUpload={() => {}}
-            isLoading={isLoading}
-            selectedCourseId={selectedCourseId}
-            onSelectCourse={onSelectCourse}
-          />
-          
           <Textarea
-            placeholder="粘贴文本内容，或上传文件..."
+            placeholder="粘贴文本内容..."
             className="min-h-[250px] font-mono text-sm"
             value={content}
             onChange={handleTextChange}
           />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">
-                语言
-              </label>
-              <Select
-                value={language}
-                onValueChange={handleLanguageChange}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择语言" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="chinese">中文</SelectItem>
-                  <SelectItem value="english">英文</SelectItem>
-                  <SelectItem value="spanish">西班牙语</SelectItem>
-                  <SelectItem value="french">法语</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-1 block">
-                生成测验题
-              </label>
-              <Select
-                value={generateQuiz ? "yes" : "no"}
-                onValueChange={handleGenerateQuizChange}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="是否生成测验题" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">是</SelectItem>
-                  <SelectItem value="no">否</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <label className="text-sm font-medium mb-1 block">
+              生成测验题
+            </label>
+            <Select
+              value={generateQuiz ? "yes" : "no"}
+              onValueChange={handleGenerateQuizChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="是否生成测验题" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yes">是</SelectItem>
+                <SelectItem value="no">否</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <Button

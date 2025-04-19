@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useSummaryGeneration } from "@/features/summary/hooks/useSummaryGeneration";
 import { useQuizGeneration } from "@/features/quiz/hooks/useQuizGeneration";
 import { useHistoryManagement } from "@/features/history/hooks/useHistoryManagement";
+import { openaiService } from "@/services/openaiService";
 
 export const useContentManager = () => {
   const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
@@ -47,6 +48,7 @@ export const useContentManager = () => {
           summary: {
             content: summaries.casual.content,
             style: "casual",
+            language: "chinese", // Default language is Chinese
             allStyles: {
               casual: summaries.casual.content,
               academic: summaries.academic.content,
@@ -83,7 +85,7 @@ export const useContentManager = () => {
           summary: {
             ...prev.summary,
             style: style,
-            content: prev.summary.allStyles[style]
+            content: prev.summary.allStyles[style] as string
           }
         };
       });

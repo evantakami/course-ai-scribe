@@ -2,7 +2,7 @@
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Summary, SummaryStyle, SummaryLanguage } from "@/types";
+import { Summary, SummaryStyle } from "@/types";
 import { Loader2, BookOpen, HelpCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { 
@@ -12,13 +12,11 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import LanguageSelector from "@/components/LanguageSelector";
 
 interface SummaryTabProps {
   summary: Summary | null;
   isLoading: boolean;
   onStyleChange: (style: SummaryStyle) => void;
-  onLanguageChange: (language: SummaryLanguage) => void;
   onGenerateQuiz: () => void;
 }
 
@@ -26,7 +24,6 @@ const SummaryTab = ({
   summary,
   isLoading,
   onStyleChange,
-  onLanguageChange,
   onGenerateQuiz
 }: SummaryTabProps) => {
   const handleStyleChange = (value: string) => {
@@ -61,12 +58,6 @@ const SummaryTab = ({
                   <SelectItem value="basic">基础概念</SelectItem>
                 </SelectContent>
               </Select>
-              
-              <LanguageSelector
-                value={summary?.language || "chinese"}
-                onChange={onLanguageChange}
-                disabled={isLoading}
-              />
               
               <Button
                 variant="outline"
