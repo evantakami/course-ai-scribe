@@ -22,7 +22,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { CustomPromptType } from "@/types";
+import { CustomPromptType, CustomPrompt } from "@/types";
 
 const promptTypes: { value: CustomPromptType; label: string }[] = [
   { value: "summary", label: "摘要生成" },

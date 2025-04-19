@@ -1,16 +1,23 @@
-
 import { useState, useEffect } from "react";
-import { Summary, SummaryStyle } from "@/types";
+import { Summary, SummaryStyle, SummaryLanguage } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface CourseSummaryProps {
   summary: Summary | null;
   isLoading: boolean;
   onStyleChange: (style: SummaryStyle) => void;
+  onLanguageChange: (language: SummaryLanguage) => void;
   onGenerateQuiz: () => void;
 }
 
@@ -22,6 +29,7 @@ const CourseSummary = ({
   summary,
   isLoading,
   onStyleChange,
+  onLanguageChange,
   onGenerateQuiz,
 }: CourseSummaryProps) => {
   const [activeStyle, setActiveStyle] = useState<SummaryStyle>(summary?.style || "casual");
@@ -69,6 +77,23 @@ const CourseSummary = ({
     }
   };
 
+  const handleLanguageChange = (value: string) => {
+    onLanguageChange(value as SummaryLanguage);
+    setSavedSummaries({});
+    setLocalLoading({
+      casual: false,
+      academic: false,
+      basic: false
+    });
+  };
+
+  const languageOptions = [
+    { value: "chinese", label: "中文" },
+    { value: "english", label: "English" },
+    { value: "spanish", label: "Español" },
+    { value: "french", label: "Français" }
+  ];
+
   const isCurrentStyleLoading = localLoading[activeStyle] || (isLoading && !savedSummaries[activeStyle]);
 
   return (
@@ -76,6 +101,22 @@ const CourseSummary = ({
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>课程摘要</CardTitle>
         <div className="flex items-center space-x-2">
+          <Select 
+            value={summary?.language || "chinese"} 
+            onValueChange={handleLanguageChange}
+            disabled={isLoading}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="选择语言" />
+            </SelectTrigger>
+            <SelectContent>
+              {languageOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button 
             onClick={onGenerateQuiz} 
             disabled={isLoading || !summary}

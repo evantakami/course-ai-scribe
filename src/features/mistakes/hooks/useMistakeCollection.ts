@@ -3,25 +3,19 @@ import { useState, useEffect } from 'react';
 import { UserAnswer } from "@/types";
 import { toast } from "sonner";
 
-export const useMistakeCollection = (courseId?: string) => {
+export const useMistakeCollection = () => {
   const [mistakes, setMistakes] = useState<UserAnswer[]>([]);
   const [selectedMistake, setSelectedMistake] = useState<UserAnswer | null>(null);
 
   useEffect(() => {
     loadMistakes();
-  }, [courseId]); // Added courseId as a dependency
+  }, []);
 
   const loadMistakes = () => {
     try {
       const mistakesString = localStorage.getItem('mistake_collection') || '[]';
-      const allMistakes = JSON.parse(mistakesString);
-      
-      if (courseId) {
-        // Filter mistakes by courseId if specified
-        setMistakes(allMistakes.filter((m: UserAnswer) => m.courseId === courseId));
-      } else {
-        setMistakes(allMistakes);
-      }
+      const parsed = JSON.parse(mistakesString);
+      setMistakes(parsed);
     } catch (error) {
       console.error("Failed to load mistakes:", error);
       setMistakes([]);
@@ -30,25 +24,14 @@ export const useMistakeCollection = (courseId?: string) => {
 
   const deleteMistake = (questionId: number) => {
     try {
-      const mistakesString = localStorage.getItem('mistake_collection') || '[]';
-      const allMistakes = JSON.parse(mistakesString);
-      
-      // Remove the mistake from all mistakes
-      const updatedAllMistakes = allMistakes.filter((m: UserAnswer) => m.questionId !== questionId);
-      localStorage.setItem('mistake_collection', JSON.stringify(updatedAllMistakes));
-      
-      // Update the state with filtered mistakes
-      if (courseId) {
-        setMistakes(updatedAllMistakes.filter((m: UserAnswer) => m.courseId === courseId));
-      } else {
-        setMistakes(updatedAllMistakes);
-      }
+      const updatedMistakes = mistakes.filter(m => m.questionId !== questionId);
+      setMistakes(updatedMistakes);
+      localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
+      toast.success("已从错题本中删除");
       
       if (selectedMistake?.questionId === questionId) {
         setSelectedMistake(null);
       }
-      
-      toast.success("已从错题本中删除");
     } catch (error) {
       console.error("Failed to delete mistake:", error);
       toast.error("删除失败");
@@ -57,17 +40,7 @@ export const useMistakeCollection = (courseId?: string) => {
 
   const clearAllMistakes = () => {
     try {
-      if (courseId) {
-        // Only clear mistakes for this course
-        const mistakesString = localStorage.getItem('mistake_collection') || '[]';
-        const allMistakes = JSON.parse(mistakesString);
-        const otherMistakes = allMistakes.filter((m: UserAnswer) => m.courseId !== courseId);
-        localStorage.setItem('mistake_collection', JSON.stringify(otherMistakes));
-      } else {
-        // Clear all mistakes
-        localStorage.removeItem('mistake_collection');
-      }
-      
+      localStorage.removeItem('mistake_collection');
       setMistakes([]);
       setSelectedMistake(null);
       toast.success("已清空错题本");

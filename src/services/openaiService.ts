@@ -1,8 +1,9 @@
-import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage } from "@/types";
+
+import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage, CustomPrompt } from "@/types";
 
 class OpenAIService {
   private apiKey: string | null = null;
-  private model: string = "gpt-4o-mini";
+  private model: string = "gpt-4o-mini";  // 默认模型
   private customPrompts: Record<string, Record<string, string>> = {
     summary: {},
     questions: {},
@@ -94,7 +95,7 @@ class OpenAIService {
     *   使用标准的Markdown格式。
     *   标题层级分明 (\`##\`, \`###\`)。
     *   关键术语、模型、工具名称使用**加粗**。
-    *   ���用列表（有序/无序）清晰组织信息。`;
+    *   使用列表（有序/无序）清晰组织信息。`;
       } else if (style === 'casual') {
         return `**任务**: 对提供的教学内容（如课程录音转录、介绍性文章或讲座）进行清晰简明、易于理解的总结。
 
@@ -150,7 +151,7 @@ class OpenAIService {
     
     switch (type) {
       case 'summary':
-        return "对以下课程内容进行总结。确保捕捉所有关键知���点和重要信息。内容要全面但简洁。内容必须采用Markdown格式以提高可读性，包括标题、重点内容加粗、列表等。";
+        return "对以下课程内容进行总结。确保捕捉所有关键知识点和重要信息。内容要全面但简洁。内容必须采用Markdown格式以提高可读性，包括标题、重点内容加粗、列表等。";
       case 'questions':
         return "根据这个课程内容创建多选题。每个问题必须有恰好4个选项，且只有一个正确答案。所有问题和答案必须直接基于提供的内容，不要引入外部信息。对每个问题，包含一个解释字段，用Markdown格式详细解释为什么正确答案是对的，以及其他选项为什么是错误的。确保解释清晰易懂，有教育意义。不要添加没有在原始内容中出现的信息。";
       case 'explanation':
@@ -279,74 +280,33 @@ class OpenAIService {
     3. 所有问题和答案必须直接基于提供的内容 - 不要引入外部信息
     4. ${languagePrompt}
     5. 为每个问题添加一个explanation字段，使用Markdown格式提供详细解释，解释为什么正确答案是正确的，其他选项为什么是错误的
-    6. 以下是JSON格式的示例，请严格按照这个格式返回响应：
+    6. 以这种JSON格式返回响应：
     [
       {
         "id": 1,
         "text": "这里是问题文本？",
         "options": ["选项A", "选项B", "选项C", "选项D"],
-        "correctAnswer": 0,
+        "correctAnswer": 0, // 正确选项的索引（0-3）
         "difficulty": "${difficulty}",
-        "explanation": "这里是详细解释"
-      }
+        "explanation": "这里是Markdown格式的详细解释说明为什么正确答案是对的，以及其他选项为什么是错误的"
+      },
+      ...更多问题
     ]
     
-    请确保返回格式正确的纯JSON，不要添加任何其他格式或标记，不要使用格式标记如反引号（\`\`\`json）等。只返回JSON数组。
+    请确保返回格式正确的JSON，不要添加任何额外的文本。
     `;
 
+    const result = await this.callAPI(prompt);
+    
     try {
-      const result = await this.callAPI(prompt);
+      // Extract JSON from the response (in case there's extra text)
+      const jsonMatch = result.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error("Failed to parse questions JSON");
       
-      // Clean the response to ensure it only contains JSON
-      let cleanedResult = result;
-      
-      // Remove any code block markers if present
-      cleanedResult = cleanedResult.replace(/```json|```/g, '');
-      
-      // Trim any leading or trailing whitespace
-      cleanedResult = cleanedResult.trim();
-      
-      // Try to extract JSON from the response if it's not proper JSON
-      const jsonMatch = cleanedResult.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (jsonMatch) {
-        cleanedResult = jsonMatch[0];
-      }
-      
-      // Parse the JSON
-      try {
-        const questions = JSON.parse(cleanedResult);
-        if (!Array.isArray(questions)) {
-          throw new Error("Response is not a valid array");
-        }
-        
-        // Validate each question has the required fields
-        questions.forEach((q, index) => {
-          if (!q.id) q.id = index + 1;
-          if (!q.difficulty) q.difficulty = difficulty;
-          if (!Array.isArray(q.options) || q.options.length !== 4) {
-            throw new Error(`Question ${index + 1} does not have exactly 4 options`);
-          }
-          if (typeof q.correctAnswer !== 'number' || q.correctAnswer < 0 || q.correctAnswer > 3) {
-            throw new Error(`Question ${index + 1} has an invalid correctAnswer value`);
-          }
-        });
-        
-        return questions;
-      } catch (parseError) {
-        console.error("Error parsing JSON:", parseError, "Raw JSON:", cleanedResult);
-        
-        // Fallback: if parsing fails, return a generic question
-        return [{
-          id: 1,
-          text: "无法生成问题，请重试。",
-          options: ["选项A", "选项B", "选项C", "选项D"],
-          correctAnswer: 0,
-          difficulty: difficulty,
-          explanation: "由于API返回格式错误，无法生成正确的问题。"
-        }];
-      }
+      const questions = JSON.parse(jsonMatch[0]);
+      return questions;
     } catch (error) {
-      console.error("Error generating questions:", error);
+      console.error("Error parsing questions response:", error);
       throw new Error("生成问题失败。请重试。");
     }
   }

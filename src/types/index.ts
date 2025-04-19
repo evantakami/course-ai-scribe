@@ -41,10 +41,6 @@ export interface UserAnswer {
   explanation?: string;
   timestamp: Date | string;
   courseId?: string;
-  attempts?: Array<{
-    isCorrect: boolean;
-    timestamp: Date | string;
-  }>;
 }
 
 export interface Course {

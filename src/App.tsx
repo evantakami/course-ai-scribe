@@ -12,17 +12,19 @@ const queryClient = new QueryClient();
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster position="bottom-center" />
-        </TooltipProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <TooltipProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster position="bottom-center" />
+          </TooltipProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 };
 
