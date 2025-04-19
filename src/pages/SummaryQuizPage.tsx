@@ -27,10 +27,12 @@ const SummaryQuizPage = () => {
     handleGenerateQuiz,
     handleRegenerateQuiz,
     setCurrentQuizDifficulty,
-    setActiveTab: setContentManagerActiveTab
+    setActiveTab: setContentManagerActiveTab,
+    handleContentLoaded
   } = useContentManager();
 
   const { saveUserAnswersToHistory, getHistoryItemById } = useContentHistory();
+  const [loadedFromHistory, setLoadedFromHistory] = useState(false);
 
   useEffect(() => {
     // Check if there is content in session storage
@@ -45,24 +47,42 @@ const SummaryQuizPage = () => {
     }
     
     // Try to load content from history if not in session storage
-    if (!storedContent && contentId) {
+    if ((!storedContent || !currentCourseId) && contentId && !loadedFromHistory) {
+      console.log("Trying to load content from history for ID:", contentId);
       const historyItem = getHistoryItemById(contentId);
+      
       if (historyItem) {
         console.log("Content found in history:", historyItem.id);
         sessionStorage.setItem('current_content', historyItem.rawContent);
         sessionStorage.setItem('current_course_id', historyItem.courseId);
+        
+        // Process the content from history
+        if (historyItem.rawContent && historyItem.courseId) {
+          const language = historyItem.language || "chinese";
+          console.log("Loading content from history with language:", language);
+          
+          handleContentLoaded(
+            historyItem.rawContent,
+            true,
+            "medium",
+            language,
+            historyItem.courseId
+          );
+          
+          setLoadedFromHistory(true);
+        }
       } else {
-        console.log("Content not found in history or session storage");
+        console.log("Content not found in history for ID:", contentId);
         toast.error("没有找到内容，请返回重试");
         navigate('/');
       }
     } else {
-      console.log("Content found in session storage");
+      console.log("Content found in session storage, not loading from history");
     }
     
     // Sync tabs
     setContentManagerActiveTab(activeTab);
-  }, [contentId, activeTab, navigate, setContentManagerActiveTab, getHistoryItemById]);
+  }, [contentId, activeTab, navigate, setContentManagerActiveTab, getHistoryItemById, handleContentLoaded, loadedFromHistory]);
 
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
@@ -141,7 +161,7 @@ const SummaryQuizPage = () => {
                   onStyleChange={handleStyleChange}
                   onLanguageChange={handleLanguageChange}
                   onGenerateQuiz={handleGenerateQuiz}
-                  showGenerateControls={false}
+                  showGenerateControls={true}
                 />
               </TabsContent>
               

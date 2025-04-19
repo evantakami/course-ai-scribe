@@ -66,6 +66,9 @@ const CourseSummary = ({
           [summary.style]: false
         }));
       }
+      
+      // Update the active style to match the summary style
+      setActiveStyle(summary.style);
     }
   }, [summary, isLoading]);
 
@@ -95,6 +98,21 @@ const CourseSummary = ({
     { value: "spanish", label: "Español" },
     { value: "french", label: "Français" }
   ];
+
+  const getSummaryContent = () => {
+    if (summary) {
+      if (summary.allStyles && summary.allStyles[activeStyle]) {
+        return summary.allStyles[activeStyle];
+      }
+      // If we don't have this style in allStyles but have the main content
+      if (summary.style === activeStyle) {
+        return summary.content;
+      }
+    }
+    return null;
+  };
+
+  const summaryContent = getSummaryContent();
 
   return (
     <Card className="w-full">
@@ -130,7 +148,7 @@ const CourseSummary = ({
       </CardHeader>
       <CardContent>
         <Tabs 
-          defaultValue="casual" 
+          defaultValue={activeStyle} 
           value={activeStyle}
           onValueChange={handleStyleChange}
           className="w-full"
@@ -146,11 +164,11 @@ const CourseSummary = ({
               <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
               <span className="ml-2 text-edu-600">正在加载摘要...</span>
             </div>
-          ) : summary && savedSummaries[activeStyle] ? (
+          ) : summaryContent ? (
             <TabsContent value={activeStyle} className="mt-0">
               <div className="prose max-w-none">
                 <ReactMarkdown>
-                  {savedSummaries[activeStyle]}
+                  {summaryContent}
                 </ReactMarkdown>
               </div>
             </TabsContent>

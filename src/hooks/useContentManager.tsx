@@ -51,7 +51,6 @@ export const useContentManager = () => {
     try {
       setSummaryProgress(20);
       
-      // Generate all three styles in parallel
       const [casualSummaryPromise, academicSummaryPromise, basicSummaryPromise] = [
         openaiService.generateSummary(content, "casual", language),
         openaiService.generateSummary(content, "academic", language),
@@ -67,7 +66,6 @@ export const useContentManager = () => {
       setSummaryProgress(100);
       toast.success("所有风格的摘要已生成");
       
-      // Return all summary styles at once
       return {
         casual: casualSummary,
         academic: academicSummary,
@@ -80,7 +78,6 @@ export const useContentManager = () => {
     }
   };
 
-  // Generate summary and quiz in parallel
   const handleContentLoaded = async (
     content: string,
     generateQuiz: boolean = true,
@@ -88,11 +85,20 @@ export const useContentManager = () => {
     language: SummaryLanguage = "chinese",
     courseId: string
   ) => {
+    if (!content) {
+      console.error("No content provided to handleContentLoaded");
+      return false;
+    }
+    
     if (!openaiService.getApiKey()) {
+      console.error("No OpenAI API key found");
       toast.error("请先设置OpenAI API密钥");
-      return;
+      return false;
     }
 
+    console.log("Processing content:", content.substring(0, 50) + "...");
+    console.log("Language:", language, "Course ID:", courseId);
+    
     setIsLoading(true);
     setCurrentLanguage(language);
     setSummaryProgress(0);
@@ -105,15 +111,14 @@ export const useContentManager = () => {
     });
 
     try {
-      // Start both processes in parallel
       const summariesPromise = generateAllSummaryStyles(content, language);
       const questionsPromise = generateQuiz ? generateAllQuestions(content, language) : Promise.resolve(null);
       
-      // Wait for both to complete
       const [summaries, questions] = await Promise.all([summariesPromise, questionsPromise]);
       
+      console.log("Content processing complete. Summaries:", !!summaries, "Questions:", !!questions);
+      
       if (summaries) {
-        // Use the casual style as the default displayed summary
         setCourseContent({
           rawContent: content,
           summary: {
@@ -128,9 +133,18 @@ export const useContentManager = () => {
           },
           questions
         });
+        
+        console.log("Updated courseContent with summaries and questions");
+        return true;
+      } else {
+        console.error("Failed to generate summaries");
+        setCourseContent({
+          rawContent: content,
+          summary: null,
+          questions
+        });
+        return false;
       }
-      
-      return true;
     } catch (error) {
       console.error("Error processing content:", error);
       toast.error("处理内容时出错，请重试");
@@ -140,16 +154,13 @@ export const useContentManager = () => {
     }
   };
 
-  // Simply update the language setting without regenerating content
   const handleLanguageChange = (language: SummaryLanguage) => {
     setCurrentLanguage(language);
   };
 
-  // Handle style change without API calls if the style is already generated
   const handleStyleChange = async (style: SummaryStyle) => {
     if (!courseContent?.summary) return;
     
-    // If we already have all styles, just update the current style without API call
     if (courseContent.summary.allStyles && courseContent.summary.allStyles[style]) {
       setCourseContent(prev => {
         if (!prev || !prev.summary || !prev.summary.allStyles) return prev;
@@ -166,7 +177,6 @@ export const useContentManager = () => {
       return;
     }
     
-    // Otherwise, we need to generate this style
     setIsLoading(true);
     try {
       const styleSummary = await openaiService.generateSummary(
@@ -178,7 +188,6 @@ export const useContentManager = () => {
       setCourseContent(prev => {
         if (!prev || !prev.summary) return prev;
         
-        // Create or update allStyles object
         const updatedAllStyles = {
           ...(prev.summary.allStyles || {}),
           [style]: styleSummary.content
@@ -202,7 +211,6 @@ export const useContentManager = () => {
     }
   };
 
-  // Generate quiz only when explicitly requested
   const handleGenerateQuiz = async () => {
     if (!courseContent?.rawContent) return;
     setActiveTab("quiz");

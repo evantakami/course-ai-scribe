@@ -1,4 +1,3 @@
-
 import { CourseContent, HistoryItem, UserAnswer } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -119,12 +118,14 @@ export const useContentHistory = () => {
     }
   };
 
-  // Add the getHistoryItemById function
   const getHistoryItemById = (id: string): HistoryItem | undefined => {
     try {
+      console.log("Fetching history item with ID:", id);
       const historyString = localStorage.getItem('content_history') || '[]';
       const history: HistoryItem[] = JSON.parse(historyString);
-      return history.find(item => item.id === id);
+      const item = history.find(item => item.id === id);
+      console.log("History item found:", !!item);
+      return item;
     } catch (error) {
       console.error("Failed to get history item by id:", error);
       return undefined;
@@ -182,6 +183,6 @@ export const useContentHistory = () => {
   return {
     saveToHistory,
     saveUserAnswersToHistory,
-    getHistoryItemById // Export the new function
+    getHistoryItemById
   };
 };
