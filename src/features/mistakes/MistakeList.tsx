@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -55,6 +54,13 @@ const MistakeList = ({ mistakes, onStartPractice, onDeleteMistake, onClearAll }:
     }
   };
 
+  const getAttemptStats = (mistake: UserAnswer) => {
+    const totalAttempts = mistake.attempts?.length || 0;
+    const correctAttempts = mistake.attempts?.filter(a => a.isCorrect).length || 0;
+    const incorrectAttempts = totalAttempts - correctAttempts;
+    return { correctAttempts, incorrectAttempts };
+  };
+
   return (
     <div className="space-y-4">
       {mistakes.length > 0 && (
@@ -96,74 +102,84 @@ const MistakeList = ({ mistakes, onStartPractice, onDeleteMistake, onClearAll }:
       
       <ScrollArea className="h-[600px]">
         <div className="space-y-4">
-          {mistakes.map((mistake) => (
-            <Card key={mistake.questionId} className="relative">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="mr-1 h-4 w-4" />
-                    {formatDate(mistake.timestamp)}
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleExpand(mistake.questionId)}
-                      title={expandedMistake === mistake.questionId ? "收起详情" : "查看详情"}
-                    >
-                      {expandedMistake === mistake.questionId ? 
-                        <EyeOff className="h-4 w-4" /> : 
-                        <Eye className="h-4 w-4" />
-                      }
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDeleteMistake(mistake.questionId)}
-                      title="删除错题"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="prose max-w-none">
-                  <ReactMarkdown>{mistake.question}</ReactMarkdown>
-                </div>
-                
-                {expandedMistake === mistake.questionId && (
-                  <div className="mt-4">
-                    <div className="text-sm font-medium mb-2">选项：</div>
-                    <div className="space-y-2">
-                      {mistake.options.map((option, index) => (
-                        <div 
-                          key={index} 
-                          className={`p-2 rounded-md ${
-                            index === mistake.correctAnswer 
-                              ? "bg-green-100 border border-green-300" 
-                              : index === mistake.selectedOption 
-                                ? "bg-red-100 border border-red-300" 
-                                : "bg-gray-50 border border-gray-200"
-                          }`}
-                        >
-                          <ReactMarkdown>{option}</ReactMarkdown>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {mistake.explanation && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                        <div className="text-sm font-medium mb-1">题目解析：</div>
-                        <div className="text-sm">
-                          <ReactMarkdown>{mistake.explanation}</ReactMarkdown>
-                        </div>
+          {mistakes.map((mistake) => {
+            const { correctAttempts, incorrectAttempts } = getAttemptStats(mistake);
+            return (
+              <Card key={mistake.questionId} className="relative">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Clock className="mr-1 h-4 w-4" />
+                        {formatDate(mistake.timestamp)}
                       </div>
-                    )}
+                      <div className="flex items-center space-x-2 text-sm">
+                        <span className="text-green-600">正确: {correctAttempts}</span>
+                        <span className="text-red-600">错误: {incorrectAttempts}</span>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => toggleExpand(mistake.questionId)}
+                        title={expandedMistake === mistake.questionId ? "收起详情" : "查看详情"}
+                      >
+                        {expandedMistake === mistake.questionId ? 
+                          <EyeOff className="h-4 w-4" /> : 
+                          <Eye className="h-4 w-4" />
+                        }
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onDeleteMistake(mistake.questionId)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        title="删除错题"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  
+                  <div className="prose max-w-none">
+                    <ReactMarkdown>{mistake.question}</ReactMarkdown>
+                  </div>
+                  
+                  {expandedMistake === mistake.questionId && (
+                    <div className="mt-4">
+                      <div className="text-sm font-medium mb-2">选项：</div>
+                      <div className="space-y-2">
+                        {mistake.options.map((option, index) => (
+                          <div 
+                            key={index} 
+                            className={`p-2 rounded-md ${
+                              index === mistake.correctAnswer 
+                                ? "bg-green-100 border border-green-300" 
+                                : index === mistake.selectedOption 
+                                  ? "bg-red-100 border border-red-300" 
+                                  : "bg-gray-50 border border-gray-200"
+                            }`}
+                          >
+                            <ReactMarkdown>{option}</ReactMarkdown>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {mistake.explanation && (
+                        <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                          <div className="text-sm font-medium mb-1">题目解析：</div>
+                          <div className="text-sm">
+                            <ReactMarkdown>{mistake.explanation}</ReactMarkdown>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </ScrollArea>
     </div>
