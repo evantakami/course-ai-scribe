@@ -2,7 +2,7 @@
 import { UserAnswer, Course } from "@/types";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2 } from "lucide-react";
+import { BookOpen, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
