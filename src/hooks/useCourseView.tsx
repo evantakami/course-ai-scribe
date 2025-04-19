@@ -47,6 +47,12 @@ export const useCourseView = () => {
     }
   };
 
+  const handleSelectCourse = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    setView("content");
+    setActiveTab("upload");
+  };
+
   const handleSelectHistoryContent = (content: string) => {
     setCourseContent({ 
       rawContent: content,
@@ -67,6 +73,7 @@ export const useCourseView = () => {
     setActiveTab,
     courseContent,
     setCourseContent,
+    handleSelectCourse,
     handleSelectHistoryContent
   };
 };
