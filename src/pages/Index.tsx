@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer, Course } from "@/types";
 import { Toaster, toast } from "sonner";
@@ -22,6 +21,8 @@ const Index = () => {
   const [currentQuizDifficulty, setCurrentQuizDifficulty] = useState<QuestionDifficulty>("medium");
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [view, setView] = useState<"catalog" | "history" | "content">("content");
+  const [summaryProgress, setSummaryProgress] = useState<number>(0);
+  const [quizProgress, setQuizProgress] = useState<number>(0);
 
   const handleApiKeySet = () => {
     setIsKeySet(true);
@@ -411,6 +412,8 @@ const Index = () => {
     setIsLoading(true);
     setCurrentLanguage(language);
     setSelectedCourseId(courseId);
+    setSummaryProgress(0);
+    setQuizProgress(0);
     
     setCourseContent({ 
       rawContent: content,
@@ -419,24 +422,30 @@ const Index = () => {
     });
 
     try {
-      // First generate the summary
+      // Generate summary with progress updates
+      setSummaryProgress(20);
       const summaryPromise = generateAllSummaries(content, language);
+      setSummaryProgress(60);
       await summaryPromise;
+      setSummaryProgress(100);
       
-      // Continue to generate quiz questions after summary is done
+      // Generate quiz with progress updates
       if (generateQuiz) {
         setIsGeneratingQuiz(true);
+        setQuizProgress(20);
         const quizPromise = generateAllQuestions(content, language);
+        setQuizProgress(60);
         await quizPromise;
+        setQuizProgress(100);
       }
       
-      // Automatically navigate to summary tab
       setActiveTab("summary");
     } catch (error) {
       console.error("Error processing content:", error);
       toast.error("处理内容时出错，请重试");
     } finally {
       setIsLoading(false);
+      setIsGeneratingQuiz(false);
     }
   };
 

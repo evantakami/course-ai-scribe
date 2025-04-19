@@ -1,4 +1,3 @@
-
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
@@ -6,6 +5,7 @@ import UploadTab from "@/features/tabs/components/UploadTab";
 import SummaryTab from "@/features/tabs/components/SummaryTab";
 import QuizTab from "@/features/tabs/components/QuizTab";
 import MistakesTab from "@/features/tabs/components/MistakesTab";
+import GenerationProgress from "./GenerationProgress";
 
 interface MainTabsProps {
   activeTab: string;
@@ -29,6 +29,8 @@ interface MainTabsProps {
   selectedCourseId: string;
   onSelectCourse: (courseId: string) => void;
   onViewCourses?: () => void;
+  summaryProgress?: number;
+  quizProgress?: number;
 }
 
 const MainTabs = ({
@@ -46,7 +48,9 @@ const MainTabs = ({
   handleRegenerateQuiz,
   selectedCourseId,
   onSelectCourse,
-  onViewCourses
+  onViewCourses,
+  summaryProgress = 0,
+  quizProgress = 0
 }: MainTabsProps) => {
   return (
     <Tabs
@@ -78,6 +82,12 @@ const MainTabs = ({
           错题本
         </TabsTrigger>
       </TabsList>
+
+      <GenerationProgress 
+        summaryProgress={summaryProgress}
+        quizProgress={quizProgress}
+        isGenerating={isLoading || isGeneratingQuiz}
+      />
 
       <UploadTab 
         isLoading={isLoading}
