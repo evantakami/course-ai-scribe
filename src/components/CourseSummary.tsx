@@ -29,9 +29,8 @@ const CourseSummary = ({
   summary,
   isLoading,
   onStyleChange,
-  onLanguageChange,
   onGenerateQuiz,
-}: CourseSummaryProps) => {
+}: Omit<CourseSummaryProps, 'onLanguageChange'>) => {
   const [activeStyle, setActiveStyle] = useState<SummaryStyle>(summary?.style || "casual");
   const [savedSummaries, setSavedSummaries] = useState<StyleSummary>({});
   const [localLoading, setLocalLoading] = useState<{[key: string]: boolean}>({
