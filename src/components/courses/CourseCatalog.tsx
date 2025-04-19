@@ -1,10 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Course, HistoryItem } from "@/types";
 import CourseCard from "./CourseCard";
 import { Button } from "@/components/ui/button";
-import { BookPlus, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import CourseSelector from "./CourseSelector";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface CourseCatalogProps {
@@ -15,8 +14,6 @@ const CourseCatalog = ({ onCourseSelect }: CourseCatalogProps) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
 
   useEffect(() => {
     loadData();
@@ -80,10 +77,6 @@ const CourseCatalog = ({ onCourseSelect }: CourseCatalogProps) => {
     return historyItems.filter(item => item.courseId === courseId);
   };
 
-  const handleNewCourse = () => {
-    window.location.href = "/input";
-  };
-
   const handleCourseSelect = (courseId: string) => {
     onCourseSelect(courseId);
   };
@@ -99,17 +92,13 @@ const CourseCatalog = ({ onCourseSelect }: CourseCatalogProps) => {
 
   return (
     <div className="p-4">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center mb-6">
         <h2 className="text-2xl font-bold">我的课程</h2>
-        <Button size="sm" onClick={handleNewCourse} className="flex items-center gap-2">
-          <BookPlus className="h-4 w-4 mr-2" />
-          新建课程
-        </Button>
       </div>
 
       {courses.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-muted-foreground">没有课程，请创建一个新课程</p>
+          <p className="text-muted-foreground">没有课程，请创建一个新课程笔记</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

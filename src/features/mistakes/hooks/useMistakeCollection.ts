@@ -15,7 +15,27 @@ export const useMistakeCollection = () => {
     try {
       const mistakesString = localStorage.getItem('mistake_collection') || '[]';
       const parsed = JSON.parse(mistakesString);
-      setMistakes(parsed);
+      
+      // Ensure each mistake has a courseId
+      const userProfileString = localStorage.getItem('user_profile');
+      let defaultCourseId = "";
+      
+      if (userProfileString) {
+        const userProfile = JSON.parse(userProfileString);
+        if (userProfile.courses && userProfile.courses.length > 0) {
+          defaultCourseId = userProfile.courses[0].id;
+        }
+      }
+
+      const updatedMistakes = parsed.map((mistake: UserAnswer) => {
+        if (!mistake.courseId) {
+          return { ...mistake, courseId: defaultCourseId };
+        }
+        return mistake;
+      });
+
+      setMistakes(updatedMistakes);
+      localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
     } catch (error) {
       console.error("Failed to load mistakes:", error);
       setMistakes([]);
