@@ -1,15 +1,10 @@
 
-import { useState } from "react";
 import { Question, UserAnswer } from "@/types";
-import { Button } from "@/components/ui/button";
-import { RadioGroup } from "@/components/ui/radio-group";
-import ReactMarkdown from "react-markdown";
-import { toast } from "sonner";
-import { useQuiz } from "@/hooks/useQuiz";
-import QuizOption from "./QuizOption";
-import QuizExplanation from "./QuizExplanation";
 import QuizProgress from "./QuizProgress";
+import QuizQuestion from "./QuizQuestion";
+import QuizExplanation from "./QuizExplanation";
 import QuizActions from "./QuizActions";
+import { useQuiz } from "./hooks/useQuiz";
 
 interface QuizProps {
   questions: Question[];
@@ -17,7 +12,11 @@ interface QuizProps {
   saveUserAnswers?: (userAnswers: UserAnswer[]) => void;
 }
 
-const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) => {
+const Quiz = ({ 
+  questions, 
+  initialAnswers = [], 
+  saveUserAnswers 
+}: QuizProps) => {
   const {
     currentIndex,
     currentQuestion,
@@ -42,7 +41,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
   if (!currentQuestion) {
     return <div className="text-center py-8 text-gray-500">加载问题中...</div>;
   }
-  
+
   const userAnswer = userAnswers.find(answer => answer.questionId === currentQuestion?.id);
   const isAnswerSubmitted = userAnswer !== undefined;
   const isCorrect = userAnswer?.isCorrect;
@@ -66,62 +65,45 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
         userAnswers={userAnswers}
       />
 
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <div className="text-lg font-medium mb-4">
-          <ReactMarkdown>{currentQuestion.text}</ReactMarkdown>
-        </div>
+      <QuizQuestion
+        question={currentQuestion}
+        selectedOption={selectedOption}
+        isAnswerSubmitted={isAnswerSubmitted}
+        userAnswerIndex={userAnswer?.selectedOption}
+        onOptionSelect={handleSelectOption}
+      />
 
-        <RadioGroup 
-          value={selectedOption?.toString()} 
-          onValueChange={handleSelectOption}
-          className="space-y-3"
-          disabled={isAnswerSubmitted}
+      {isAnswerSubmitted && isShowingExplanation && (
+        <QuizExplanation
+          isLoading={isLoadingExplanation}
+          explanation={currentQuestion.explanation}
+          customExplanation={customExplanation}
+        />
+      )}
+
+      <div className="mt-6 flex justify-between">
+        <Button
+          variant="outline"
+          onClick={handlePrevQuestion}
+          disabled={currentIndex === 0}
         >
-          {currentQuestion.options.map((option, index) => (
-            <QuizOption
-              key={index}
-              index={index}
-              option={option}
-              isSubmitted={isAnswerSubmitted}
-              isSelected={selectedOption === index || userAnswer?.selectedOption === index}
-              isCorrect={index === currentQuestion.correctAnswer}
-              disabled={isAnswerSubmitted}
-            />
-          ))}
-        </RadioGroup>
+          上一题
+        </Button>
 
-        {isAnswerSubmitted && isShowingExplanation && (
-          <QuizExplanation
-            isLoading={isLoadingExplanation}
-            explanation={currentQuestion.explanation}
-            customExplanation={customExplanation}
-          />
-        )}
-
-        <div className="mt-6 flex justify-between">
-          <Button
-            variant="outline"
-            onClick={handlePrevQuestion}
-            disabled={currentIndex === 0}
-          >
-            上一题
-          </Button>
-
-          <QuizActions
-            isAnswerSubmitted={isAnswerSubmitted}
-            isCorrect={isCorrect}
-            customExplanation={customExplanation}
-            isShowingExplanation={isShowingExplanation}
-            isLoadingExplanation={isLoadingExplanation}
-            onSaveToMistakeCollection={handleSaveToMistakeCollection}
-            onGenerateWhyWrong={handleGenerateExplanation}
-            onToggleExplanation={() => setIsShowingExplanation(!isShowingExplanation)}
-            onSubmitAnswer={handleSubmitAnswer}
-            onNextQuestion={handleNextQuestion}
-            selectedOption={selectedOption}
-            isLastQuestion={currentIndex === questions.length - 1}
-          />
-        </div>
+        <QuizActions
+          isAnswerSubmitted={isAnswerSubmitted}
+          isCorrect={isCorrect}
+          customExplanation={customExplanation}
+          isShowingExplanation={isShowingExplanation}
+          isLoadingExplanation={isLoadingExplanation}
+          onSaveToMistakeCollection={handleSaveToMistakeCollection}
+          onGenerateWhyWrong={handleGenerateExplanation}
+          onToggleExplanation={() => setIsShowingExplanation(!isShowingExplanation)}
+          onSubmitAnswer={handleSubmitAnswer}
+          onNextQuestion={handleNextQuestion}
+          selectedOption={selectedOption}
+          isLastQuestion={currentIndex === questions.length - 1}
+        />
       </div>
     </div>
   );
