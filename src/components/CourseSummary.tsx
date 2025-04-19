@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Summary, SummaryStyle, SummaryLanguage } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -41,19 +40,27 @@ const CourseSummary = ({
     basic: false
   });
 
-  // Update saved summaries when new summary is received
   useEffect(() => {
     if (summary && !isLoading) {
-      setSavedSummaries(prev => ({
-        ...prev,
-        [summary.style]: summary.content
-      }));
-      
-      // Reset loading state for this style
-      setLocalLoading(prev => ({
-        ...prev,
-        [summary.style]: false
-      }));
+      if (summary.allStyles) {
+        setSavedSummaries(summary.allStyles as StyleSummary);
+        
+        setLocalLoading({
+          casual: false,
+          academic: false,
+          basic: false
+        });
+      } else {
+        setSavedSummaries(prev => ({
+          ...prev,
+          [summary.style]: summary.content
+        }));
+        
+        setLocalLoading(prev => ({
+          ...prev,
+          [summary.style]: false
+        }));
+      }
     }
   }, [summary, isLoading]);
 
@@ -61,7 +68,6 @@ const CourseSummary = ({
     const style = value as SummaryStyle;
     setActiveStyle(style);
     
-    // Only call the API if we don't have this style saved yet
     if (!savedSummaries[style]) {
       setLocalLoading(prev => ({
         ...prev,
@@ -73,38 +79,13 @@ const CourseSummary = ({
 
   const handleLanguageChange = (value: string) => {
     onLanguageChange(value as SummaryLanguage);
-    // Clear saved summaries when language changes
     setSavedSummaries({});
-    // Reset all loading states
     setLocalLoading({
       casual: false,
       academic: false,
       basic: false
     });
   };
-
-  // Request all summary styles when content changes
-  useEffect(() => {
-    if (summary && Object.keys(savedSummaries).length === 1 && savedSummaries[summary.style]) {
-      const styles: SummaryStyle[] = ["casual", "academic", "basic"];
-      
-      // Filter out the style we already have
-      const missingStyles = styles.filter(style => style !== summary.style);
-      
-      // Set loading state for missing styles
-      missingStyles.forEach(style => {
-        setLocalLoading(prev => ({
-          ...prev,
-          [style]: true
-        }));
-      });
-      
-      // Request each missing style
-      missingStyles.forEach(style => {
-        onStyleChange(style);
-      });
-    }
-  }, [summary, savedSummaries]);
 
   const languageOptions = [
     { value: "chinese", label: "中文" },
@@ -113,7 +94,6 @@ const CourseSummary = ({
     { value: "french", label: "Français" }
   ];
 
-  // Determine if we should display loading state for current style
   const isCurrentStyleLoading = localLoading[activeStyle] || (isLoading && !savedSummaries[activeStyle]);
 
   return (

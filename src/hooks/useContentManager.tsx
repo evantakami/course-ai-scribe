@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CourseContent, SummaryLanguage, SummaryStyle, QuestionDifficulty, UserAnswer } from "@/types";
 import { openaiService } from "@/services/openaiService";
@@ -48,13 +47,32 @@ export const useContentManager = () => {
     }
   };
 
-  const generateAllSummaries = async (content: string, language: SummaryLanguage) => {
+  const generateAllSummaryStyles = async (content: string, language: SummaryLanguage) => {
     try {
       setSummaryProgress(20);
-      const casualSummary = await openaiService.generateSummary(content, "casual", language);
+      
+      // Generate all three styles in parallel
+      const [casualSummaryPromise, academicSummaryPromise, basicSummaryPromise] = [
+        openaiService.generateSummary(content, "casual", language),
+        openaiService.generateSummary(content, "academic", language),
+        openaiService.generateSummary(content, "basic", language)
+      ];
+      
+      const [casualSummary, academicSummary, basicSummary] = await Promise.all([
+        casualSummaryPromise,
+        academicSummaryPromise,
+        basicSummaryPromise
+      ]);
+      
       setSummaryProgress(100);
-      toast.success("通俗易懂摘要已生成");
-      return casualSummary;
+      toast.success("所有风格的摘要已生成");
+      
+      // Return all summary styles at once
+      return {
+        casual: casualSummary,
+        academic: academicSummary,
+        basic: basicSummary
+      };
     } catch (error) {
       console.error("Error generating summaries:", error);
       toast.error("生成摘要时出错");
@@ -88,18 +106,29 @@ export const useContentManager = () => {
 
     try {
       // Start both processes in parallel
-      const summaryPromise = generateAllSummaries(content, language);
+      const summariesPromise = generateAllSummaryStyles(content, language);
       const questionsPromise = generateQuiz ? generateAllQuestions(content, language) : Promise.resolve(null);
       
       // Wait for both to complete
-      const [summary, questions] = await Promise.all([summaryPromise, questionsPromise]);
+      const [summaries, questions] = await Promise.all([summariesPromise, questionsPromise]);
       
-      // Update content with both results
-      setCourseContent({
-        rawContent: content,
-        summary,
-        questions
-      });
+      if (summaries) {
+        // Use the casual style as the default displayed summary
+        setCourseContent({
+          rawContent: content,
+          summary: {
+            content: summaries.casual.content,
+            style: "casual",
+            language,
+            allStyles: {
+              casual: summaries.casual.content,
+              academic: summaries.academic.content,
+              basic: summaries.basic.content
+            }
+          },
+          questions
+        });
+      }
       
       return true;
     } catch (error) {
@@ -116,21 +145,54 @@ export const useContentManager = () => {
     setCurrentLanguage(language);
   };
 
-  // Only generate summary for this specific style change without redoing everything
+  // Handle style change without API calls if the style is already generated
   const handleStyleChange = async (style: SummaryStyle) => {
-    if (!courseContent?.rawContent) return;
+    if (!courseContent?.summary) return;
     
+    // If we already have all styles, just update the current style without API call
+    if (courseContent.summary.allStyles && courseContent.summary.allStyles[style]) {
+      setCourseContent(prev => {
+        if (!prev || !prev.summary || !prev.summary.allStyles) return prev;
+        
+        return {
+          ...prev,
+          summary: {
+            ...prev.summary,
+            style: style,
+            content: prev.summary.allStyles[style]
+          }
+        };
+      });
+      return;
+    }
+    
+    // Otherwise, we need to generate this style
     setIsLoading(true);
     try {
-      const summary = await openaiService.generateSummary(
-        courseContent.rawContent, 
+      const styleSummary = await openaiService.generateSummary(
+        courseContent.rawContent || "", 
         style,
         currentLanguage
       );
       
       setCourseContent(prev => {
-        if (!prev) return null;
-        return { ...prev, summary };
+        if (!prev || !prev.summary) return prev;
+        
+        // Create or update allStyles object
+        const updatedAllStyles = {
+          ...(prev.summary.allStyles || {}),
+          [style]: styleSummary.content
+        };
+        
+        return {
+          ...prev,
+          summary: {
+            ...prev.summary,
+            style: style,
+            content: styleSummary.content,
+            allStyles: updatedAllStyles
+          }
+        };
       });
     } catch (error) {
       console.error("Error changing summary style:", error);

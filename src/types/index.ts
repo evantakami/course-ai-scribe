@@ -13,6 +13,9 @@ export interface Summary {
   content: string;
   style: SummaryStyle;
   language: SummaryLanguage;
+  allStyles?: {
+    [key in SummaryStyle]?: string;
+  };
 }
 
 export type SummaryStyle = "academic" | "casual" | "basic";
