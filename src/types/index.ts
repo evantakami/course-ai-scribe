@@ -1,3 +1,4 @@
+
 export interface CourseContent {
   rawContent: string | null;
   summary: Summary | null;

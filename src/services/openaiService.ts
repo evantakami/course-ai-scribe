@@ -1,9 +1,9 @@
 
-import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage, CustomPrompt } from "@/types";
+import { SummaryStyle, QuestionDifficulty, Question, Summary, SummaryLanguage } from "@/types";
 
 class OpenAIService {
   private apiKey: string | null = null;
-  private model: string = "gpt-4o-mini";  // 默认模型
+  private model: string = "gpt-4o-mini";
   private customPrompts: Record<string, Record<string, string>> = {
     summary: {},
     questions: {},
