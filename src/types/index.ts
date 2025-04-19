@@ -1,4 +1,3 @@
-
 export interface CourseContent {
   rawContent: string | null;
   summary: Summary | null;
@@ -36,12 +35,11 @@ export interface UserAnswer {
   questionId: number;
   selectedOption: number;
   isCorrect: boolean;
-  // 额外字段用于错题收集
-  question?: string;
-  options?: string[];
-  correctAnswer?: number;
+  question: string;
+  options: string[];
+  correctAnswer: number;
   explanation?: string;
-  timestamp?: Date | string;
+  timestamp: Date | string;
   courseId?: string;
 }
 
@@ -60,7 +58,6 @@ export interface HistoryItem {
   timestamp: Date | string;
   title?: string;
   courseId: string;
-  // 存储生成内容的新字段
   summaries?: StyleSummaries;
   questions?: {
     easy?: Question[];
