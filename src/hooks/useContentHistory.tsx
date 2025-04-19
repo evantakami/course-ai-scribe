@@ -119,6 +119,18 @@ export const useContentHistory = () => {
     }
   };
 
+  // Add the getHistoryItemById function
+  const getHistoryItemById = (id: string): HistoryItem | undefined => {
+    try {
+      const historyString = localStorage.getItem('content_history') || '[]';
+      const history: HistoryItem[] = JSON.parse(historyString);
+      return history.find(item => item.id === id);
+    } catch (error) {
+      console.error("Failed to get history item by id:", error);
+      return undefined;
+    }
+  };
+
   const saveIncorrectToMistakeCollection = (userAnswers: UserAnswer[], content: CourseContent) => {
     try {
       const incorrectAnswers = userAnswers.filter(answer => !answer.isCorrect);
@@ -169,6 +181,7 @@ export const useContentHistory = () => {
 
   return {
     saveToHistory,
-    saveUserAnswersToHistory
+    saveUserAnswersToHistory,
+    getHistoryItemById // Export the new function
   };
 };
