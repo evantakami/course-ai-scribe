@@ -22,6 +22,10 @@ const Index = () => {
     navigate(`/course/${courseId}`);
   };
 
+  const handleNewCourse = () => {
+    navigate("/input");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen w-full">
@@ -47,7 +51,7 @@ const Index = () => {
                     </Button>
                     <Button 
                       variant="default" 
-                      onClick={() => navigate("/input")}
+                      onClick={handleNewCourse}
                       className="flex items-center gap-2"
                     >
                       <Plus className="h-4 w-4" />
