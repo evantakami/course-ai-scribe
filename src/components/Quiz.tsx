@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Loader2, HelpCircle, BookOpen } from "lucide-react";
+import { RadioGroup } from "@/components/ui/radio-group";
+import { CheckCircle, XCircle } from "lucide-react";
 import { openaiService } from "@/services/openaiService";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import QuizOption from "@/features/quiz/components/QuizOption";
+import QuizExplanation from "@/features/quiz/components/QuizExplanation";
+import { BookOpen, HelpCircle } from "lucide-react";
 
 interface QuizProps {
   questions: Question[];
@@ -75,7 +77,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
   }
   
   const userAnswer = userAnswers.find(answer => 
-    answer.questionId === currentQuestion.id
+    answer.questionId === currentQuestion?.id
   );
   const isAnswerSubmitted = userAnswer !== undefined;
   const isCorrect = userAnswer?.isCorrect;
@@ -204,9 +206,11 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
         </div>
         <div className="text-sm flex items-center">
           <CheckCircle className="text-green-500 h-4 w-4 mr-1" />
-          <span className="mr-3">{progress.correct} 正确</span>
+          <span className="mr-3">
+            {userAnswers.filter(a => a.isCorrect).length} 正确
+          </span>
           <XCircle className="text-red-500 h-4 w-4 mr-1" />
-          <span>{progress.answeredCount - progress.correct} 错误</span>
+          <span>{userAnswers.length - userAnswers.filter(a => a.isCorrect).length} 错误</span>
         </div>
       </div>
 
@@ -217,58 +221,29 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
 
         <RadioGroup 
           value={selectedOption?.toString()} 
-          onValueChange={handleSelectOption}
+          onValueChange={(value) => setSelectedOption(parseInt(value))}
           className="space-y-3"
           disabled={isAnswerSubmitted}
         >
           {currentQuestion.options.map((option, index) => (
-            <div key={index} className={`
-              flex items-start space-x-2 rounded-md p-3 border transition-colors
-              ${isAnswerSubmitted ? (
-                index === currentQuestion.correctAnswer ? 'bg-green-50 border-green-200' :
-                index === userAnswer?.selectedOption ? 'bg-red-50 border-red-200' :
-                'border-transparent'
-              ) : (
-                selectedOption === index ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50 border-transparent'
-              )}
-            `}>
-              <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-              <Label 
-                htmlFor={`option-${index}`} 
-                className="flex-grow font-normal cursor-pointer"
-              >
-                <ReactMarkdown>{option}</ReactMarkdown>
-              </Label>
-              {isAnswerSubmitted && (
-                index === currentQuestion.correctAnswer ? (
-                  <CheckCircle className="text-green-500 h-5 w-5 flex-shrink-0" />
-                ) : index === userAnswer?.selectedOption ? (
-                  <XCircle className="text-red-500 h-5 w-5 flex-shrink-0" />
-                ) : null
-              )}
-            </div>
+            <QuizOption
+              key={index}
+              index={index}
+              option={option}
+              isSubmitted={isAnswerSubmitted}
+              isSelected={selectedOption === index || userAnswer?.selectedOption === index}
+              isCorrect={index === currentQuestion.correctAnswer}
+              disabled={isAnswerSubmitted}
+            />
           ))}
         </RadioGroup>
 
         {isAnswerSubmitted && isShowingExplanation && (
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <h4 className="flex items-center text-sm font-medium text-blue-800 mb-2">
-              <HelpCircle className="mr-1 h-4 w-4" />
-              解析
-            </h4>
-            <div className="text-sm text-gray-700 prose max-w-none">
-              {isLoadingExplanation ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  <span>生成解析中...</span>
-                </div>
-              ) : (
-                <ReactMarkdown>
-                  {customExplanation || currentQuestion.explanation || "暂无解析"}
-                </ReactMarkdown>
-              )}
-            </div>
-          </div>
+          <QuizExplanation
+            isLoading={isLoadingExplanation}
+            explanation={currentQuestion.explanation}
+            customExplanation={customExplanation}
+          />
         )}
 
         <div className="mt-6 flex justify-between">
