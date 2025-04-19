@@ -36,7 +36,7 @@ const FileUpload = ({
   const [language, setLanguage] = useState<SummaryLanguage>("chinese");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
   const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
-  const [selectedModel, setSelectedModel] = useState<string>(openaiService.getModel() || "");
+  const [selectedModel, setSelectedModel] = useState<string>(openaiService.getModel());
 
   // Initialize selectedCourseId if not set
   useEffect(() => {
@@ -56,7 +56,7 @@ const FileUpload = ({
   }, [selectedCourseId, onSelectCourse]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles && acceptedFiles.length > 0) {
+    if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
       setSelectedFile(file);
     }
@@ -108,23 +108,17 @@ const FileUpload = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;
-      if (content) {
-        // Always generate quiz with all content
-        if (generateAllContent) {
-          onContentLoaded(content, true, quizDifficulty, language, selectedCourseId);
-        } else {
-          onContentLoaded(content, generateQuiz, quizDifficulty, language, selectedCourseId);
-        }
+      // Always generate quiz with all content
+      if (generateAllContent) {
+        onContentLoaded(content, true, quizDifficulty, language, selectedCourseId);
       } else {
-        toast.error("无法读取文件内容");
+        onContentLoaded(content, generateQuiz, quizDifficulty, language, selectedCourseId);
       }
     };
     reader.onerror = () => {
       toast.error("读取文件出错");
     };
-    if (selectedFile) {
-      reader.readAsText(selectedFile);
-    }
+    reader.readAsText(selectedFile);
   };
 
   const handleSaveContent = () => {
@@ -140,7 +134,7 @@ const FileUpload = ({
     
     try {
       const historyString = localStorage.getItem('content_history') || '[]';
-      let mistakes = JSON.parse(historyString);
+      const history = JSON.parse(historyString);
       
       // Extract title from first line
       const firstLine = textContent.split('\n')[0] || '';
@@ -154,7 +148,7 @@ const FileUpload = ({
         courseId: selectedCourseId
       };
       
-      const updatedHistory = [newItem, ...mistakes].slice(0, 50);
+      const updatedHistory = [newItem, ...history].slice(0, 50);
       
       localStorage.setItem('content_history', JSON.stringify(updatedHistory));
       toast.success("内容已保存，可在课程历史记录中查看");

@@ -20,7 +20,6 @@ interface CourseSummaryProps {
   onStyleChange: (style: SummaryStyle) => void;
   onLanguageChange: (language: SummaryLanguage) => void;
   onGenerateQuiz: () => void;
-  showGenerateControls?: boolean;
 }
 
 interface StyleSummary {
@@ -33,7 +32,6 @@ const CourseSummary = ({
   onStyleChange,
   onLanguageChange,
   onGenerateQuiz,
-  showGenerateControls = false
 }: CourseSummaryProps) => {
   const [activeStyle, setActiveStyle] = useState<SummaryStyle>(summary?.style || "casual");
   const [savedSummaries, setSavedSummaries] = useState<StyleSummary>({});
@@ -43,33 +41,19 @@ const CourseSummary = ({
     basic: false
   });
 
+  // Update saved summaries when new summary is received
   useEffect(() => {
-    console.log("Summary prop changed:", !!summary);
     if (summary && !isLoading) {
-      console.log("Summary updated:", summary.style, "with all styles:", !!summary.allStyles);
+      setSavedSummaries(prev => ({
+        ...prev,
+        [summary.style]: summary.content
+      }));
       
-      if (summary.allStyles) {
-        setSavedSummaries(summary.allStyles as StyleSummary);
-        
-        setLocalLoading({
-          casual: false,
-          academic: false,
-          basic: false
-        });
-      } else {
-        setSavedSummaries(prev => ({
-          ...prev,
-          [summary.style]: summary.content
-        }));
-        
-        setLocalLoading(prev => ({
-          ...prev,
-          [summary.style]: false
-        }));
-      }
-      
-      // Update the active style to match the summary style
-      setActiveStyle(summary.style);
+      // Reset loading state for this style
+      setLocalLoading(prev => ({
+        ...prev,
+        [summary.style]: false
+      }));
     }
   }, [summary, isLoading]);
 
@@ -77,11 +61,8 @@ const CourseSummary = ({
     const style = value as SummaryStyle;
     setActiveStyle(style);
     
-    // Only trigger API call if we don't already have this style saved
-    if (summary?.allStyles && summary.allStyles[style]) {
-      console.log("Using cached summary for style:", style);
-    } else {
-      console.log("Requesting new summary style:", style);
+    // Only call the API if we don't have this style saved yet
+    if (!savedSummaries[style]) {
       setLocalLoading(prev => ({
         ...prev,
         [style]: true
@@ -91,11 +72,39 @@ const CourseSummary = ({
   };
 
   const handleLanguageChange = (value: string) => {
-    console.log("Changing language to:", value);
     onLanguageChange(value as SummaryLanguage);
-    // Reset saved summaries when language changes
+    // Clear saved summaries when language changes
     setSavedSummaries({});
+    // Reset all loading states
+    setLocalLoading({
+      casual: false,
+      academic: false,
+      basic: false
+    });
   };
+
+  // Request all summary styles when content changes
+  useEffect(() => {
+    if (summary && Object.keys(savedSummaries).length === 1 && savedSummaries[summary.style]) {
+      const styles: SummaryStyle[] = ["casual", "academic", "basic"];
+      
+      // Filter out the style we already have
+      const missingStyles = styles.filter(style => style !== summary.style);
+      
+      // Set loading state for missing styles
+      missingStyles.forEach(style => {
+        setLocalLoading(prev => ({
+          ...prev,
+          [style]: true
+        }));
+      });
+      
+      // Request each missing style
+      missingStyles.forEach(style => {
+        onStyleChange(style);
+      });
+    }
+  }, [summary, savedSummaries]);
 
   const languageOptions = [
     { value: "chinese", label: "中文" },
@@ -104,57 +113,42 @@ const CourseSummary = ({
     { value: "french", label: "Français" }
   ];
 
-  const getSummaryContent = () => {
-    if (summary) {
-      if (summary.allStyles && summary.allStyles[activeStyle]) {
-        return summary.allStyles[activeStyle];
-      }
-      // If we don't have this style in allStyles but have the main content
-      if (summary.style === activeStyle) {
-        return summary.content;
-      }
-    }
-    return null;
-  };
-
-  const summaryContent = getSummaryContent();
-  const currentStyleLoading = localLoading[activeStyle] || isLoading;
+  // Determine if we should display loading state for current style
+  const isCurrentStyleLoading = localLoading[activeStyle] || (isLoading && !savedSummaries[activeStyle]);
 
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>课程摘要</CardTitle>
-        {showGenerateControls && (
-          <div className="flex items-center space-x-2">
-            <Select 
-              value={summary?.language || "chinese"} 
-              onValueChange={handleLanguageChange}
-              disabled={isLoading}
-            >
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="选择语言" />
-              </SelectTrigger>
-              <SelectContent>
-                {languageOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button 
-              onClick={onGenerateQuiz} 
-              disabled={isLoading || !summary}
-              className="bg-edu-600 hover:bg-edu-700"
-            >
-              生成测验题
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center space-x-2">
+          <Select 
+            value={summary?.language || "chinese"} 
+            onValueChange={handleLanguageChange}
+            disabled={isLoading}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="选择语言" />
+            </SelectTrigger>
+            <SelectContent>
+              {languageOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button 
+            onClick={onGenerateQuiz} 
+            disabled={isLoading || !summary}
+            className="bg-edu-600 hover:bg-edu-700"
+          >
+            生成测验题
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs 
-          defaultValue={activeStyle} 
+          defaultValue="casual" 
           value={activeStyle}
           onValueChange={handleStyleChange}
           className="w-full"
@@ -165,16 +159,16 @@ const CourseSummary = ({
             <TabsTrigger value="basic" disabled={isLoading}>基础概念</TabsTrigger>
           </TabsList>
           
-          {currentStyleLoading ? (
+          {isCurrentStyleLoading ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
-              <span className="ml-2 text-edu-600">正在加载摘要...</span>
+              <span className="ml-2 text-edu-600">正在生成摘要...</span>
             </div>
-          ) : summaryContent ? (
+          ) : savedSummaries[activeStyle] ? (
             <TabsContent value={activeStyle} className="mt-0">
               <div className="prose max-w-none">
                 <ReactMarkdown>
-                  {summaryContent}
+                  {savedSummaries[activeStyle]}
                 </ReactMarkdown>
               </div>
             </TabsContent>

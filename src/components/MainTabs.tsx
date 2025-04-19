@@ -1,12 +1,11 @@
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
-import UploadTab from "@/features/tabs/components/UploadTab";
-import SummaryTab from "@/features/tabs/components/SummaryTab";
-import QuizTab from "@/features/tabs/components/QuizTab";
-import MistakesTab from "@/features/tabs/components/MistakesTab";
-import GenerationProgress from "./GenerationProgress";
+import FileUpload from "./FileUpload";
+import CourseSummary from "./CourseSummary";
+import QuizGenerator from "./QuizGenerator";
+import MistakeCollection from "./MistakeCollection";
 
 interface MainTabsProps {
   activeTab: string;
@@ -29,9 +28,7 @@ interface MainTabsProps {
   handleRegenerateQuiz?: (difficulty: QuestionDifficulty) => void;
   selectedCourseId: string;
   onSelectCourse: (courseId: string) => void;
-  onViewCourses?: () => void;
-  summaryProgress?: number;
-  quizProgress?: number;
+  onViewCourses: () => void;
 }
 
 const MainTabs = ({
@@ -49,24 +46,16 @@ const MainTabs = ({
   handleRegenerateQuiz,
   selectedCourseId,
   onSelectCourse,
-  onViewCourses,
-  summaryProgress = 0,
-  quizProgress = 0
+  onViewCourses
 }: MainTabsProps) => {
-  // Simple tab change handler that doesn't trigger regeneration or processing
-  const handleTabChange = (value: string) => {
-    console.log("Tab changed to:", value);
-    setActiveTab(value);
-  };
+  // Add console log to see when tab changes
+  console.log("MainTabs - activeTab:", activeTab);
+  console.log("MainTabs - courseContent:", courseContent);
   
-  // Check if we have content in course for specific tabs
-  const hasSummary = courseContent?.summary !== null && courseContent?.summary !== undefined;
-  const hasQuestions = courseContent?.questions !== null && courseContent?.questions !== undefined;
-
   return (
     <Tabs
       value={activeTab}
-      onValueChange={handleTabChange}
+      onValueChange={setActiveTab}
       className="space-y-4"
     >
       <TabsList className="grid w-full grid-cols-4">
@@ -76,14 +65,14 @@ const MainTabs = ({
         </TabsTrigger>
         <TabsTrigger 
           value="summary" 
-          disabled={isLoading || !hasSummary}
+          disabled={isLoading || !courseContent?.summary}
         >
           <BookOpen className="mr-2 h-4 w-4" />
           总结
         </TabsTrigger>
         <TabsTrigger 
           value="quiz" 
-          disabled={isLoading || isGeneratingQuiz || !hasQuestions}
+          disabled={isLoading || isGeneratingQuiz || !courseContent?.questions}
         >
           <HelpCircle className="mr-2 h-4 w-4" />
           知识测验
@@ -94,37 +83,30 @@ const MainTabs = ({
         </TabsTrigger>
       </TabsList>
 
-      {/* Only show progress when actually generating, not when switching tabs */}
-      {(isLoading || isGeneratingQuiz) && (
-        <GenerationProgress 
-          summaryProgress={summaryProgress}
-          quizProgress={quizProgress}
-          isGenerating={isLoading || isGeneratingQuiz}
-        />
-      )}
-
-      <TabsContent value="upload">
-        <UploadTab 
-          isLoading={isLoading}
-          handleContentLoaded={handleContentLoaded}
-          selectedCourseId={selectedCourseId}
-          onSelectCourse={onSelectCourse}
-        />
+      <TabsContent value="upload" className="mt-4">
+        <div className="flex justify-center">
+          <FileUpload 
+            onContentLoaded={handleContentLoaded} 
+            isLoading={isLoading}
+            selectedCourseId={selectedCourseId}
+            onSelectCourse={onSelectCourse}
+            generateAllContent={true}
+          />
+        </div>
       </TabsContent>
 
-      <TabsContent value="summary">
-        <SummaryTab 
-          summary={courseContent?.summary || null}
+      <TabsContent value="summary" className="mt-4">
+        <CourseSummary 
+          summary={courseContent?.summary || null} 
           isLoading={isLoading}
           onStyleChange={handleStyleChange}
           onLanguageChange={handleLanguageChange}
           onGenerateQuiz={handleGenerateQuiz}
-          showGenerateControls={true}
         />
       </TabsContent>
 
-      <TabsContent value="quiz">
-        <QuizTab 
+      <TabsContent value="quiz" className="mt-4">
+        <QuizGenerator 
           questions={courseContent?.questions || null}
           isGenerating={isGeneratingQuiz}
           onDifficultyChange={handleDifficultyChange}
@@ -132,9 +114,9 @@ const MainTabs = ({
           onRegenerateQuiz={handleRegenerateQuiz}
         />
       </TabsContent>
-
-      <TabsContent value="mistakes">
-        <MistakesTab />
+      
+      <TabsContent value="mistakes" className="mt-4">
+        <MistakeCollection />
       </TabsContent>
     </Tabs>
   );

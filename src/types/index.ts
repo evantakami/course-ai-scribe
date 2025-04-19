@@ -1,3 +1,4 @@
+
 export interface CourseContent {
   rawContent: string | null;
   summary: Summary | null;
@@ -12,9 +13,6 @@ export interface Summary {
   content: string;
   style: SummaryStyle;
   language: SummaryLanguage;
-  allStyles?: {
-    [key in SummaryStyle]?: string;
-  };
 }
 
 export type SummaryStyle = "academic" | "casual" | "basic";
@@ -35,11 +33,12 @@ export interface UserAnswer {
   questionId: number;
   selectedOption: number;
   isCorrect: boolean;
-  question: string;
-  options: string[];
-  correctAnswer: number;
+  // Additional fields for mistake collection
+  question?: string;
+  options?: string[];
+  correctAnswer?: number;
   explanation?: string;
-  timestamp: Date | string;
+  timestamp?: Date | string;
   courseId?: string;
 }
 
@@ -58,6 +57,7 @@ export interface HistoryItem {
   timestamp: Date | string;
   title?: string;
   courseId: string;
+  // New fields to store generated content
   summaries?: StyleSummaries;
   questions?: {
     easy?: Question[];
@@ -102,3 +102,4 @@ export interface UserProfile {
   courses: Course[];
   quizStats: UserStats;
 }
+
