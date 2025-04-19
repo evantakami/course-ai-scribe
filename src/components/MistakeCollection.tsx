@@ -6,37 +6,16 @@ import { BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import MistakeList from "@/features/mistakes/components/MistakeList";
 import MistakePractice from "@/features/mistakes/components/MistakePractice";
+import { useMistakeCollection } from "@/features/mistakes/hooks/useMistakeCollection";
 
 const MistakeCollection = () => {
-  const [mistakes, setMistakes] = useState<UserAnswer[]>([]);
+  const { 
+    mistakes, 
+    deleteMistake, 
+    clearAllMistakes
+  } = useMistakeCollection();
+  
   const [isPracticing, setIsPracticing] = useState(false);
-
-  useEffect(() => {
-    loadMistakes();
-  }, []);
-
-  const loadMistakes = () => {
-    try {
-      const mistakesString = localStorage.getItem('mistake_collection') || '[]';
-      const parsed = JSON.parse(mistakesString);
-      setMistakes(parsed);
-    } catch (error) {
-      console.error("Failed to load mistakes:", error);
-      setMistakes([]);
-    }
-  };
-
-  const handleDeleteMistake = (questionId: number) => {
-    try {
-      const updatedMistakes = mistakes.filter(m => m.questionId !== questionId);
-      setMistakes(updatedMistakes);
-      localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
-      toast.success("已从错题本中删除");
-    } catch (error) {
-      console.error("Failed to delete mistake:", error);
-      toast.error("删除失败");
-    }
-  };
 
   const handleUpdateMistakes = (newAnswers: UserAnswer[]) => {
     try {
@@ -45,12 +24,9 @@ const MistakeCollection = () => {
       
       if (correctAnswers.length > 0) {
         // Remove correct answers from mistake collection
-        const updatedMistakes = mistakes.filter(mistake => 
-          !correctAnswers.some(answer => answer.questionId === mistake.questionId)
-        );
-        
-        setMistakes(updatedMistakes);
-        localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
+        correctAnswers.forEach(answer => {
+          deleteMistake(answer.questionId);
+        });
         
         toast.success(`恭喜！已掌握 ${correctAnswers.length} 道题目`);
       }
@@ -79,7 +55,8 @@ const MistakeCollection = () => {
           <MistakeList
             mistakes={mistakes}
             onStartPractice={() => setIsPracticing(true)}
-            onDeleteMistake={handleDeleteMistake}
+            onDeleteMistake={deleteMistake}
+            onClearAll={clearAllMistakes}
           />
         )}
       </CardContent>

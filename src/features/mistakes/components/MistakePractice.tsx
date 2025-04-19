@@ -24,14 +24,21 @@ const MistakePractice = ({ mistakes, onBackToList, onUpdateMistakes }: MistakePr
     difficulty: "medium"
   }));
 
+  // Load initial mistakes once on component mount
+  useEffect(() => {
+    // Initialize with empty answers - don't pre-fill from mistakes
+    // to avoid infinite update loops
+    setUserAnswers([]);
+  }, []);
+
   // Handle saving answers from Quiz component
   const handleSaveAnswers = (answers: UserAnswer[]) => {
-    setUserAnswers(answers);
-    
-    // Pass updated answers to parent component
+    // Only pass to parent component if we have answers and they've changed
     if (answers.length > 0) {
       onUpdateMistakes(answers);
     }
+    // Always update local state
+    setUserAnswers(answers);
   };
 
   return (
