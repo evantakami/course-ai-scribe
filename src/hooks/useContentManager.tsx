@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CourseContent, SummaryLanguage, SummaryStyle, QuestionDifficulty, UserAnswer, HistoryItem, StyleSummaries } from "@/types";
+import { CourseContent, QuestionDifficulty, UserAnswer, HistoryItem, StyleSummaries } from "@/types";
 import { openaiService } from "@/services/openaiService";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
@@ -18,7 +18,6 @@ export const useContentManager = () => {
     content: string, 
     summaries: any, 
     questions: any, 
-    language: SummaryLanguage, 
     courseId: string
   ) => {
     try {
@@ -45,8 +44,7 @@ export const useContentManager = () => {
           title: title,
           courseId: courseId,
           summaries: summariesObj,
-          questions: questions,
-          language: language
+          questions: questions
         };
       } else {
         const newItem: HistoryItem = {
@@ -56,8 +54,7 @@ export const useContentManager = () => {
           title: title,
           courseId: courseId,
           summaries: summariesObj,
-          questions: questions,
-          language: language
+          questions: questions
         };
         
         history = [newItem, ...history];
@@ -109,15 +106,15 @@ export const useContentManager = () => {
     }
   };
 
-  const generateAllQuestions = async (content: string, language: SummaryLanguage) => {
+  const generateAllQuestions = async (content: string) => {
     try {
       setIsGeneratingQuiz(true);
       setQuizProgress(20);
       
       const [easyQuestionsPromise, mediumQuestionsPromise, hardQuestionsPromise] = [
-        openaiService.generateQuestions(content, "easy", 10, language),
-        openaiService.generateQuestions(content, "medium", 10, language),
-        openaiService.generateQuestions(content, "hard", 10, language)
+        openaiService.generateQuestions(content, "easy", 10, "chinese"),
+        openaiService.generateQuestions(content, "medium", 10, "chinese"),
+        openaiService.generateQuestions(content, "hard", 10, "chinese")
       ];
       
       const [easyQuestions, mediumQuestions, hardQuestions] = await Promise.all([
@@ -143,15 +140,15 @@ export const useContentManager = () => {
     }
   };
 
-  const generateAllSummaryStyles = async (content: string, language: SummaryLanguage) => {
+  const generateAllSummaryStyles = async (content: string) => {
     try {
       setSummaryProgress(20);
       
       // Generate all three styles in parallel
       const [casualSummaryPromise, academicSummaryPromise, basicSummaryPromise] = [
-        openaiService.generateSummary(content, "casual", language),
-        openaiService.generateSummary(content, "academic", language),
-        openaiService.generateSummary(content, "basic", language)
+        openaiService.generateSummary(content, "casual", "chinese"),
+        openaiService.generateSummary(content, "academic", "chinese"),
+        openaiService.generateSummary(content, "basic", "chinese")
       ];
       
       const [casualSummary, academicSummary, basicSummary] = await Promise.all([
@@ -163,7 +160,6 @@ export const useContentManager = () => {
       setSummaryProgress(100);
       toast.success("所有风格的摘要已生成");
       
-      // Return all summary styles at once
       return {
         casual: casualSummary,
         academic: academicSummary,
@@ -179,7 +175,6 @@ export const useContentManager = () => {
   const handleContentLoaded = async (
     content: string,
     generateQuiz: boolean = true,
-    language: SummaryLanguage = "chinese",
     courseId: string
   ) => {
     if (!openaiService.getApiKey()) {
@@ -188,7 +183,6 @@ export const useContentManager = () => {
     }
 
     setIsLoading(true);
-    setCurrentLanguage(language);
     setSummaryProgress(0);
     setQuizProgress(0);
     
@@ -200,8 +194,8 @@ export const useContentManager = () => {
 
     try {
       // Start both processes in parallel
-      const summariesPromise = generateAllSummaryStyles(content, language);
-      const questionsPromise = generateQuiz ? generateAllQuestions(content, language) : Promise.resolve(null);
+      const summariesPromise = generateAllSummaryStyles(content);
+      const questionsPromise = generateQuiz ? generateAllQuestions(content) : Promise.resolve(null);
       
       // Wait for both to complete
       const [summaries, questions] = await Promise.all([summariesPromise, questionsPromise]);
@@ -213,7 +207,6 @@ export const useContentManager = () => {
           summary: {
             content: summaries.casual.content,
             style: "casual",
-            language,
             allStyles: {
               casual: summaries.casual.content,
               academic: summaries.academic.content,
@@ -224,7 +217,7 @@ export const useContentManager = () => {
         });
         
         // Save to history
-        saveToHistory(content, summaries, questions, language, courseId);
+        saveToHistory(content, summaries, questions, courseId);
       }
       
       return true;
@@ -235,10 +228,6 @@ export const useContentManager = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleLanguageChange = (language: SummaryLanguage) => {
-    setCurrentLanguage(language);
   };
 
   const handleStyleChange = async (style: SummaryStyle) => {
@@ -260,111 +249,19 @@ export const useContentManager = () => {
       });
       return;
     }
-    
-    // Otherwise, we need to generate this style
-    setIsLoading(true);
-    try {
-      const styleSummary = await openaiService.generateSummary(
-        courseContent.rawContent || "", 
-        style,
-        currentLanguage
-      );
-      
-      setCourseContent(prev => {
-        if (!prev || !prev.summary) return prev;
-        
-        // Create or update allStyles object
-        const updatedAllStyles = {
-          ...(prev.summary.allStyles || {}),
-          [style]: styleSummary.content
-        };
-        
-        return {
-          ...prev,
-          summary: {
-            ...prev.summary,
-            style: style,
-            content: styleSummary.content,
-            allStyles: updatedAllStyles
-          }
-        };
-      });
-    } catch (error) {
-      console.error("Error changing summary style:", error);
-      toast.error("更改摘要样式时出错");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateQuiz = async () => {
-    if (!courseContent?.rawContent) return;
-    setActiveTab("quiz");
-    
-    try {
-      const questions = await generateAllQuestions(courseContent.rawContent, currentLanguage);
-      if (questions) {
-        setCourseContent(prev => {
-          if (!prev) return null;
-          return { ...prev, questions };
-        });
-      }
-    } catch (error) {
-      console.error("Error generating quiz:", error);
-      toast.error("生成测验题时出错");
-    }
-  };
-
-  const handleRegenerateQuiz = async (difficulty: QuestionDifficulty) => {
-    if (!courseContent?.rawContent) return;
-    
-    setIsGeneratingQuiz(true);
-    try {
-      const newQuestions = await openaiService.generateQuestions(
-        courseContent.rawContent,
-        difficulty,
-        10,
-        currentLanguage
-      );
-      
-      setCourseContent(prev => {
-        if (!prev) return null;
-        
-        const updatedQuestions = {
-          ...(prev.questions || {}),
-          [difficulty]: newQuestions
-        };
-        
-        return { 
-          ...prev, 
-          questions: updatedQuestions
-        };
-      });
-      
-      toast.success(`已重新生成${difficulty === 'easy' ? '简单' : difficulty === 'medium' ? '普通' : '困难'}难度的测验题`);
-    } catch (error) {
-      console.error("Error regenerating quiz:", error);
-      toast.error("重新生成测验题时出错");
-    } finally {
-      setIsGeneratingQuiz(false);
-    }
   };
 
   return {
     courseContent,
     isLoading,
     isGeneratingQuiz,
-    currentLanguage,
-    currentQuizDifficulty,
     summaryProgress,
     quizProgress,
     activeTab,
     setActiveTab,
     handleContentLoaded,
     handleStyleChange,
-    handleLanguageChange,
-    handleGenerateQuiz,
-    handleRegenerateQuiz,
-    setCurrentQuizDifficulty
+    setCurrentQuizDifficulty,
+    handleRegenerateQuiz
   };
 };

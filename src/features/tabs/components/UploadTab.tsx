@@ -1,14 +1,12 @@
 
 import { TabsContent } from "@/components/ui/tabs";
 import FileUpload from "@/components/FileUpload";
-import { SummaryLanguage } from "@/types";
 
 interface UploadTabProps {
   isLoading: boolean;
   handleContentLoaded: (
     content: string,
     generateQuiz: boolean,
-    language: SummaryLanguage,
     courseId: string
   ) => void;
   selectedCourseId: string;

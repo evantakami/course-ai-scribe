@@ -1,12 +1,11 @@
 
 import React, { useState } from 'react';
-import LanguageSelector from '@/components/LanguageSelector';
-import { SummaryLanguage, QuestionDifficulty } from '@/types';
-import FileUploader from '@/components/FileUploader';
-import TextInput from '@/components/TextInput';
 import { Card } from '@/components/ui/card';
-import CourseSelector from '@/components/courses/CourseSelector';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2 } from "lucide-react";
 import CustomPromptSettings from '@/components/CustomPromptSettings';
+import CourseSelector from '@/components/courses/CourseSelector';
 
 interface FileUploadProps {
   isLoading: boolean;
@@ -15,7 +14,6 @@ interface FileUploadProps {
   onContentLoaded: (
     content: string,
     generateQuiz: boolean,
-    language: SummaryLanguage,
     courseId: string
   ) => void;
   generateAllContent?: boolean;
@@ -29,36 +27,16 @@ const FileUpload = ({
   generateAllContent = true
 }: FileUploadProps) => {
   const [content, setContent] = useState<string>("");
-  const [language, setLanguage] = useState<SummaryLanguage>("chinese");
-  const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
-  const [showUploader, setShowUploader] = useState<boolean>(true);
-
-  const handleLanguageChange = (value: SummaryLanguage) => {
-    setLanguage(value);
-  };
-
-  const handleUploadSuccess = (text: string) => {
-    setContent(text);
-  };
 
   const handleProcess = () => {
     if (content.trim().length < 50) {
       alert("请输入至少50个字符的内容");
       return;
     }
-    onContentLoaded(content, generateQuiz, language, selectedCourseId);
-  };
-
-  const handleTextInput = () => {
-    setShowUploader(false);
-  };
-
-  const handleFileUpload = () => {
-    setShowUploader(true);
+    onContentLoaded(content, true, selectedCourseId);
   };
 
   const handleSaveContent = () => {
-    // Save content to localStorage or elsewhere
     if (content.trim().length > 0) {
       localStorage.setItem('saved_content', content);
       alert("内容已保存");
@@ -76,48 +54,36 @@ const FileUpload = ({
       </div>
       
       <Card className="p-6">
-        {showUploader ? (
-          <FileUploader 
-            onDrop={(files) => {
-              const file = files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  const text = e.target?.result as string;
-                  handleUploadSuccess(text);
-                };
-                reader.readAsText(file);
-              }
-            }}
-            selectedFile={null}
-            onHandleManualTextInput={handleTextInput}
-            onHandleUpload={handleProcess}
-            isLoading={isLoading}
-            selectedCourseId={selectedCourseId}
-            onSelectCourse={onSelectCourse}
+        <div className="space-y-4">
+          <Textarea 
+            placeholder="请输入或粘贴课程内容..." 
+            className="min-h-[300px]"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
           />
-        ) : (
-          <TextInput 
-            textContent={content}
-            setTextContent={setContent}
-            onHandleFileUpload={handleFileUpload}
-            onSubmitText={handleProcess}
-            isLoading={isLoading}
-            onSaveContent={handleSaveContent}
-            selectedCourseId={selectedCourseId}
-            onSelectCourse={onSelectCourse}
-          />
-        )}
-
-        <div className="mt-4">
-          <label className="text-sm font-medium mb-1 block">
-            语言
-          </label>
-          <LanguageSelector 
-            value={language}
-            onChange={handleLanguageChange}
-            disabled={isLoading}
-          />
+          
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={handleSaveContent}
+              disabled={content.trim().length === 0 || isLoading}
+            >
+              保存
+            </Button>
+            <Button
+              onClick={handleProcess}
+              disabled={isLoading || content.trim().length < 50}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  处理中...
+                </>
+              ) : (
+                "处理内容"
+              )}
+            </Button>
+          </div>
         </div>
       </Card>
     </div>

@@ -1,7 +1,6 @@
-
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
-import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
+import { CourseContent, SummaryStyle, QuestionDifficulty, UserAnswer } from "@/types";
 import UploadTab from "@/features/tabs/components/UploadTab";
 import SummaryTab from "@/features/tabs/components/SummaryTab";
 import QuizTab from "@/features/tabs/components/QuizTab";
@@ -17,12 +16,9 @@ interface MainTabsProps {
   handleContentLoaded: (
     content: string,
     generateQuiz: boolean,
-    quizDifficulty: QuestionDifficulty,
-    language: SummaryLanguage,
     courseId: string
   ) => void;
   handleStyleChange: (style: SummaryStyle) => void;
-  handleLanguageChange: (language: SummaryLanguage) => void;
   handleGenerateQuiz: () => void;
   handleDifficultyChange: (difficulty: QuestionDifficulty) => void;
   saveUserAnswersToHistory?: (userAnswers: UserAnswer[]) => void;
@@ -42,7 +38,6 @@ const MainTabs = ({
   isGeneratingQuiz,
   handleContentLoaded,
   handleStyleChange,
-  handleLanguageChange,
   handleGenerateQuiz,
   handleDifficultyChange,
   saveUserAnswersToHistory,
@@ -90,7 +85,6 @@ const MainTabs = ({
         </TabsTrigger>
       </TabsList>
 
-      {/* Only show progress when actually generating, not when switching tabs */}
       <GenerationProgress 
         summaryProgress={summaryProgress}
         quizProgress={quizProgress}
@@ -108,7 +102,6 @@ const MainTabs = ({
         summary={courseContent?.summary || null}
         isLoading={isLoading}
         onStyleChange={handleStyleChange}
-        onLanguageChange={handleLanguageChange}
         onGenerateQuiz={handleGenerateQuiz}
       />
 
