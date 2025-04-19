@@ -17,6 +17,8 @@ const SummaryQuizPage = () => {
   const { contentId } = useParams<{ contentId: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("summary");
+  const [contentLoaded, setContentLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const {
     courseContent,
@@ -35,29 +37,50 @@ const SummaryQuizPage = () => {
   const [loadedFromHistory, setLoadedFromHistory] = useState(false);
 
   useEffect(() => {
+    console.log("SummaryQuizPage initialized with contentId:", contentId);
+    
     // Check if there is content in session storage
     const storedContent = sessionStorage.getItem('current_content');
     const currentCourseId = sessionStorage.getItem('current_course_id');
     
     if (!contentId) {
-      console.log("No content ID found, redirecting to home");
+      console.error("No content ID found, redirecting to home");
       toast.error("没有找到内容，请返回重试");
       navigate('/');
       return;
     }
     
-    // Try to load content from history if not in session storage
-    if ((!storedContent || !currentCourseId) && contentId && !loadedFromHistory) {
-      console.log("Trying to load content from history for ID:", contentId);
-      const historyItem = getHistoryItemById(contentId);
+    // First attempt: Try to use content directly from session storage
+    if (storedContent && currentCourseId && !loadedFromHistory && !contentLoaded) {
+      console.log("Using content from sessionStorage, length:", storedContent.length);
+      const language = sessionStorage.getItem('content_language') || "chinese";
       
-      if (historyItem) {
-        console.log("Content found in history:", historyItem.id);
-        sessionStorage.setItem('current_content', historyItem.rawContent);
-        sessionStorage.setItem('current_course_id', historyItem.courseId);
+      try {
+        handleContentLoaded(
+          storedContent,
+          true,
+          "medium",
+          language,
+          currentCourseId
+        );
+        setContentLoaded(true);
+      } catch (error) {
+        console.error("Error processing content from session storage:", error);
+        toast.error("处理内容时出错，请重试");
+      }
+    } 
+    // Second attempt: Try to load from history if not in session storage
+    else if ((!storedContent || !currentCourseId || !contentLoaded) && contentId && !loadedFromHistory) {
+      console.log("Trying to load content from history for ID:", contentId);
+      
+      try {
+        const historyItem = getHistoryItemById(contentId);
         
-        // Process the content from history
-        if (historyItem.rawContent && historyItem.courseId) {
+        if (historyItem && historyItem.rawContent) {
+          console.log("Content found in history:", historyItem.id);
+          sessionStorage.setItem('current_content', historyItem.rawContent);
+          sessionStorage.setItem('current_course_id', historyItem.courseId);
+          
           const language = historyItem.language || "chinese";
           console.log("Loading content from history with language:", language);
           
@@ -70,19 +93,21 @@ const SummaryQuizPage = () => {
           );
           
           setLoadedFromHistory(true);
+          setContentLoaded(true);
+        } else {
+          console.error("Content not found in history for ID:", contentId);
+          toast.error("没有找到内容，请返回重试");
         }
-      } else {
-        console.log("Content not found in history for ID:", contentId);
-        toast.error("没有找到内容，请返回重试");
-        navigate('/');
+      } catch (error) {
+        console.error("Error loading from history:", error);
+        toast.error("加载历史内容失败，请重试");
       }
-    } else {
-      console.log("Content found in session storage, not loading from history");
     }
     
     // Sync tabs
     setContentManagerActiveTab(activeTab);
-  }, [contentId, activeTab, navigate, setContentManagerActiveTab, getHistoryItemById, handleContentLoaded, loadedFromHistory]);
+    setLoading(false);
+  }, [contentId, activeTab, navigate, setContentManagerActiveTab, getHistoryItemById, handleContentLoaded, loadedFromHistory, contentLoaded]);
 
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
@@ -105,6 +130,68 @@ const SummaryQuizPage = () => {
     } else {
       navigate('/');
     }
+  };
+
+  // Conditionally render based on content loading state
+  const renderContent = () => {
+    if (loading || isLoading) {
+      return (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin h-10 w-10 border-4 border-edu-500 border-t-transparent rounded-full"></div>
+          <span className="ml-3 text-lg">正在加载内容...</span>
+        </div>
+      );
+    }
+    
+    if (!courseContent && !isLoading) {
+      return (
+        <div className="text-center py-20">
+          <h3 className="text-xl font-medium mb-4">无法加载内容</h3>
+          <p className="text-muted-foreground mb-6">
+            找不到请求的内容或无法处理，请返回课程页面重试
+          </p>
+          <Button onClick={handleBackToCoursePage}>
+            返回课程页面
+          </Button>
+        </div>
+      );
+    }
+    
+    return (
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="summary" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            课程摘要
+          </TabsTrigger>
+          <TabsTrigger value="quiz" className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" />
+            知识测验
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="summary">
+          <SummaryTab 
+            summary={courseContent?.summary}
+            isLoading={isLoading}
+            onStyleChange={handleStyleChange}
+            onLanguageChange={handleLanguageChange}
+            onGenerateQuiz={handleGenerateQuiz}
+            showGenerateControls={true}
+          />
+        </TabsContent>
+        
+        <TabsContent value="quiz">
+          <QuizTab 
+            questions={courseContent?.questions}
+            isGenerating={isGeneratingQuiz}
+            onDifficultyChange={setCurrentQuizDifficulty}
+            saveUserAnswers={handleSaveUserAnswers}
+            onRegenerateQuiz={handleRegenerateQuiz}
+          />
+        </TabsContent>
+      </Tabs>
+    );
   };
 
   return (
@@ -142,39 +229,7 @@ const SummaryQuizPage = () => {
               </div>
             </div>
             
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="summary" className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  课程摘要
-                </TabsTrigger>
-                <TabsTrigger value="quiz" className="flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4" />
-                  知识测验
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="summary">
-                <SummaryTab 
-                  summary={courseContent?.summary}
-                  isLoading={isLoading}
-                  onStyleChange={handleStyleChange}
-                  onLanguageChange={handleLanguageChange}
-                  onGenerateQuiz={handleGenerateQuiz}
-                  showGenerateControls={true}
-                />
-              </TabsContent>
-              
-              <TabsContent value="quiz">
-                <QuizTab 
-                  questions={courseContent?.questions}
-                  isGenerating={isGeneratingQuiz}
-                  onDifficultyChange={setCurrentQuizDifficulty}
-                  saveUserAnswers={handleSaveUserAnswers}
-                  onRegenerateQuiz={handleRegenerateQuiz}
-                />
-              </TabsContent>
-            </Tabs>
+            {renderContent()}
           </main>
           <Footer />
         </div>

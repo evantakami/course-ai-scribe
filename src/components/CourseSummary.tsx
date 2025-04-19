@@ -44,6 +44,7 @@ const CourseSummary = ({
   });
 
   useEffect(() => {
+    console.log("Summary prop changed:", !!summary);
     if (summary && !isLoading) {
       console.log("Summary updated:", summary.style, "with all styles:", !!summary.allStyles);
       
@@ -81,6 +82,10 @@ const CourseSummary = ({
       console.log("Using cached summary for style:", style);
     } else {
       console.log("Requesting new summary style:", style);
+      setLocalLoading(prev => ({
+        ...prev,
+        [style]: true
+      }));
       onStyleChange(style);
     }
   };
@@ -113,6 +118,7 @@ const CourseSummary = ({
   };
 
   const summaryContent = getSummaryContent();
+  const currentStyleLoading = localLoading[activeStyle] || isLoading;
 
   return (
     <Card className="w-full">
@@ -159,7 +165,7 @@ const CourseSummary = ({
             <TabsTrigger value="basic" disabled={isLoading}>基础概念</TabsTrigger>
           </TabsList>
           
-          {isLoading ? (
+          {currentStyleLoading ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
               <span className="ml-2 text-edu-600">正在加载摘要...</span>

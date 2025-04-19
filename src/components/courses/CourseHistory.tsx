@@ -37,12 +37,15 @@ interface CourseHistoryProps {
 const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistoryProps) => {
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Loading history for course ID:", courseId);
     loadData();
   }, [courseId]);
 
   const loadData = () => {
+    setLoading(true);
     try {
       // Load course data
       const userProfileString = localStorage.getItem('user_profile');
@@ -50,18 +53,26 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
         const userProfile = JSON.parse(userProfileString);
         const foundCourse = userProfile.courses?.find((c: Course) => c.id === courseId);
         if (foundCourse) {
+          console.log("Found course:", foundCourse.name);
           setCourse(foundCourse);
+        } else {
+          console.log("Course not found in user profile");
         }
+      } else {
+        console.log("User profile not found in localStorage");
       }
 
       // Load history items for this course
       const historyString = localStorage.getItem('content_history') || '[]';
       const allHistory: HistoryItem[] = JSON.parse(historyString);
       const filteredHistory = allHistory.filter(item => item.courseId === courseId);
+      console.log(`Found ${filteredHistory.length} history items for course`);
       setHistoryItems(filteredHistory);
     } catch (error) {
       console.error("Failed to load course history:", error);
       toast.error("加载课程历史记录失败");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,13 +121,19 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
 
   const handleSelectItem = (item: HistoryItem) => {
     try {
+      if (!item.rawContent) {
+        console.error("No raw content found in history item");
+        toast.error("历史内容不完整，无法加载");
+        return;
+      }
+      
       // Deep clone the item to prevent reference issues
       const clonedItem = JSON.parse(JSON.stringify(item));
       
       // Make sure to preserve all properties of the history item, especially questions and explanations
-      console.log("Storing history item:", JSON.stringify(clonedItem));
+      console.log("Storing history item:", clonedItem.title || "Untitled");
       
-      // Ensure questions have all required fields
+      // Ensure questions have all required fields if they exist
       if (clonedItem.questions) {
         ['easy', 'medium', 'hard'].forEach(difficulty => {
           if (clonedItem.questions[difficulty]) {
@@ -131,6 +148,12 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
       
       // Store the complete item in session storage for later retrieval
       sessionStorage.setItem('selected_history_item', JSON.stringify(clonedItem));
+      sessionStorage.setItem('current_content', item.rawContent);
+      sessionStorage.setItem('current_course_id', courseId);
+      sessionStorage.setItem('current_content_id', item.id);
+      
+      console.log("Item stored in session storage with ID:", item.id);
+      console.log("Raw content length:", item.rawContent.length);
       
       // Just pass the raw content to parent component
       onSelectContent(item.rawContent);
@@ -138,7 +161,7 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
       toast.success("已加载历史内容");
     } catch (error) {
       console.error("Failed to select history item:", error);
-      toast.error("加载历史内容失败");
+      toast.error("加载历史内容失败，请检查内容是否完整");
     }
   };
 
@@ -170,7 +193,12 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
         )}
       </div>
 
-      {historyItems.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-10">
+          <div className="animate-spin h-10 w-10 border-4 border-edu-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-muted-foreground">正在加载课程历史记录...</p>
+        </div>
+      ) : historyItems.length === 0 ? (
         <div className="text-center py-10">
           <File className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
           <h3 className="text-lg font-medium mb-2">暂无课程笔记</h3>
