@@ -2,8 +2,7 @@
 import { useState, useEffect } from "react";
 import { UserAnswer } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Play } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import MistakeList from "@/features/mistakes/components/MistakeList";
 import MistakePractice from "@/features/mistakes/components/MistakePractice";
@@ -41,16 +40,18 @@ const MistakeCollection = () => {
 
   const handleUpdateMistakes = (newAnswers: UserAnswer[]) => {
     try {
-      // 只更新答对的题目
+      // Only update correctly answered questions
       const correctAnswers = newAnswers.filter(answer => answer.isCorrect);
-      const updatedMistakes = mistakes.filter(mistake => 
-        !correctAnswers.some(answer => answer.questionId === mistake.questionId)
-      );
-      
-      setMistakes(updatedMistakes);
-      localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
       
       if (correctAnswers.length > 0) {
+        // Remove correct answers from mistake collection
+        const updatedMistakes = mistakes.filter(mistake => 
+          !correctAnswers.some(answer => answer.questionId === mistake.questionId)
+        );
+        
+        setMistakes(updatedMistakes);
+        localStorage.setItem('mistake_collection', JSON.stringify(updatedMistakes));
+        
         toast.success(`恭喜！已掌握 ${correctAnswers.length} 道题目`);
       }
     } catch (error) {
@@ -61,20 +62,11 @@ const MistakeCollection = () => {
 
   return (
     <Card className="w-full mt-6">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BookOpen className="h-5 w-5" />
           错题本
         </CardTitle>
-        {!isPracticing && mistakes.length > 0 && (
-          <Button 
-            onClick={() => setIsPracticing(true)}
-            className="bg-edu-600 hover:bg-edu-700"
-          >
-            <Play className="mr-2 h-4 w-4" />
-            开始练习
-          </Button>
-        )}
       </CardHeader>
       <CardContent>
         {isPracticing ? (
