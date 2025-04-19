@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CourseContent, SummaryLanguage, SummaryStyle } from "@/types";
 import { openaiService } from "@/services/openaiService";
@@ -25,7 +26,7 @@ export const useContentProcessor = () => {
       ]);
       
       return {
-        style: "casual",
+        style: "casual" as SummaryStyle,
         content: casualSummary.content,
         language,
         allStyles: {
