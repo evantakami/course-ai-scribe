@@ -7,11 +7,11 @@ import { toast } from "sonner";
 import MistakeList from "@/features/mistakes/components/MistakeList";
 import MistakePractice from "@/features/mistakes/components/MistakePractice";
 import { useMistakeCollection } from "@/features/mistakes/hooks/useMistakeCollection";
-import { useQuiz } from "@/hooks/useQuiz";
+import { useCourseView } from "@/hooks/useCourseView";
 import { useContentHistory } from "@/hooks/useContentHistory";
 
 const MistakeCollection = () => {
-  const { selectedCourseId } = useQuiz();
+  const { selectedCourseId } = useCourseView();
   const { 
     mistakes, 
     deleteMistake, 
