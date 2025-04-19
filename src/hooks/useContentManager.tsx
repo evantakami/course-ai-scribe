@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CourseContent, SummaryLanguage, SummaryStyle, QuestionDifficulty, UserAnswer } from "@/types";
 import { openaiService } from "@/services/openaiService";
@@ -61,6 +62,7 @@ export const useContentManager = () => {
     }
   };
 
+  // Modified to generate summary and quiz in parallel
   const handleContentLoaded = async (
     content: string,
     generateQuiz: boolean = true,
@@ -85,25 +87,19 @@ export const useContentManager = () => {
     });
 
     try {
-      const summary = await generateAllSummaries(content, language);
+      // Start both processes in parallel
+      const summaryPromise = generateAllSummaries(content, language);
+      const questionsPromise = generateQuiz ? generateAllQuestions(content, language) : Promise.resolve(null);
       
-      const initialContent: CourseContent = {
+      // Wait for both to complete
+      const [summary, questions] = await Promise.all([summaryPromise, questionsPromise]);
+      
+      // Update content with both results
+      setCourseContent({
         rawContent: content,
         summary,
-        questions: null
-      };
-      
-      setCourseContent(initialContent);
-      
-      if (generateQuiz) {
-        const questions = await generateAllQuestions(content, language);
-        if (questions) {
-          setCourseContent({
-            ...initialContent,
-            questions
-          });
-        }
-      }
+        questions
+      });
       
       return true;
     } catch (error) {
@@ -115,6 +111,12 @@ export const useContentManager = () => {
     }
   };
 
+  // Modify handleLanguageChange to not trigger regeneration automatically
+  const handleLanguageChange = (language: SummaryLanguage) => {
+    setCurrentLanguage(language);
+  };
+
+  // Only generate summary for this specific style change without redoing everything
   const handleStyleChange = async (style: SummaryStyle) => {
     if (!courseContent?.rawContent) return;
     
@@ -138,27 +140,7 @@ export const useContentManager = () => {
     }
   };
 
-  const handleLanguageChange = async (language: SummaryLanguage) => {
-    if (!courseContent?.rawContent) return;
-    setCurrentLanguage(language);
-    
-    setIsLoading(true);
-    try {
-      const summary = await generateAllSummaries(courseContent.rawContent, language);
-      if (summary) {
-        setCourseContent(prev => {
-          if (!prev) return null;
-          return { ...prev, summary };
-        });
-      }
-    } catch (error) {
-      console.error("Error changing summary language:", error);
-      toast.error("更改摘要语言时出错");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Generate quiz only when explicitly requested
   const handleGenerateQuiz = async () => {
     if (!courseContent?.rawContent) return;
     setActiveTab("quiz");

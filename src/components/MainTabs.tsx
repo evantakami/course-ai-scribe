@@ -53,10 +53,15 @@ const MainTabs = ({
   summaryProgress = 0,
   quizProgress = 0
 }: MainTabsProps) => {
+  // Simple tab change handler that doesn't trigger regeneration
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
   return (
     <Tabs
       value={activeTab}
-      onValueChange={setActiveTab}
+      onValueChange={handleTabChange}
       className="space-y-4"
     >
       <TabsList className="grid w-full grid-cols-4">
