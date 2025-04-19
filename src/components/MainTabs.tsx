@@ -1,11 +1,11 @@
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
-import FileUpload from "./FileUpload";
-import CourseSummary from "./CourseSummary";
-import QuizGenerator from "./QuizGenerator";
-import MistakeCollection from "./MistakeCollection";
+import UploadTab from "@/features/tabs/components/UploadTab";
+import SummaryTab from "@/features/tabs/components/SummaryTab";
+import QuizTab from "@/features/tabs/components/QuizTab";
+import MistakesTab from "@/features/tabs/components/MistakesTab";
 
 interface MainTabsProps {
   activeTab: string;
@@ -28,7 +28,6 @@ interface MainTabsProps {
   handleRegenerateQuiz?: (difficulty: QuestionDifficulty) => void;
   selectedCourseId: string;
   onSelectCourse: (courseId: string) => void;
-  onViewCourses: () => void;
 }
 
 const MainTabs = ({
@@ -45,8 +44,7 @@ const MainTabs = ({
   saveUserAnswersToHistory,
   handleRegenerateQuiz,
   selectedCourseId,
-  onSelectCourse,
-  onViewCourses
+  onSelectCourse
 }: MainTabsProps) => {
   return (
     <Tabs
@@ -79,41 +77,30 @@ const MainTabs = ({
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="upload" className="mt-4">
-        <div className="flex justify-center">
-          <FileUpload 
-            onContentLoaded={handleContentLoaded} 
-            isLoading={isLoading}
-            selectedCourseId={selectedCourseId}
-            onSelectCourse={onSelectCourse}
-            generateAllContent={true}
-          />
-        </div>
-      </TabsContent>
+      <UploadTab 
+        isLoading={isLoading}
+        handleContentLoaded={handleContentLoaded}
+        selectedCourseId={selectedCourseId}
+        onSelectCourse={onSelectCourse}
+      />
 
-      <TabsContent value="summary" className="mt-4">
-        <CourseSummary 
-          summary={courseContent?.summary || null} 
-          isLoading={isLoading}
-          onStyleChange={handleStyleChange}
-          onLanguageChange={handleLanguageChange}
-          onGenerateQuiz={handleGenerateQuiz}
-        />
-      </TabsContent>
+      <SummaryTab 
+        summary={courseContent?.summary || null}
+        isLoading={isLoading}
+        onStyleChange={handleStyleChange}
+        onLanguageChange={handleLanguageChange}
+        onGenerateQuiz={handleGenerateQuiz}
+      />
 
-      <TabsContent value="quiz" className="mt-4">
-        <QuizGenerator 
-          questions={courseContent?.questions || null}
-          isGenerating={isGeneratingQuiz}
-          onDifficultyChange={handleDifficultyChange}
-          saveUserAnswers={saveUserAnswersToHistory}
-          onRegenerateQuiz={handleRegenerateQuiz}
-        />
-      </TabsContent>
-      
-      <TabsContent value="mistakes" className="mt-4">
-        <MistakeCollection />
-      </TabsContent>
+      <QuizTab 
+        questions={courseContent?.questions || null}
+        isGenerating={isGeneratingQuiz}
+        onDifficultyChange={handleDifficultyChange}
+        saveUserAnswers={saveUserAnswersToHistory}
+        onRegenerateQuiz={handleRegenerateQuiz}
+      />
+
+      <MistakesTab />
     </Tabs>
   );
 };
