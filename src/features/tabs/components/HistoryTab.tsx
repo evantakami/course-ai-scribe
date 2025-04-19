@@ -3,8 +3,13 @@ import { TabsContent } from "@/components/ui/tabs";
 import CourseHistory from "@/components/courses/CourseHistory";
 import { useCourseView } from "@/hooks/useCourseView";
 
-const HistoryTab = () => {
-  const { selectedCourseId, handleSelectHistoryContent, setView } = useCourseView();
+interface HistoryTabProps {
+  courseId: string;
+  onSelectContent: (content: string) => void;
+}
+
+const HistoryTab = ({ courseId, onSelectContent }: HistoryTabProps) => {
+  const { setView } = useCourseView();
 
   const handleBackClick = () => {
     setView("catalog");
@@ -13,9 +18,9 @@ const HistoryTab = () => {
   return (
     <TabsContent value="history" className="mt-4">
       <CourseHistory 
-        courseId={selectedCourseId}
+        courseId={courseId}
         onBackClick={handleBackClick}
-        onSelectContent={handleSelectHistoryContent}
+        onSelectContent={onSelectContent}
       />
     </TabsContent>
   );

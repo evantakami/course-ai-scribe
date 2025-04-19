@@ -1,7 +1,7 @@
 
 import { TabsContent } from "@/components/ui/tabs";
-import QuizGenerator from "@/components/QuizGenerator";
-import { Question, QuestionDifficulty, UserAnswer } from "@/types";
+import Quiz from "@/components/Quiz";
+import { Question } from "@/types";
 
 interface QuizTabProps {
   questions: {
@@ -9,28 +9,12 @@ interface QuizTabProps {
     medium?: Question[];
     hard?: Question[];
   } | null;
-  isGenerating: boolean;
-  onDifficultyChange: (difficulty: QuestionDifficulty) => void;
-  saveUserAnswers?: (userAnswers: UserAnswer[]) => void;
-  onRegenerateQuiz?: (difficulty: QuestionDifficulty) => void;
 }
 
-const QuizTab = ({
-  questions,
-  isGenerating,
-  onDifficultyChange,
-  saveUserAnswers,
-  onRegenerateQuiz
-}: QuizTabProps) => {
+const QuizTab = ({ questions }: QuizTabProps) => {
   return (
-    <TabsContent value="quiz" className="mt-4">
-      <QuizGenerator 
-        questions={questions}
-        isGenerating={isGenerating}
-        onDifficultyChange={onDifficultyChange}
-        saveUserAnswers={saveUserAnswers}
-        onRegenerateQuiz={onRegenerateQuiz}
-      />
+    <TabsContent value="quiz" className="mt-4 space-y-8">
+      <Quiz questions={questions} />
     </TabsContent>
   );
 };
