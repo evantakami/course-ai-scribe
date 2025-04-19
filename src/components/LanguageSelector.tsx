@@ -9,11 +9,12 @@ import {
 import { SummaryLanguage } from "@/types";
 
 interface LanguageSelectorProps {
-  language: SummaryLanguage;
-  onLanguageChange: (value: SummaryLanguage) => void;
+  value: SummaryLanguage;  // Changed from 'language' to 'value'
+  onChange: (value: SummaryLanguage) => void;  // Changed from 'onLanguageChange' to 'onChange'
+  disabled?: boolean;  // Added disabled prop
 }
 
-const LanguageSelector = ({ language, onLanguageChange }: LanguageSelectorProps) => {
+const LanguageSelector = ({ value, onChange, disabled = false }: LanguageSelectorProps) => {
   const languageOptions = [
     { value: "chinese", label: "中文" },
     { value: "english", label: "English" },
@@ -22,7 +23,7 @@ const LanguageSelector = ({ language, onLanguageChange }: LanguageSelectorProps)
   ];
 
   return (
-    <Select value={language} onValueChange={(value) => onLanguageChange(value as SummaryLanguage)}>
+    <Select value={value} onValueChange={(value) => onChange(value as SummaryLanguage)} disabled={disabled}>
       <SelectTrigger className="w-[120px]">
         <SelectValue placeholder="选择语言" />
       </SelectTrigger>

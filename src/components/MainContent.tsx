@@ -22,7 +22,7 @@ const MainContent = () => {
     handleStyleChange,
     handleLanguageChange,
     handleGenerateQuiz,
-    handleDifficultyChange,
+    setCurrentQuizDifficulty,  // This is what we use instead of handleDifficultyChange
     saveUserAnswersToHistory,
     handleRegenerateQuiz,
     selectedCourseId,
@@ -90,7 +90,7 @@ const MainContent = () => {
       <QuizTab 
         questions={courseContent?.questions || null}
         isGenerating={isGeneratingQuiz}
-        onDifficultyChange={handleDifficultyChange}
+        onDifficultyChange={setCurrentQuizDifficulty}  // Use setCurrentQuizDifficulty here
         saveUserAnswers={saveUserAnswersToHistory}
         onRegenerateQuiz={handleRegenerateQuiz}
       />

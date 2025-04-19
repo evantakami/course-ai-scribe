@@ -65,6 +65,7 @@ const UploadTab = ({
     handleContentLoaded(content, generateQuiz, quizDifficulty, language, selectedCourseId);
   };
 
+  // Create a handler that FileUploader can use
   const handleUploadSuccess = (text: string) => {
     setContent(text);
   };
@@ -81,7 +82,26 @@ const UploadTab = ({
       
       <Card className="p-6">
         <div className="space-y-4">
-          <FileUploader onUploadSuccess={handleUploadSuccess} />
+          {/* Pass compatible props to FileUploader */}
+          <FileUploader 
+            onDrop={(files) => {
+              const file = files[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  const text = e.target?.result as string;
+                  handleUploadSuccess(text);
+                };
+                reader.readAsText(file);
+              }
+            }}
+            selectedFile={null}
+            onHandleManualTextInput={() => {}}
+            onHandleUpload={() => {}}
+            isLoading={isLoading}
+            selectedCourseId={selectedCourseId}
+            onSelectCourse={onSelectCourse}
+          />
           
           <Textarea
             placeholder="粘贴文本内容，或上传文件..."
