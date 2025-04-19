@@ -80,11 +80,9 @@ export const useContentManager = () => {
     }
   };
 
-  // Generate summary and quiz in parallel
   const handleContentLoaded = async (
     content: string,
     generateQuiz: boolean = true,
-    quizDifficulty: QuestionDifficulty = "medium",
     language: SummaryLanguage = "chinese",
     courseId: string
   ) => {
@@ -128,6 +126,9 @@ export const useContentManager = () => {
           },
           questions
         });
+        
+        // Save to history
+        saveToHistory(content, summaries, questions, language, courseId);
       }
       
       return true;
@@ -140,12 +141,10 @@ export const useContentManager = () => {
     }
   };
 
-  // Simply update the language setting without regenerating content
   const handleLanguageChange = (language: SummaryLanguage) => {
     setCurrentLanguage(language);
   };
 
-  // Handle style change without API calls if the style is already generated
   const handleStyleChange = async (style: SummaryStyle) => {
     if (!courseContent?.summary) return;
     
@@ -202,7 +201,6 @@ export const useContentManager = () => {
     }
   };
 
-  // Generate quiz only when explicitly requested
   const handleGenerateQuiz = async () => {
     if (!courseContent?.rawContent) return;
     setActiveTab("quiz");

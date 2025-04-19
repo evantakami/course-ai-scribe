@@ -11,7 +11,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { SummaryLanguage, QuestionDifficulty } from "@/types";
+import { SummaryLanguage } from "@/types";
 import { Loader2 } from "lucide-react";
 import CourseSelector from "@/components/courses/CourseSelector";
 import FileUploader from "@/components/FileUploader";
@@ -22,7 +22,6 @@ interface UploadTabProps {
   handleContentLoaded: (
     content: string,
     generateQuiz: boolean,
-    quizDifficulty: QuestionDifficulty,
     language: SummaryLanguage,
     courseId: string
   ) => void;
@@ -39,7 +38,6 @@ const UploadTab = ({
   const [content, setContent] = useState<string>("");
   const [language, setLanguage] = useState<SummaryLanguage>("chinese");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
-  const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
@@ -53,19 +51,14 @@ const UploadTab = ({
     setGenerateQuiz(value === "yes");
   };
 
-  const handleQuizDifficultyChange = (value: string) => {
-    setQuizDifficulty(value as QuestionDifficulty);
-  };
-
   const handleProcess = () => {
     if (content.trim().length < 50) {
       alert("请输入至少50个字符的内容");
       return;
     }
-    handleContentLoaded(content, generateQuiz, quizDifficulty, language, selectedCourseId);
+    handleContentLoaded(content, generateQuiz, language, selectedCourseId);
   };
 
-  // Create a handler that FileUploader can use
   const handleUploadSuccess = (text: string) => {
     setContent(text);
   };
@@ -82,7 +75,6 @@ const UploadTab = ({
       
       <Card className="p-6">
         <div className="space-y-4">
-          {/* Pass compatible props to FileUploader */}
           <FileUploader 
             onDrop={(files) => {
               const file = files[0];
@@ -110,7 +102,7 @@ const UploadTab = ({
             onChange={handleTextChange}
           />
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-1 block">
                 语言
@@ -150,28 +142,6 @@ const UploadTab = ({
                 </SelectContent>
               </Select>
             </div>
-            
-            {generateQuiz && (
-              <div>
-                <label className="text-sm font-medium mb-1 block">
-                  测验难度
-                </label>
-                <Select
-                  value={quizDifficulty}
-                  onValueChange={handleQuizDifficultyChange}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择难度" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">简单</SelectItem>
-                    <SelectItem value="medium">普通</SelectItem>
-                    <SelectItem value="hard">困难</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
           
           <Button
