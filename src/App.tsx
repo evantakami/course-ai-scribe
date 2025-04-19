@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-// Create a new QueryClient instance
+// 创建一个新的QueryClient实例
 const queryClient = new QueryClient();
 
 const App = () => {

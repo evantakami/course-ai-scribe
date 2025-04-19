@@ -33,7 +33,7 @@ export interface UserAnswer {
   questionId: number;
   selectedOption: number;
   isCorrect: boolean;
-  // Additional fields for mistake collection
+  // 额外字段用于错题收集
   question?: string;
   options?: string[];
   correctAnswer?: number;
@@ -57,7 +57,7 @@ export interface HistoryItem {
   timestamp: Date | string;
   title?: string;
   courseId: string;
-  // New fields to store generated content
+  // 存储生成内容的新字段
   summaries?: StyleSummaries;
   questions?: {
     easy?: Question[];
@@ -102,4 +102,3 @@ export interface UserProfile {
   courses: Course[];
   quizStats: UserStats;
 }
-
