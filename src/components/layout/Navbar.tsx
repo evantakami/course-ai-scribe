@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
@@ -20,11 +19,9 @@ interface NavbarProps {
   isKeySet: boolean;
   onOpenApiModal: () => void;
   onToggleHistory: () => void;
-  activeTab?: string;
-  setActiveTab?: (tab: string) => void;
 }
 
-const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory, activeTab, setActiveTab }: NavbarProps) => {
+const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   

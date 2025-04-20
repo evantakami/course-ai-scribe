@@ -2,12 +2,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
-import FileUploader from "@/components/FileUploader"; // Updated import name to match the file
+import FileUpload from "./FileUpload";
 import CourseSummary from "./CourseSummary";
 import QuizGenerator from "./QuizGenerator";
 import MistakeCollection from "./MistakeCollection";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
 
 interface MainTabsProps {
   activeTab: string;
@@ -54,9 +53,6 @@ const MainTabs = ({
   console.log("MainTabs - activeTab:", activeTab);
   console.log("MainTabs - courseContent:", courseContent);
   
-  // Track selected file state within MainTabs
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
   // Check if questions exist before accessing their length
   const hasQuestions = courseContent?.questions && (
     (courseContent.questions.easy && courseContent.questions.easy.length > 0) ||
@@ -79,41 +75,6 @@ const MainTabs = ({
       opacity: 0,
       transition: { duration: 0.2 }
     })
-  };
-  
-  // Handle file selection
-  const handleFileDrop = (acceptedFiles: File[]) => {
-    if (acceptedFiles && acceptedFiles.length > 0) {
-      setSelectedFile(acceptedFiles[0]);
-    }
-  };
-  
-  // Handle manual text input
-  const handleManualTextInput = () => {
-    // This would normally navigate to a text input view
-    console.log("Navigate to manual text input");
-  };
-  
-  // Handle upload
-  const handleUpload = () => {
-    if (selectedFile) {
-      // Read file content
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        if (content) {
-          // Process with hardcoded values for now
-          handleContentLoaded(
-            content,
-            true,
-            "medium" as QuestionDifficulty,
-            "chinese" as SummaryLanguage,
-            selectedCourseId
-          );
-        }
-      };
-      reader.readAsText(selectedFile);
-    }
   };
   
   return (
@@ -168,14 +129,12 @@ const MainTabs = ({
           >
             <TabsContent value="upload" className="mt-0">
               <div className="flex justify-center">
-                <FileUploader 
-                  onDrop={handleFileDrop}
-                  selectedFile={selectedFile}
-                  onHandleManualTextInput={handleManualTextInput}
-                  onHandleUpload={handleUpload}
+                <FileUpload 
+                  onContentLoaded={handleContentLoaded} 
                   isLoading={isLoading}
                   selectedCourseId={selectedCourseId}
                   onSelectCourse={onSelectCourse}
+                  generateAllContent={true}
                 />
               </div>
             </TabsContent>
