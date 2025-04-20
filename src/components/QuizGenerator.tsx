@@ -38,8 +38,10 @@ const QuizGenerator = ({
     // Create ID based on first and last question IDs to identify this batch of questions
     const questionSet = questions[difficulty] || [];
     if (questionSet.length === 0) return `${difficulty}-empty`;
-    const firstId = questionSet[0]?.id;
-    const lastId = questionSet[questionSet.length - 1]?.id;
+    
+    // Add null checks for getting first and last IDs
+    const firstId = questionSet[0]?.id || 0;
+    const lastId = questionSet[questionSet.length - 1]?.id || 0;
     return `${difficulty}-${firstId}-${lastId}`;
   };
 
@@ -68,12 +70,13 @@ const QuizGenerator = ({
   };
 
   const getCurrentQuestions = () => {
-    if (!questions) return null;
-    return questions[activeDifficulty] || [];
+    if (!questions) return [];
+    const questionsForDifficulty = questions[activeDifficulty];
+    return questionsForDifficulty || [];
   };
 
   const currentQuestions = getCurrentQuestions();
-  const isCurrentDifficultyGenerating = isGenerating && !currentQuestions?.length;
+  const isCurrentDifficultyGenerating = isGenerating && (!currentQuestions || currentQuestions.length === 0);
   
   // Create a custom save function that includes the current difficulty and batch ID
   const handleSaveUserAnswers = (userAnswers: UserAnswer[]) => {

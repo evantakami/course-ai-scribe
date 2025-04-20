@@ -57,6 +57,13 @@ const CourseSummary = ({
     }
   }, [summary, isLoading]);
 
+  // Update activeStyle when summary changes and we don't have an activeStyle saved
+  useEffect(() => {
+    if (summary && summary.style) {
+      setActiveStyle(summary.style);
+    }
+  }, [summary]);
+
   const handleStyleChange = (value: string) => {
     const style = value as SummaryStyle;
     setActiveStyle(style);
@@ -72,7 +79,8 @@ const CourseSummary = ({
   };
 
   const handleLanguageChange = (value: string) => {
-    onLanguageChange(value as SummaryLanguage);
+    const lang = value as SummaryLanguage;
+    onLanguageChange(lang);
     // Clear saved summaries when language changes
     setSavedSummaries({});
     // Reset all loading states

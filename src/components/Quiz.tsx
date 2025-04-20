@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
       setIsShowingExplanation(false);
       setCustomExplanation(null);
       
+      // Make sure currentQuestionIndex is valid
       if (currentQuestionIndex >= questions.length) {
         setCurrentQuestionIndex(0);
       }
@@ -60,18 +62,19 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
   }, [userAnswers, saveUserAnswers]);
 
   if (!questions || questions.length === 0) {
-    return <div className="text-center py-8 text-gray-500">No questions available</div>;
+    return <div className="text-center py-8 text-gray-500">暂无测验题</div>;
   }
 
+  // Ensure currentQuestionIndex is within bounds
   if (currentQuestionIndex >= questions.length) {
     setCurrentQuestionIndex(0);
-    return <div className="text-center py-8 text-gray-500">Loading questions...</div>;
+    return <div className="text-center py-8 text-gray-500">加载测验题中...</div>;
   }
 
   const currentQuestion = questions[currentQuestionIndex];
   
   if (!currentQuestion) {
-    return <div className="text-center py-8 text-gray-500">Question not available</div>;
+    return <div className="text-center py-8 text-gray-500">测验题不可用</div>;
   }
   
   const userAnswer = userAnswers.find(answer => 

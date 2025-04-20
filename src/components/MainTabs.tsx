@@ -52,6 +52,13 @@ const MainTabs = ({
   console.log("MainTabs - activeTab:", activeTab);
   console.log("MainTabs - courseContent:", courseContent);
   
+  // Check if questions exist before accessing their length
+  const hasQuestions = courseContent?.questions && (
+    (courseContent.questions.easy && courseContent.questions.easy.length > 0) ||
+    (courseContent.questions.medium && courseContent.questions.medium.length > 0) ||
+    (courseContent.questions.hard && courseContent.questions.hard.length > 0)
+  );
+  
   return (
     <Tabs
       value={activeTab}
@@ -72,7 +79,7 @@ const MainTabs = ({
         </TabsTrigger>
         <TabsTrigger 
           value="quiz" 
-          disabled={isLoading || isGeneratingQuiz || !courseContent?.questions}
+          disabled={isLoading || isGeneratingQuiz || !hasQuestions}
         >
           <HelpCircle className="mr-2 h-4 w-4" />
           知识测验
