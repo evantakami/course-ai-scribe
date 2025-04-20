@@ -2,7 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, HelpCircle, BookOpenCheck } from "lucide-react";
 import { CourseContent, SummaryLanguage, QuestionDifficulty, SummaryStyle, UserAnswer } from "@/types";
-import FileUpload from "./FileUpload";
+import FileUpload from "@/components/FileUploader"; // Updated import path
 import CourseSummary from "./CourseSummary";
 import QuizGenerator from "./QuizGenerator";
 import MistakeCollection from "./MistakeCollection";
