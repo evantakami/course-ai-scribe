@@ -226,7 +226,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
               flex items-start space-x-2 rounded-md p-3 border transition-colors
               ${isAnswerSubmitted ? (
                 index === currentQuestion.correctAnswer ? 'bg-green-50 border-green-200' :
-                index === userAnswer?.selectedOption ? 'bg-red-50 border-red-200' :
+                index === userAnswer?.selectedOptionIndex ? 'bg-red-50 border-red-200' :
                 'border-transparent'
               ) : (
                 selectedOption === index ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50 border-transparent'
