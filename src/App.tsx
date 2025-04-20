@@ -31,6 +31,8 @@ const App = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>("default");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
   const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
+  const [processedContent, setProcessedContent] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("upload");
 
   useEffect(() => {
     // Check if API key is set
@@ -76,8 +78,25 @@ const App = () => {
     language: SummaryLanguage,
     courseId: string
   ) => {
-    // Placeholder function to satisfy the type requirements
-    console.log("Content loaded", { content, generateQuiz, quizDifficulty, language, courseId });
+    // Store processed content in state
+    setProcessedContent({
+      rawContent: content,
+      generateQuiz,
+      quizDifficulty,
+      language,
+      courseId
+    });
+    
+    // Navigate to summary
+    setActiveTab("summary");
+    
+    console.log("Content loaded and ready for processing", { 
+      contentLength: content.length, 
+      generateQuiz, 
+      quizDifficulty, 
+      language, 
+      courseId 
+    });
   };
 
   const handleSelectCourse = (courseId: string) => {
@@ -98,6 +117,8 @@ const App = () => {
                 isKeySet={isKeySet} 
                 onOpenApiModal={() => setIsApiKeyModalOpen(true)}
                 onToggleHistory={toggleHistoryDrawer}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
               />
               
               {/* Main Content */}
@@ -119,9 +140,33 @@ const App = () => {
                         />
                       } 
                     />
-                    <Route path="/summary" element={<SummaryReport />} />
-                    <Route path="/quiz" element={<InteractiveQuiz />} />
-                    <Route path="/revision" element={<RevisionCenter />} />
+                    <Route 
+                      path="/summary" 
+                      element={
+                        <SummaryReport 
+                          initialContent={processedContent} 
+                          activeTab={activeTab}
+                        />
+                      } 
+                    />
+                    <Route 
+                      path="/quiz" 
+                      element={
+                        <InteractiveQuiz 
+                          initialContent={processedContent}
+                          activeTab={activeTab}
+                        />
+                      } 
+                    />
+                    <Route 
+                      path="/revision" 
+                      element={
+                        <RevisionCenter 
+                          initialContent={processedContent}
+                          activeTab={activeTab}
+                        />
+                      } 
+                    />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </div>
@@ -149,7 +194,7 @@ const App = () => {
               {/* API Key Modal */}
               <ApiKeyModal 
                 isOpen={isApiKeyModalOpen} 
-                onClose={() => !isKeySet && setIsApiKeyModalOpen(false)}
+                onClose={() => isKeySet && setIsApiKeyModalOpen(false)}
                 onApiKeySet={handleApiKeySet}
               />
             </div>

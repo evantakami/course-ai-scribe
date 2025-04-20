@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -121,6 +122,11 @@ const UploadContent = ({
       return;
     }
 
+    if (!selectedCourseId) {
+      toast.error("请先选择课程分类");
+      return;
+    }
+
     let contentToProcess = "";
 
     if (activeTab === "paste") {
@@ -148,17 +154,20 @@ const UploadContent = ({
     try {
       saveToHistory(contentToProcess);
       
+      // Always generate quizzes with all difficulty levels
       onContentLoaded(
         contentToProcess, 
-        generateQuiz, 
+        true, // Always generate quiz regardless of user setting
         quizDifficulty, 
         language, 
         selectedCourseId
       );
       
       stopLoading();
+      // After processing, navigate to summary tab via App.tsx routing
     } catch (error) {
       stopLoading();
+      console.error("处理内容失败:", error);
       toast.error("处理内容失败，请重试");
     }
   };
@@ -312,7 +321,7 @@ const UploadContent = ({
                   <Textarea 
                     placeholder="在此粘贴或输入课程内容..."
                     value={textContent}
-                    onChange={(e) => setTextContent(e.target.value)}
+                    onChange={handleTextChange}
                     className="min-h-[200px] bg-dark/20 border-gray-700 text-white placeholder:text-gray-500 focus-visible:ring-primary"
                   />
                 </TabsContent>
