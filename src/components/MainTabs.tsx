@@ -153,10 +153,9 @@ const MainTabs = ({
             <TabsContent value="summary" className="mt-0">
               <CourseSummary 
                 summary={courseContent?.summary || null} 
-                isLoading={isLoading}
+                summaries={courseContent?.summaries}
+                rawContent={courseContent?.rawContent || ""}
                 onStyleChange={handleStyleChange}
-                onLanguageChange={handleLanguageChange}
-                onGenerateQuiz={handleGenerateQuiz}
               />
             </TabsContent>
           </motion.div>

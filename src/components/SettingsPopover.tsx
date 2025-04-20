@@ -39,9 +39,9 @@ const SettingsPopover = ({
   setQuizDifficulty
 }: SettingsPopoverProps) => {
   const difficultyOptions = [
-    { value: "easy", label: "简单" },
-    { value: "medium", label: "普通" },
-    { value: "hard", label: "困难" }
+    { value: "easy" as QuestionDifficulty, label: "简单" },
+    { value: "medium" as QuestionDifficulty, label: "普通" },
+    { value: "hard" as QuestionDifficulty, label: "困难" }
   ];
 
   return (
@@ -87,9 +87,12 @@ const SettingsPopover = ({
                 <Label htmlFor="difficulty">测验难度</Label>
                 <Select 
                   value={quizDifficulty} 
-                  onValueChange={(value) => 
-                    setQuizDifficulty(value as QuestionDifficulty)
-                  }
+                  onValueChange={(value: string) => {
+                    // Ensure we're passing a valid QuestionDifficulty type
+                    if (value === "easy" || value === "medium" || value === "hard") {
+                      setQuizDifficulty(value);
+                    }
+                  }}
                 >
                   <SelectTrigger id="difficulty" className="mt-1">
                     <SelectValue placeholder="选择难度" />

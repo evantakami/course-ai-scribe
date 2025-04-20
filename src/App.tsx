@@ -16,6 +16,7 @@ import HistoryDrawer from "./components/layout/HistoryDrawer";
 import ProgressBar from "./components/common/ProgressBar";
 import ApiKeyModal from "./components/modals/ApiKeyModal";
 import { openaiService } from "./services/openaiService";
+import { QuestionDifficulty, SummaryLanguage } from "./types";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -27,6 +28,9 @@ const App = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [loadingMessage, setLoadingMessage] = useState<string>("");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("default");
+  const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
+  const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
 
   useEffect(() => {
     // Check if API key is set
@@ -65,6 +69,21 @@ const App = () => {
     };
   };
 
+  const handleContentLoaded = (
+    content: string, 
+    generateQuiz: boolean, 
+    quizDifficulty: QuestionDifficulty,
+    language: SummaryLanguage,
+    courseId: string
+  ) => {
+    // Placeholder function to satisfy the type requirements
+    console.log("Content loaded", { content, generateQuiz, quizDifficulty, language, courseId });
+  };
+
+  const handleSelectCourse = (courseId: string) => {
+    setSelectedCourseId(courseId);
+  };
+
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
@@ -91,7 +110,12 @@ const App = () => {
                       element={
                         <UploadContent 
                           isKeySet={isKeySet} 
-                          startLoading={startLoading} 
+                          startLoading={startLoading}
+                          onContentLoaded={handleContentLoaded}
+                          selectedCourseId={selectedCourseId}
+                          onSelectCourse={handleSelectCourse}
+                          generateQuiz={generateQuiz}
+                          quizDifficulty={quizDifficulty}
                         />
                       } 
                     />

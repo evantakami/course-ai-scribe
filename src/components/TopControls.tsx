@@ -5,6 +5,7 @@ import CustomPromptSettings from "@/components/CustomPromptSettings";
 import SettingsPopover from "@/components/SettingsPopover";
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
+import { QuestionDifficulty } from "@/types";
 
 interface TopControlsProps {
   onSelectHistoryContent: (content: string) => void;
@@ -14,8 +15,8 @@ interface TopControlsProps {
   onModelChange: (model: string) => void;
   generateQuiz: boolean;
   setGenerateQuiz: (value: boolean) => void;
-  quizDifficulty: string;
-  setQuizDifficulty: (difficulty: string) => void;
+  quizDifficulty: QuestionDifficulty;
+  setQuizDifficulty: (difficulty: QuestionDifficulty) => void;
 }
 
 const TopControls = ({ 
