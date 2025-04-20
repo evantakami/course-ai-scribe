@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -143,14 +144,15 @@ const UploadContent = ({
       }
     }
 
-    const stopLoading = startLoading("正在生成摘要...");
+    const stopLoading = startLoading("正在生成摘要和测验题...");
 
     try {
       saveToHistory(contentToProcess);
       
+      // 始终设置generateQuiz为true，以确保同时生成所有内容
       onContentLoaded(
         contentToProcess, 
-        generateQuiz, 
+        true, // 强制设置为true，确保生成测验
         quizDifficulty, 
         language, 
         selectedCourseId

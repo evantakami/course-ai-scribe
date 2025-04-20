@@ -17,6 +17,7 @@ import ProgressBar from "./components/common/ProgressBar";
 import ApiKeyModal from "./components/modals/ApiKeyModal";
 import { openaiService } from "./services/openaiService";
 import { QuestionDifficulty, SummaryLanguage } from "./types";
+import Index from "./pages/Index";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>("default");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
   const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
+  const [indexProps, setIndexProps] = useState<any>(null);
 
   useEffect(() => {
     // Check if API key is set
@@ -76,8 +78,17 @@ const App = () => {
     language: SummaryLanguage,
     courseId: string
   ) => {
-    // Placeholder function to satisfy the type requirements
-    console.log("Content loaded", { content, generateQuiz, quizDifficulty, language, courseId });
+    // 将内容和配置传递给Index组件
+    setIndexProps({
+      content,
+      generateQuiz,
+      quizDifficulty,
+      language,
+      courseId
+    });
+    
+    // 导航到Index组件并处理内容
+    window.location.href = "/summary";
   };
 
   const handleSelectCourse = (courseId: string) => {
@@ -119,7 +130,14 @@ const App = () => {
                         />
                       } 
                     />
-                    <Route path="/summary" element={<SummaryReport />} />
+                    <Route 
+                      path="/summary" 
+                      element={
+                        <Index 
+                          initialProps={indexProps}
+                        />
+                      } 
+                    />
                     <Route path="/quiz" element={<InteractiveQuiz />} />
                     <Route path="/revision" element={<RevisionCenter />} />
                     <Route path="*" element={<NotFound />} />
