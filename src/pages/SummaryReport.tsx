@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -29,13 +28,10 @@ const SummaryReport = () => {
   const [summaryStyle, setSummaryStyle] = useState<SummaryStyle>("casual");
   const [language, setLanguage] = useState<SummaryLanguage>("chinese");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [summaryContent, setSummaryContent] = useState<string>(
-    "# 摘要示例\n\n这是一个示例摘要，实际内容将根据您上传的课程内容生成。摘要将包含课程的关键知识点、重要概念和核心观点。\n\n## 主要内容\n\n- **概念一**：这里是概念一的简要解释和重要性\n- **概念二**：这里是概念二的简要解释和适用场景\n- **概念三**：这里是概念三的详细说明和示例\n\n## 核心要点\n\n1. 第一个要点及其解释\n2. 第二个要点及其具体应用\n3. 第三个要点及其注意事项\n\n## 总结\n\n本课程主要讲解了上述三个核心概念，它们之间的关系是互相补充、递进的。掌握这些概念对于理解整个学科领域具有重要意义。"
-  );
+  const [summaryContent, setSummaryContent] = useState<string>("");
 
   useEffect(() => {
-    // Simulate loading summary on style change
-    handleStyleChange(summaryStyle);
+    // Remove initial simulation
   }, []);
 
   const handleStyleChange = (style: SummaryStyle) => {
