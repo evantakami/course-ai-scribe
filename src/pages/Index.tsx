@@ -6,17 +6,7 @@ import { openaiService } from "@/services/openaiService";
 import MainTabs from "@/components/MainTabs";
 import TopControls from "@/components/TopControls";
 
-interface IndexProps {
-  initialProps?: {
-    content?: string;
-    generateQuiz?: boolean;
-    quizDifficulty?: QuestionDifficulty;
-    language?: SummaryLanguage;
-    courseId?: string;
-  }
-}
-
-const Index = ({ initialProps }: IndexProps) => {
+const Index = () => {
   const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
   const [activeTab, setActiveTab] = useState<string>("upload");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -25,20 +15,6 @@ const Index = ({ initialProps }: IndexProps) => {
   const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
   const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
-
-  // 处理初始props
-  useEffect(() => {
-    if (initialProps?.content) {
-      console.log("初始props接收成功:", initialProps);
-      handleContentLoaded(
-        initialProps.content,
-        initialProps.generateQuiz || true,
-        initialProps.quizDifficulty || "medium",
-        initialProps.language || "chinese",
-        initialProps.courseId || "default"
-      );
-    }
-  }, [initialProps]);
 
   useEffect(() => {
     // Load saved settings
