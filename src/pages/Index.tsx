@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { SummaryLanguage, SummaryStyle, CourseContent, Question, QuestionDifficulty, UserAnswer } from "@/types";
@@ -5,52 +6,18 @@ import { openaiService } from "@/services/openaiService";
 import MainTabs from "@/components/MainTabs";
 import TopControls from "@/components/TopControls";
 
-interface IndexProps {
-  initialContent?: CourseContent | null;
-  initialGenerateQuiz?: boolean;
-  initialQuizDifficulty?: QuestionDifficulty;
-  initialCourseId?: string;
-  activeTab?: string;
-}
-
-const Index = ({
-  initialContent = null,
-  initialGenerateQuiz = true,
-  initialQuizDifficulty = "medium",
-  initialCourseId = "default",
-  activeTab = "upload"
-}: IndexProps) => {
-  const [courseContent, setCourseContent] = useState<CourseContent | null>(initialContent);
-  const [currentActiveTab, setCurrentActiveTab] = useState<string>(activeTab);
+const Index = () => {
+  const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("upload");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState<boolean>(false);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(initialCourseId);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("default");
   const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
-  const [generateQuiz, setGenerateQuiz] = useState<boolean>(initialGenerateQuiz);
-  const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>(initialQuizDifficulty);
+  const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
+  const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
 
   useEffect(() => {
-    console.log("Index component mounted with:", {
-      initialContent,
-      initialGenerateQuiz,
-      initialQuizDifficulty,
-      initialCourseId,
-      activeTab,
-      courseContent
-    });
-
-    if (initialContent?.rawContent && !initialContent.summary) {
-      handleContentLoaded(
-        initialContent.rawContent,
-        true,
-        initialQuizDifficulty,
-        "chinese",
-        initialCourseId
-      );
-    }
-  }, []);
-
-  useEffect(() => {
+    // Load saved settings
     const savedModel = openaiService.getModel();
     if (savedModel) {
       setSelectedModel(savedModel);
@@ -58,9 +25,11 @@ const Index = ({
   }, []);
 
   useEffect(() => {
+    // Update API model when it changes
     openaiService.setModel(selectedModel);
   }, [selectedModel]);
 
+  // 同时生成所有摘要
   const generateAllSummaries = async (content: string, language: SummaryLanguage) => {
     try {
       const styles: SummaryStyle[] = ["casual", "academic", "basic"];
@@ -75,8 +44,7 @@ const Index = ({
         if (!prev) return null;
         return { 
           ...prev, 
-          summary: allSummaries[0], 
-          summaries: allSummaries
+          summary: allSummaries[0]  // Default to first summary style
         };
       });
       
@@ -89,10 +57,9 @@ const Index = ({
     }
   };
 
+  // 同时生成所有难度的问题
   const generateAllQuestions = async (content: string, language: SummaryLanguage) => {
     try {
-      setIsGeneratingQuiz(true);
-      
       const [easyQuestionsPromise, mediumQuestionsPromise, hardQuestionsPromise] = [
         openaiService.generateQuestions(content, "easy", 10, language),
         openaiService.generateQuestions(content, "medium", 10, language),
@@ -123,11 +90,10 @@ const Index = ({
       console.error("Error generating questions:", error);
       toast.error("生成测验题时出错");
       throw error;
-    } finally {
-      setIsGeneratingQuiz(false);
     }
   };
 
+  // 处理内容加载
   const handleContentLoaded = async (
     content: string, 
     generateQuiz: boolean, 
@@ -139,39 +105,43 @@ const Index = ({
       setIsLoading(true);
       setSelectedCourseId(courseId);
       
+      // Set initial state with raw content
       setCourseContent({
         rawContent: content,
         summary: null,
         questions: null
       });
 
+      // Real API processing instead of fake processing
       if (!openaiService.getApiKey()) {
         toast.error("请先设置 OpenAI API Key");
         setIsLoading(false);
         return;
       }
       
+      // 并行生成所有内容
       const summaryPromise = generateAllSummaries(content, language);
-      const questionsPromise = generateAllQuestions(content, language);
+      const questionsPromise = generateQuiz ? generateAllQuestions(content, language) : null;
       
+      // 等待所有结果
       const [summaries, questions] = await Promise.all([
         summaryPromise,
         questionsPromise
       ]);
       
+      // 更新状态
       setCourseContent(prev => {
         if (!prev) return null;
         return {
           rawContent: content,
-          summary: summaries[0],
-          summaries: summaries,
+          summary: summaries[0], // 默认使用第一个样式
+          summaries: summaries,  // 存储所有摘要
           questions: questions || null
         };
       });
       
-      if (currentActiveTab === "upload") {
-        setCurrentActiveTab("summary");
-      }
+      // 更新标签页
+      setActiveTab("summary");
       
     } catch (error) {
       console.error("Error processing content:", error);
@@ -182,6 +152,7 @@ const Index = ({
   };
 
   const handleStyleChange = (style: SummaryStyle) => {
+    // 实现摘要样式切换功能
     if (!courseContent || !courseContent.summaries) return;
     
     const selectedSummary = courseContent.summaries.find(s => s.style === style);
@@ -194,18 +165,23 @@ const Index = ({
   };
 
   const handleLanguageChange = (language: SummaryLanguage) => {
+    // 实现语言切换功能
   };
 
   const handleGenerateQuiz = () => {
+    // 实现生成测验功能
   };
 
   const handleDifficultyChange = (difficulty: QuestionDifficulty) => {
+    // 实现难度切换功能
   };
 
   const saveUserAnswersToHistory = (userAnswers: UserAnswer[]) => {
+    // 实现保存答案到历史记录功能
   };
 
   const handleRegenerateQuiz = (difficulty: QuestionDifficulty) => {
+    // 实现重新生成测验功能
   };
 
   const onSelectCourse = (courseId: string) => {
@@ -213,7 +189,8 @@ const Index = ({
   };
 
   const onViewCourses = () => {
-    setCurrentActiveTab("upload");
+    // 实现查看课程功能
+    setActiveTab("upload");
   };
 
   const handleApiKeySet = () => {
@@ -221,6 +198,7 @@ const Index = ({
   };
 
   const handleSelectHistoryContent = (content: string) => {
+    // 实现从历史记录选择内容的功能
   };
 
   return (
@@ -237,8 +215,8 @@ const Index = ({
         setQuizDifficulty={setQuizDifficulty}
       />
       <MainTabs
-        activeTab={currentActiveTab}
-        setActiveTab={setCurrentActiveTab}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         courseContent={courseContent}
         isLoading={isLoading}
         isGeneratingQuiz={isGeneratingQuiz}

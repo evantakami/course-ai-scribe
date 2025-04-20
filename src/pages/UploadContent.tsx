@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { SummaryLanguage, QuestionDifficulty } from "@/types";
 import { openaiService } from "@/services/openaiService";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import CourseSelector from "@/components/courses/CourseSelector";
 
 interface UploadContentProps {
@@ -122,6 +122,11 @@ const UploadContent = ({
       return;
     }
 
+    if (!selectedCourseId) {
+      toast.error("请先选择课程分类");
+      return;
+    }
+
     let contentToProcess = "";
 
     if (activeTab === "paste") {
@@ -144,37 +149,25 @@ const UploadContent = ({
       }
     }
 
-    if (!selectedCourseId) {
-      toast.error("请先选择课程分类");
-      return;
-    }
-
-    const stopLoading = startLoading("正在生成摘要和测验题...");
+    const stopLoading = startLoading("正在生成摘要...");
 
     try {
       saveToHistory(contentToProcess);
       
-      // 修改：强制生成所有内容，总是设置generateQuiz为true
+      // Always generate quizzes with all difficulty levels
       onContentLoaded(
         contentToProcess, 
-        true, // 始终生成测验题
+        true, // Always generate quiz regardless of user setting
         quizDifficulty, 
         language, 
         selectedCourseId
       );
       
-      console.log("Content processing started:", {
-        contentLength: contentToProcess.length,
-        generateQuiz: true,
-        quizDifficulty,
-        language,
-        selectedCourseId
-      });
-      
       stopLoading();
+      // After processing, navigate to summary tab via App.tsx routing
     } catch (error) {
       stopLoading();
-      console.error("Content processing error:", error);
+      console.error("处理内容失败:", error);
       toast.error("处理内容失败，请重试");
     }
   };
@@ -258,7 +251,6 @@ const UploadContent = ({
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
-                    <DialogTitle>选择课程分类</DialogTitle>
                     <CourseSelector 
                       selectedCourseId={selectedCourseId} 
                       onSelectCourse={(id) => {
@@ -408,8 +400,7 @@ const UploadContent = ({
               onClick={handleProcessContent}
               disabled={
                 (activeTab === "paste" && !textContent.trim()) || 
-                (activeTab === "upload" && !selectedFile) ||
-                !selectedCourseId
+                (activeTab === "upload" && !selectedFile)
               }
               className="bg-primary hover:bg-primary-hover text-white hover-glow"
             >
