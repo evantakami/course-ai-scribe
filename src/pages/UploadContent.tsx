@@ -1,7 +1,5 @@
-
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import { 
   Card, 
   CardContent, 
@@ -36,22 +34,41 @@ import {
 } from "lucide-react";
 import { SummaryLanguage, QuestionDifficulty } from "@/types";
 import { openaiService } from "@/services/openaiService";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import CourseSelector from "@/components/courses/CourseSelector";
 
 interface UploadContentProps {
   isKeySet: boolean;
   startLoading: (message: string) => () => void;
+  onContentLoaded: (
+    content: string, 
+    generateQuiz: boolean, 
+    quizDifficulty: QuestionDifficulty,
+    language: SummaryLanguage,
+    courseId: string
+  ) => void;
+  selectedCourseId: string;
+  onSelectCourse: (courseId: string) => void;
+  generateQuiz: boolean;
+  quizDifficulty: QuestionDifficulty;
 }
 
-const UploadContent = ({ isKeySet, startLoading }: UploadContentProps) => {
-  const navigate = useNavigate();
+const UploadContent = ({ 
+  isKeySet, 
+  startLoading, 
+  onContentLoaded, 
+  selectedCourseId,
+  onSelectCourse,
+  generateQuiz,
+  quizDifficulty
+}: UploadContentProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<string>("paste");
   const [textContent, setTextContent] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [language, setLanguage] = useState<SummaryLanguage>("chinese");
-  const [courseCategory, setCourseCategory] = useState<string>("default");
-  const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isCourseSelectorOpen, setIsCourseSelectorOpen] = useState<boolean>(false);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextContent(e.target.value);
@@ -126,19 +143,20 @@ const UploadContent = ({ isKeySet, startLoading }: UploadContentProps) => {
       }
     }
 
-    // Simulate processing with the progress bar
     const stopLoading = startLoading("正在生成摘要...");
 
     try {
-      // Save to local storage for demo
       saveToHistory(contentToProcess);
       
-      // Simulate API call delay
-      setTimeout(() => {
-        stopLoading();
-        navigate("/summary");
-        toast.success("摘要已生成");
-      }, 3000);
+      onContentLoaded(
+        contentToProcess, 
+        generateQuiz, 
+        quizDifficulty, 
+        language, 
+        selectedCourseId
+      );
+      
+      stopLoading();
     } catch (error) {
       stopLoading();
       toast.error("处理内容失败，请重试");
@@ -175,7 +193,7 @@ const UploadContent = ({ isKeySet, startLoading }: UploadContentProps) => {
         rawContent: content,
         timestamp: new Date(),
         title,
-        courseId: courseCategory,
+        courseId: selectedCourseId,
         language
       };
       
@@ -210,24 +228,32 @@ const UploadContent = ({ isKeySet, startLoading }: UploadContentProps) => {
           
           <CardContent className="p-6">
             <div className="space-y-6">
-              {/* Settings Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">课程分类</label>
-                  <Select value={courseCategory} onValueChange={setCourseCategory}>
-                    <SelectTrigger className="bg-dark/20 border-gray-700 text-white">
-                      <SelectValue placeholder="选择课程分类" />
-                    </SelectTrigger>
-                    <SelectContent className="glass border-gray-700">
-                      <SelectItem value="default">通用课程</SelectItem>
-                      <SelectItem value="programming">编程开发</SelectItem>
-                      <SelectItem value="language">语言学习</SelectItem>
-                      <SelectItem value="science">科学研究</SelectItem>
-                      <SelectItem value="business">商业管理</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">课程分类</label>
+                <Dialog open={isCourseSelectorOpen} onOpenChange={setIsCourseSelectorOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start gap-2"
+                      onClick={() => setIsCourseSelectorOpen(true)}
+                    >
+                      {selectedCourseId ? "选择课程分类" : "选择课程分类"}
+                      <ChevronRight className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <CourseSelector 
+                      selectedCourseId={selectedCourseId} 
+                      onSelectCourse={(id) => {
+                        onSelectCourse(id);
+                        setIsCourseSelectorOpen(false);
+                      }} 
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-300">摘要语言</label>
                   <Select value={language} onValueChange={(value) => setLanguage(value as SummaryLanguage)}>
@@ -242,26 +268,8 @@ const UploadContent = ({ isKeySet, startLoading }: UploadContentProps) => {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">测验难度</label>
-                  <Select 
-                    value={quizDifficulty} 
-                    onValueChange={(value) => setQuizDifficulty(value as QuestionDifficulty)}
-                  >
-                    <SelectTrigger className="bg-dark/20 border-gray-700 text-white">
-                      <SelectValue placeholder="选择难度" />
-                    </SelectTrigger>
-                    <SelectContent className="glass border-gray-700">
-                      <SelectItem value="easy">简单</SelectItem>
-                      <SelectItem value="medium">普通</SelectItem>
-                      <SelectItem value="hard">困难</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
               
-              {/* Info Card */}
               <div className="glass-card bg-dark/40">
                 <div className="flex space-x-3">
                   <Info className="h-5 w-5 text-secondary flex-shrink-0 mt-0.5" />
@@ -272,13 +280,12 @@ const UploadContent = ({ isKeySet, startLoading }: UploadContentProps) => {
                     <ul className="list-disc list-inside space-y-1">
                       <li>三种风格的课程摘要（学术、通俗、基础）</li>
                       <li>包含详细解释的互动测验题</li>
-                      <li>错题收集与学习报告</li>
+                      <li>术语表与知识点提取</li>
                     </ul>
                   </div>
                 </div>
               </div>
               
-              {/* Input Tabs */}
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
@@ -305,7 +312,7 @@ const UploadContent = ({ isKeySet, startLoading }: UploadContentProps) => {
                   <Textarea 
                     placeholder="在此粘贴或输入课程内容..."
                     value={textContent}
-                    onChange={handleTextChange}
+                    onChange={(e) => setTextContent(e.target.value)}
                     className="min-h-[200px] bg-dark/20 border-gray-700 text-white placeholder:text-gray-500 focus-visible:ring-primary"
                   />
                 </TabsContent>

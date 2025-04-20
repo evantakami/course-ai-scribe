@@ -1,12 +1,13 @@
-
 export interface CourseContent {
   rawContent: string | null;
   summary: Summary | null;
+  summaries?: Summary[];
   questions: {
-    easy?: Question[];
-    medium?: Question[];
-    hard?: Question[];
+    easy: Question[];
+    medium: Question[];
+    hard: Question[];
   } | null;
+  terms?: Term[];
 }
 
 export interface Summary {
@@ -15,8 +16,15 @@ export interface Summary {
   language: SummaryLanguage;
 }
 
-export type SummaryStyle = "academic" | "casual" | "basic";
-export type SummaryLanguage = "english" | "chinese" | "spanish" | "french";
+export type SummaryStyle = "casual" | "academic" | "basic";
+export type SummaryLanguage = "chinese" | "english" | "spanish" | "french";
+export type QuestionDifficulty = "easy" | "medium" | "hard";
+
+export interface Term {
+  term: string;
+  definition: string;
+  category: string;
+}
 
 export interface Question {
   id: number;
@@ -27,11 +35,9 @@ export interface Question {
   explanation?: string;
 }
 
-export type QuestionDifficulty = "easy" | "medium" | "hard";
-
 export interface UserAnswer {
   questionId: number;
-  selectedOptionIndex: number; // Changed from selectedAnswer to match actual usage
+  selectedOptionIndex: number;
   isCorrect: boolean;
   question?: string;
   options?: string[];
@@ -56,7 +62,6 @@ export interface HistoryItem {
   timestamp: Date | string;
   title?: string;
   courseId: string;
-  // New fields to store generated content
   summaries?: StyleSummaries;
   questions?: {
     easy?: Question[];

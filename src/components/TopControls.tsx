@@ -2,6 +2,7 @@
 import ApiKeyInput from "@/components/ApiKeyInput";
 import UserAccount from "@/components/UserAccount";
 import CustomPromptSettings from "@/components/CustomPromptSettings";
+import SettingsPopover from "@/components/SettingsPopover";
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 
@@ -9,9 +10,25 @@ interface TopControlsProps {
   onSelectHistoryContent: (content: string) => void;
   onApiKeySet: () => void;
   onViewCourses: () => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
+  generateQuiz: boolean;
+  setGenerateQuiz: (value: boolean) => void;
+  quizDifficulty: string;
+  setQuizDifficulty: (difficulty: string) => void;
 }
 
-const TopControls = ({ onSelectHistoryContent, onApiKeySet, onViewCourses }: TopControlsProps) => {
+const TopControls = ({ 
+  onSelectHistoryContent, 
+  onApiKeySet, 
+  onViewCourses,
+  selectedModel,
+  onModelChange,
+  generateQuiz,
+  setGenerateQuiz,
+  quizDifficulty,
+  setQuizDifficulty
+}: TopControlsProps) => {
   return (
     <div className="flex justify-between mb-4">
       <div className="flex space-x-2">
@@ -27,6 +44,14 @@ const TopControls = ({ onSelectHistoryContent, onApiKeySet, onViewCourses }: Top
         <CustomPromptSettings />
       </div>
       <div className="flex space-x-2">
+        <SettingsPopover
+          selectedModel={selectedModel}
+          onModelChange={onModelChange}
+          generateQuiz={generateQuiz}
+          setGenerateQuiz={setGenerateQuiz}
+          quizDifficulty={quizDifficulty}
+          setQuizDifficulty={setQuizDifficulty}
+        />
         <UserAccount />
         <ApiKeyInput onApiKeySet={onApiKeySet} />
       </div>

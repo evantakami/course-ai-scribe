@@ -1,85 +1,56 @@
 
+import { format } from "date-fns";
+import { Book, Clock, FileText } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Course, HistoryItem } from "@/types";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarClock, FileText, HelpCircle } from "lucide-react";
+import CourseIcon from "./CourseIcon";
 
 interface CourseCardProps {
   course: Course;
-  historyItems?: HistoryItem[];
-  onClick: (courseId: string) => void;
+  historyItems: HistoryItem[];
+  onClick: () => void;
 }
 
-const CourseCard = ({ course, historyItems = [], onClick }: CourseCardProps) => {
-  // Count items and questions for this course
-  const itemCount = historyItems.length;
-  
-  // Count total questions across all history items
-  const questionCount = historyItems.reduce((total, item) => {
-    if (!item.questions) return total;
-    return total + (
-      (item.questions.easy?.length || 0) + 
-      (item.questions.medium?.length || 0) + 
-      (item.questions.hard?.length || 0)
-    );
-  }, 0);
-  
-  // Last updated
-  const lastUpdated = historyItems.length > 0 
-    ? new Date(historyItems[0].timestamp) 
-    : new Date(course.timestamp);
-  
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('zh-CN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
-  };
+const CourseCard = ({ course, historyItems, onClick }: CourseCardProps) => {
+  // Get the most recent history item
+  const mostRecentItem = historyItems.length > 0
+    ? historyItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
+    : null;
+
+  // Format the date for display
+  const formattedDate = mostRecentItem
+    ? format(new Date(mostRecentItem.timestamp), "yyyy-MM-dd")
+    : format(new Date(course.timestamp), "yyyy-MM-dd");
 
   return (
     <Card 
-      className="overflow-hidden hover:border-primary/50 transition-all cursor-pointer"
-      onClick={() => onClick(course.id)}
+      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onClick}
     >
-      <div className={`h-2 ${course.color}`} />
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between">
-          <Avatar className="h-14 w-14">
-            {course.icon ? (
-              <AvatarImage src={course.icon} alt={course.name} />
-            ) : null}
-            <AvatarFallback className={`${course.color} text-white text-lg`}>
-              {course.name.substring(0, 2)}
-            </AvatarFallback>
-          </Avatar>
+      <CardHeader className="pb-2 flex flex-row items-center gap-4">
+        <CourseIcon course={course} size="lg" />
+        <div>
+          <CardTitle className="text-lg">{course.name}</CardTitle>
+          <CardDescription>
+            {course.description || "无描述"}
+          </CardDescription>
         </div>
-        
-        <h3 className="font-semibold text-lg mt-4 line-clamp-1">{course.name}</h3>
-        
-        {course.description && (
-          <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{course.description}</p>
-        )}
-        
-        <div className="flex items-center text-xs text-muted-foreground mt-4 gap-4">
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center">
-            <FileText className="h-3 w-3 mr-1" />
-            {itemCount} 项笔记
+            <FileText className="h-4 w-4 mr-1" />
+            <span>{historyItems.length} 个内容</span>
           </div>
           <div className="flex items-center">
-            <HelpCircle className="h-3 w-3 mr-1" />
-            {questionCount} 题测验
+            <Clock className="h-4 w-4 mr-1" />
+            <span>{formattedDate}</span>
           </div>
         </div>
       </CardContent>
-      
-      <CardFooter className="border-t bg-muted/50 px-6 py-3">
-        <div className="flex items-center text-xs text-muted-foreground">
-          <CalendarClock className="h-3 w-3 mr-1" />
-          最近更新: {formatDate(lastUpdated)}
-        </div>
+      <CardFooter className="bg-muted/30 pt-2 pb-2 text-xs text-muted-foreground flex items-center">
+        <Book className="h-3.5 w-3.5 mr-1.5" />
+        {mostRecentItem ? mostRecentItem.title || "最近更新内容" : "尚未添加内容"}
       </CardFooter>
     </Card>
   );
