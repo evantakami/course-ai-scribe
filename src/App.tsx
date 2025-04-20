@@ -16,7 +16,8 @@ import HistoryDrawer from "./components/layout/HistoryDrawer";
 import ProgressBar from "./components/common/ProgressBar";
 import ApiKeyModal from "./components/modals/ApiKeyModal";
 import { openaiService } from "./services/openaiService";
-import { QuestionDifficulty, SummaryLanguage } from "./types";
+import { QuestionDifficulty, SummaryLanguage, CourseContent } from "./types";
+import Index from "./pages/Index";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>("default");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
   const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
+  const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
 
   useEffect(() => {
     // Check if API key is set
@@ -69,15 +71,26 @@ const App = () => {
     };
   };
 
-  const handleContentLoaded = (
+  const handleContentLoaded = async (
     content: string, 
     generateQuiz: boolean, 
     quizDifficulty: QuestionDifficulty,
     language: SummaryLanguage,
     courseId: string
   ) => {
-    // Placeholder function to satisfy the type requirements
-    console.log("Content loaded", { content, generateQuiz, quizDifficulty, language, courseId });
+    // Save these settings for the Index component to use
+    setGenerateQuiz(generateQuiz);
+    setQuizDifficulty(quizDifficulty);
+    setSelectedCourseId(courseId);
+    
+    // Set initial content
+    setCourseContent({
+      rawContent: content,
+      summary: null,
+      questions: null
+    });
+    
+    console.log("Content loaded in App.tsx:", { content, generateQuiz, quizDifficulty, language, courseId });
   };
 
   const handleSelectCourse = (courseId: string) => {
@@ -119,7 +132,17 @@ const App = () => {
                         />
                       } 
                     />
-                    <Route path="/summary" element={<SummaryReport />} />
+                    <Route 
+                      path="/summary" 
+                      element={
+                        <Index 
+                          initialContent={courseContent}
+                          initialGenerateQuiz={generateQuiz}
+                          initialQuizDifficulty={quizDifficulty}
+                          initialCourseId={selectedCourseId}
+                        />
+                      } 
+                    />
                     <Route path="/quiz" element={<InteractiveQuiz />} />
                     <Route path="/revision" element={<RevisionCenter />} />
                     <Route path="*" element={<NotFound />} />

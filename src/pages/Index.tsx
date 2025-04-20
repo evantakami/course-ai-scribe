@@ -6,15 +6,49 @@ import { openaiService } from "@/services/openaiService";
 import MainTabs from "@/components/MainTabs";
 import TopControls from "@/components/TopControls";
 
-const Index = () => {
-  const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("upload");
+interface IndexProps {
+  initialContent?: CourseContent | null;
+  initialGenerateQuiz?: boolean;
+  initialQuizDifficulty?: QuestionDifficulty;
+  initialCourseId?: string;
+}
+
+const Index = ({
+  initialContent = null,
+  initialGenerateQuiz = true,
+  initialQuizDifficulty = "medium",
+  initialCourseId = "default"
+}: IndexProps) => {
+  const [courseContent, setCourseContent] = useState<CourseContent | null>(initialContent);
+  const [activeTab, setActiveTab] = useState<string>(initialContent ? "summary" : "upload");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState<boolean>(false);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("default");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(initialCourseId);
   const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
-  const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
-  const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
+  const [generateQuiz, setGenerateQuiz] = useState<boolean>(initialGenerateQuiz);
+  const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>(initialQuizDifficulty);
+
+  // Log the initial state for debugging
+  useEffect(() => {
+    console.log("Index component mounted with:", {
+      initialContent,
+      initialGenerateQuiz,
+      initialQuizDifficulty,
+      initialCourseId,
+      courseContent
+    });
+
+    // If we have initial content, process it
+    if (initialContent?.rawContent && !initialContent.summary) {
+      handleContentLoaded(
+        initialContent.rawContent,
+        true, // Always generate quiz
+        initialQuizDifficulty,
+        "chinese", // Default language
+        initialCourseId
+      );
+    }
+  }, []);
 
   useEffect(() => {
     // Load saved settings
@@ -44,7 +78,8 @@ const Index = () => {
         if (!prev) return null;
         return { 
           ...prev, 
-          summary: allSummaries[0]  // Default to first summary style
+          summary: allSummaries[0],  // Default to first summary style
+          summaries: allSummaries    // Store all summaries
         };
       });
       
@@ -60,6 +95,8 @@ const Index = () => {
   // 同时生成所有难度的问题
   const generateAllQuestions = async (content: string, language: SummaryLanguage) => {
     try {
+      setIsGeneratingQuiz(true);
+      
       const [easyQuestionsPromise, mediumQuestionsPromise, hardQuestionsPromise] = [
         openaiService.generateQuestions(content, "easy", 10, language),
         openaiService.generateQuestions(content, "medium", 10, language),
@@ -90,6 +127,8 @@ const Index = () => {
       console.error("Error generating questions:", error);
       toast.error("生成测验题时出错");
       throw error;
+    } finally {
+      setIsGeneratingQuiz(false);
     }
   };
 
@@ -121,7 +160,8 @@ const Index = () => {
       
       // 并行生成所有内容
       const summaryPromise = generateAllSummaries(content, language);
-      const questionsPromise = generateQuiz ? generateAllQuestions(content, language) : null;
+      // 强制生成所有难度的问题，而不考虑generateQuiz标志
+      const questionsPromise = generateAllQuestions(content, language);
       
       // 等待所有结果
       const [summaries, questions] = await Promise.all([
