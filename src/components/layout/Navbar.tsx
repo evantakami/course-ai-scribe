@@ -24,7 +24,6 @@ interface NavbarProps {
 const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCustomPromptOpen, setIsCustomPromptOpen] = useState(false);
   
   const navItems = [
     { path: '/upload', icon: FileText, label: '上传内容' },
@@ -35,10 +34,6 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleSettingsClick = () => {
-    setIsCustomPromptOpen(true);
   };
 
   return (
@@ -99,7 +94,7 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
               <Button 
                 variant="ghost" 
                 size="icon"
-                onClick={handleSettingsClick}
+                onClick={onOpenApiModal}
                 className="text-gray-300 hover:text-primary hover:bg-white/10"
               >
                 <Settings className="h-5 w-5" />
@@ -153,11 +148,6 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
           </div>
         </motion.div>
       )}
-
-      <CustomPromptSettings 
-        open={isCustomPromptOpen} 
-        onOpenChange={(open) => setIsCustomPromptOpen(open)} 
-      />
     </header>
   );
 };
