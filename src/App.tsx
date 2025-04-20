@@ -140,10 +140,42 @@ const App = () => {
                           initialGenerateQuiz={generateQuiz}
                           initialQuizDifficulty={quizDifficulty}
                           initialCourseId={selectedCourseId}
+                          activeTab="summary"
                         />
                       } 
                     />
-                    <Route path="/quiz" element={<InteractiveQuiz />} />
+                    <Route 
+                      path="/quiz" 
+                      element={
+                        <Index
+                          initialContent={courseContent}
+                          initialGenerateQuiz={generateQuiz}
+                          initialQuizDifficulty={quizDifficulty}
+                          initialCourseId={selectedCourseId}
+                          activeTab="quiz"
+                        />
+                      } 
+                    />
+                    <Route 
+                      path="/summary-report" 
+                      element={
+                        <SummaryReport
+                          summary={courseContent?.summary || null}
+                          summaries={courseContent?.summaries}
+                          rawContent={courseContent?.rawContent || ""}
+                        />
+                      } 
+                    />
+                    <Route 
+                      path="/interactive-quiz" 
+                      element={
+                        <InteractiveQuiz 
+                          questions={courseContent?.questions || null}
+                          courseId={selectedCourseId}
+                          rawContent={courseContent?.rawContent || ""}
+                        />
+                      } 
+                    />
                     <Route path="/revision" element={<RevisionCenter />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
