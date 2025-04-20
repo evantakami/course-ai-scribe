@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
@@ -19,9 +20,11 @@ interface NavbarProps {
   isKeySet: boolean;
   onOpenApiModal: () => void;
   onToggleHistory: () => void;
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
 }
 
-const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
+const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory, activeTab, setActiveTab }: NavbarProps) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -34,6 +37,20 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Update the active tab based on the current path, if setActiveTab is provided
+  const handleTabChange = (path: string) => {
+    if (setActiveTab) {
+      // Extract the route name without the leading slash
+      const tab = path.substring(1);
+      setActiveTab(tab);
+    }
+    
+    // Close mobile menu when a tab is selected
+    if (isMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+    }
   };
 
   return (
@@ -61,6 +78,7 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
                   className={({ isActive }) => 
                     `navigation-item flex items-center space-x-1 ${isActive ? 'active' : ''}`
                   }
+                  onClick={() => handleTabChange(item.path)}
                 >
                   <item.icon className="h-4 w-4" />
                   <span>{item.label}</span>
@@ -130,7 +148,7 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
               <NavLink
                 key={item.path}
                 to={item.path}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => handleTabChange(item.path)}
                 className={({ isActive }) => 
                   `block px-3 py-2 rounded-md text-base font-medium ${
                     isActive 
