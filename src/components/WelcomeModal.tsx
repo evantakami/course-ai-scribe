@@ -1,162 +1,178 @@
 
-import { useState, useEffect } from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Check, Key, FileText, BookOpen, HelpCircle, BookOpenCheck } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { BookOpen, BookOpenCheck, HelpCircle, Settings } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface WelcomeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  hasApiKey: boolean;
+  onSetApiKey: (key: string) => void;
 }
 
-const WelcomeModal = ({ isOpen, onClose, hasApiKey }: WelcomeModalProps) => {
-  const [currentStep, setCurrentStep] = useState(hasApiKey ? 1 : 0);
-  const [showModal, setShowModal] = useState(isOpen);
-  
-  useEffect(() => {
-    setShowModal(isOpen);
-  }, [isOpen]);
-  
-  const steps = [
-    {
-      title: "设置 API Key",
-      icon: Key,
-      description: "首先需要设置您的 OpenAI API Key，以启用 AI 功能",
-      color: "text-blue-500",
-      bgColor: "bg-blue-100"
-    },
-    {
-      title: "上传内容",
-      icon: FileText,
-      description: "上传或输入您的课程内容，系统将自动处理",
-      color: "text-primary",
-      bgColor: "bg-primary/20"
-    },
-    {
-      title: "查看摘要",
-      icon: BookOpen,
-      description: "AI 会生成多种风格的摘要，帮助您理解课程重点",
-      color: "text-secondary",
-      bgColor: "bg-secondary/20"
-    },
-    {
-      title: "测试知识",
-      icon: HelpCircle,
-      description: "通过生成的测验题巩固知识点，检验学习成果",
-      color: "text-accent",
-      bgColor: "bg-accent/20"
-    },
-    {
-      title: "复习错题",
-      icon: BookOpenCheck,
-      description: "错题将被自动收集，方便您集中复习薄弱环节",
-      color: "text-red-400",
-      bgColor: "bg-red-500/20"
+const WelcomeModal = ({ isOpen, onClose, onSetApiKey }: WelcomeModalProps) => {
+  const [activeTab, setActiveTab] = useState("welcome");
+  const [apiKey, setApiKey] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSetApiKey = async () => {
+    if (!apiKey.trim()) {
+      toast.error("请输入有效的 API Key");
+      return;
     }
-  ];
-  
-  const handleNextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleClose();
-    }
-  };
-  
-  const handleClose = () => {
-    setShowModal(false);
+
+    setIsLoading(true);
+    
+    // Simulate API key validation
     setTimeout(() => {
+      onSetApiKey(apiKey);
+      setIsLoading(false);
+      toast.success("API Key 设置成功");
       onClose();
-      localStorage.setItem("onboarding_completed", "true");
-    }, 300);
+    }, 1000);
   };
-  
+
   return (
-    <Dialog open={showModal} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-md glass border-0">
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-xl glass border-0 shadow-lg">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center text-white">
-            欢迎使用 AI 课程笔记助手
+          <DialogTitle className="text-xl font-bold text-primary">
+            欢迎使用 Course AI Scribe
           </DialogTitle>
-          <DialogDescription className="text-center text-gray-300">
-            让我们快速了解使用流程，帮助您提高学习效率
+          <DialogDescription className="text-gray-300">
+            这是一款帮助您从课程内容中提取关键知识点及生成测验的AI助手
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="py-6">
-          <div className="relative mb-8">
-            <div className="absolute top-5 left-8 right-8 h-0.5 bg-gray-700 z-0" />
-            <div className="relative z-10 flex justify-between">
-              {steps.map((step, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ 
-                      scale: 1, 
-                      opacity: 1,
-                      transition: { delay: index * 0.2, duration: 0.3 }
-                    }}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      index <= currentStep ? `glass ${step.color}` : "bg-gray-800 text-gray-500"
-                    }`}
-                  >
-                    {index < currentStep ? (
-                      <Check className="h-5 w-5" />
-                    ) : (
-                      <step.icon className="h-5 w-5" />
-                    )}
-                  </motion.div>
-                  {index === 0 && hasApiKey && (
-                    <div className="absolute -top-3 left-0 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      已完成
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+
+        <Tabs defaultValue="welcome" value={activeTab} onValueChange={setActiveTab} className="mt-4">
+          <TabsList className="grid grid-cols-3 bg-dark/20">
+            <TabsTrigger value="welcome">欢迎</TabsTrigger>
+            <TabsTrigger value="features">功能介绍</TabsTrigger>
+            <TabsTrigger value="apikey">设置 API Key</TabsTrigger>
+          </TabsList>
           
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 20 }}
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="text-center px-4 min-h-[120px] flex flex-col items-center"
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className={`w-16 h-16 rounded-full glass ${steps[currentStep].color} flex items-center justify-center mb-4`}>
-                <steps[currentStep].icon className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-white">{steps[currentStep].title}</h3>
-              <p className="text-gray-300">{steps[currentStep].description}</p>
+              <TabsContent value="welcome" className="mt-6">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <BookOpen className="h-16 w-16 text-primary mb-2" />
+                  <h2 className="text-2xl font-bold text-white">智能课程助手</h2>
+                  <p className="text-gray-300 max-w-md">
+                    上传您的课程内容，AI 将自动提取关键知识点，生成摘要，并创建测验题帮助您巩固学习。
+                  </p>
+                  <div className="pt-4">
+                    <Button onClick={() => setActiveTab("features")} className="bg-primary hover:bg-primary/90 text-white hover-glow">
+                      了解更多
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="features" className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="glass border-white/10">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-md flex items-center">
+                        <BookOpen className="h-5 w-5 mr-2 text-primary" />
+                        智能摘要
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-gray-300">自动提取课程中的关键知识点，生成不同风格的摘要内容</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="glass border-white/10">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-md flex items-center">
+                        <HelpCircle className="h-5 w-5 mr-2 text-primary" />
+                        智能测验
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-gray-300">根据课程内容自动生成不同难度的测验题，帮助您巩固学习</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="glass border-white/10">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-md flex items-center">
+                        <BookOpenCheck className="h-5 w-5 mr-2 text-primary" />
+                        学习复盘
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-gray-300">收集错题并提供个性化学习建议，帮助您提升薄弱环节</p>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <div className="flex justify-center mt-6">
+                  <Button onClick={() => setActiveTab("apikey")} className="bg-primary hover:bg-primary/90 text-white hover-glow">
+                    开始使用
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="apikey" className="mt-6">
+                <Card className="glass border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <Settings className="h-5 w-5 mr-2 text-primary" />
+                      设置 API Key
+                    </CardTitle>
+                    <CardDescription className="text-gray-300">
+                      需要设置 OpenAI API Key 才能使用 AI 功能
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-300">
+                        请输入您的 OpenAI API Key，可以在 OpenAI 官网获取：
+                        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary ml-1 hover:underline">
+                          https://platform.openai.com/api-keys
+                        </a>
+                      </p>
+                      <Input
+                        type="password"
+                        placeholder="sk-..."
+                        value={apiKey}
+                        onChange={(e) => setApiKey(e.target.value)}
+                        className="bg-dark/30 border-gray-700 text-white"
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <Button variant="outline" onClick={() => setActiveTab("features")} className="border-gray-700 text-gray-300">
+                      返回
+                    </Button>
+                    <Button 
+                      onClick={handleSetApiKey} 
+                      disabled={isLoading} 
+                      className="bg-primary hover:bg-primary/90 text-white hover-glow"
+                    >
+                      {isLoading ? "设置中..." : "确认设置"}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
             </motion.div>
           </AnimatePresence>
-        </div>
-        
-        <DialogFooter className="flex justify-between sm:justify-between">
-          <Button 
-            variant="outline" 
-            onClick={handleClose}
-            className="border-gray-700 text-gray-300 hover:text-white hover:border-gray-500"
-          >
-            跳过
-          </Button>
-          <Button 
-            onClick={handleNextStep}
-            className="bg-primary hover:bg-primary-hover text-white"
-          >
-            {currentStep < steps.length - 1 ? "下一步" : "开始使用"}
-          </Button>
+        </Tabs>
+
+        <DialogFooter className="mt-6 text-xs text-gray-500">
+          Course AI Scribe © {new Date().getFullYear()} 版权所有
         </DialogFooter>
       </DialogContent>
     </Dialog>
