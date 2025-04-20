@@ -143,28 +143,19 @@ const App = () => {
                     <Route 
                       path="/summary" 
                       element={
-                        <SummaryReport 
-                          initialContent={processedContent} 
-                          activeTab={activeTab}
-                        />
+                        <SummaryReport initialContent={processedContent} activeTab={activeTab} />
                       } 
                     />
                     <Route 
                       path="/quiz" 
                       element={
-                        <InteractiveQuiz 
-                          initialContent={processedContent}
-                          activeTab={activeTab}
-                        />
+                        <InteractiveQuiz initialContent={processedContent} activeTab={activeTab} />
                       } 
                     />
                     <Route 
                       path="/revision" 
                       element={
-                        <RevisionCenter 
-                          initialContent={processedContent}
-                          activeTab={activeTab}
-                        />
+                        <RevisionCenter initialContent={processedContent} activeTab={activeTab} />
                       } 
                     />
                     <Route path="*" element={<NotFound />} />
@@ -194,7 +185,7 @@ const App = () => {
               {/* API Key Modal */}
               <ApiKeyModal 
                 isOpen={isApiKeyModalOpen} 
-                onClose={() => isKeySet && setIsApiKeyModalOpen(false)}
+                onClose={() => setIsApiKeyModalOpen(false)}
                 onApiKeySet={handleApiKeySet}
               />
             </div>

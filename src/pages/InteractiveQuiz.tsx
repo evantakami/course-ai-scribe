@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Course } from '@/types';
@@ -14,7 +15,12 @@ import {
 } from "@/components/ui/card"
 import { toast } from "sonner";
 
-const InteractiveQuiz = () => {
+interface InteractiveQuizProps {
+  initialContent?: any;
+  activeTab?: string;
+}
+
+const InteractiveQuiz = ({ initialContent, activeTab }: InteractiveQuizProps) => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
@@ -37,6 +43,16 @@ const InteractiveQuiz = () => {
       setUserAnswers(JSON.parse(storedAnswers));
     }
   }, []);
+
+  useEffect(() => {
+    // Process initialContent if available
+    if (initialContent && initialContent.rawContent) {
+      setRawContent(initialContent.rawContent);
+      if (initialContent.courseId) {
+        setSelectedCourseId(initialContent.courseId);
+      }
+    }
+  }, [initialContent]);
 
   useEffect(() => {
     localStorage.setItem('userAnswers', JSON.stringify(userAnswers));

@@ -48,6 +48,7 @@ const ApiKeyModal = ({ isOpen, onClose, onApiKeySet }: ApiKeyModalProps) => {
         setIsVerifying(false);
         onApiKeySet();
         toast.success("API Key 设置成功");
+        onClose(); // Ensure the modal closes after successful API key verification
       }, 1500);
     } catch (error) {
       setIsVerifying(false);

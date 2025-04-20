@@ -36,8 +36,13 @@ import {
 } from 'recharts';
 import { HistoryItem, UserAnswer } from "@/types";
 
-const RevisionCenter = () => {
-  const [activeTab, setActiveTab] = useState<string>("history");
+interface RevisionCenterProps {
+  initialContent?: any;
+  activeTab?: string;
+}
+
+const RevisionCenter = ({ initialContent, activeTab }: RevisionCenterProps) => {
+  const [localActiveTab, setLocalActiveTab] = useState<string>("history");
   const [selectedCourseId, setSelectedCourseId] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
@@ -46,7 +51,12 @@ const RevisionCenter = () => {
   useEffect(() => {
     loadHistoryData();
     loadMistakesData();
-  }, []);
+
+    // Process initialContent if available
+    if (initialContent && initialContent.courseId) {
+      setSelectedCourseId(initialContent.courseId);
+    }
+  }, [initialContent]);
   
   const loadHistoryData = () => {
     try {
@@ -149,7 +159,7 @@ const RevisionCenter = () => {
         </Card>
         
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={localActiveTab} onValueChange={setLocalActiveTab} className="w-full">
           <TabsList className="glass bg-dark/30 mb-6">
             <TabsTrigger
               value="history"
