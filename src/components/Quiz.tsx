@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Question, UserAnswer } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,6 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
       setIsShowingExplanation(false);
       setCustomExplanation(null);
       
-      // Make sure currentQuestionIndex is valid
       if (currentQuestionIndex >= questions.length) {
         setCurrentQuestionIndex(0);
       }
@@ -65,7 +63,6 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
     return <div className="text-center py-8 text-gray-500">暂无测验题</div>;
   }
 
-  // Ensure currentQuestionIndex is within bounds
   if (currentQuestionIndex >= questions.length) {
     setCurrentQuestionIndex(0);
     return <div className="text-center py-8 text-gray-500">加载测验题中...</div>;
@@ -245,7 +242,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
               {isAnswerSubmitted && (
                 index === currentQuestion.correctAnswer ? (
                   <CheckCircle className="text-green-500 h-5 w-5 flex-shrink-0" />
-                ) : index === userAnswer?.selectedOption ? (
+                ) : index === userAnswer?.selectedOptionIndex ? (
                   <XCircle className="text-red-500 h-5 w-5 flex-shrink-0" />
                 ) : null
               )}

@@ -172,7 +172,6 @@ const MistakeCollection = () => {
         </div>
       ))}
 
-      {/* Dialog for editing explanation */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

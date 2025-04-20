@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { Course } from '@/types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 
 const InteractiveQuiz = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [rawContent, setRawContent] = useState<string>('');
@@ -27,13 +27,11 @@ const InteractiveQuiz = () => {
   const [quizStarted, setQuizStarted] = useState<boolean>(false);
 
   useEffect(() => {
-    // Load courses from local storage
     const storedCourses = localStorage.getItem('courses');
     if (storedCourses) {
       setCourses(JSON.parse(storedCourses));
     }
 
-    // Load user answers from local storage
     const storedAnswers = localStorage.getItem('userAnswers');
     if (storedAnswers) {
       setUserAnswers(JSON.parse(storedAnswers));
@@ -41,7 +39,6 @@ const InteractiveQuiz = () => {
   }, []);
 
   useEffect(() => {
-    // Save user answers to local storage whenever they change
     localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
   }, [userAnswers]);
 
@@ -49,15 +46,13 @@ const InteractiveQuiz = () => {
     const courseId = event.target.value;
     setSelectedCourseId(courseId);
 
-    // Load raw content from local storage based on selected course
     const storedContent = localStorage.getItem(`courseContent_${courseId}`);
     if (storedContent) {
       setRawContent(storedContent);
     } else {
-      setRawContent(''); // Clear content if not found
+      setRawContent('');
     }
 
-    // Reset quiz state when course changes
     setQuizStarted(false);
     setUserAnswers([]);
     setQuestionIndex(0);
@@ -76,14 +71,12 @@ const InteractiveQuiz = () => {
       return;
     }
 
-    // Basic question generation logic (replace with your actual logic)
     const generatedQuestions = generateQuestions(rawContent);
     if (generatedQuestions.length === 0) {
       toast.error("无法生成问题，请检查课程内容");
       return;
     }
 
-    // Set the first question
     setCurrentQuestion(generatedQuestions[0]);
     setQuizStarted(true);
   };
@@ -103,7 +96,6 @@ const InteractiveQuiz = () => {
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
     setIsAnswerCorrect(isCorrect);
 
-    // Add the answer to the list of user answers
     setUserAnswers(prev => [
       ...prev,
       {
@@ -130,12 +122,8 @@ const InteractiveQuiz = () => {
     }
   };
 
-  // Dummy question generation function (replace with your actual logic)
   const generateQuestions = (content: string) => {
-    // Split content into "questions" based on line breaks
     const lines = content.split('\n').filter(line => line.trim() !== '');
-
-    // Create dummy questions
     return lines.map((line, index) => ({
       id: index + 1,
       text: `问题 ${index + 1}: ${line.substring(0, 50)}...?`,
@@ -145,7 +133,7 @@ const InteractiveQuiz = () => {
         `${line.substring(40, 60)}...`,
         `${line.substring(60, 80)}...`,
       ],
-      correctAnswer: index % 4, // Just for dummy purposes
+      correctAnswer: index % 4,
     }));
   };
 
