@@ -324,7 +324,7 @@ const RevisionCenter = () => {
                           
                           <div className="mb-3">
                             <div className="text-sm text-gray-300 mb-2">
-                              <span className="text-red-400 font-medium">您的选择：</span> {item.options?.[item.selectedOptionIndex] || "选项A"}
+                              <span className="text-red-400 font-medium">您的选择：</span> {item.options?.[item.selectedOptionIndex] || '未知'}
                             </div>
                             <div className="text-sm text-gray-300">
                               <span className="text-green-400 font-medium">正确答案：</span> {item.options?.[item.correctAnswer] || "选项B"}

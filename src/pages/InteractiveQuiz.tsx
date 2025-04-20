@@ -1,418 +1,250 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardDescription,
-  CardFooter
-} from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { Course } from '@/types';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { HelpCircle, Repeat, ChevronLeft, ChevronRight, Check, X, RefreshCw } from "lucide-react";
-import { Question, QuestionDifficulty, UserAnswer } from "@/types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, XCircle } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { toast } from "sonner";
-import { Progress } from "@/components/ui/progress";
 
 const InteractiveQuiz = () => {
-  const [difficulty, setDifficulty] = useState<QuestionDifficulty>("medium");
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [isAnswered, setIsAnswered] = useState<boolean>(false);
-  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  
+  const router = useRouter();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [rawContent, setRawContent] = useState<string>('');
+  const [userAnswers, setUserAnswers] = useState<any[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+  const [questionIndex, setQuestionIndex] = useState<number>(0);
+  const [quizStarted, setQuizStarted] = useState<boolean>(false);
+
   useEffect(() => {
-    const loadQuestions = async () => {
-      setIsLoading(true);
-      
-      setTimeout(() => {
-        const mockQuestions: Question[] = Array(10).fill(null).map((_, index) => ({
-          id: index + 1,
-          text: `这是一个关于课程内容的${difficulty}难度测验题，题目内容包含了一个需要思考的问题？`,
-          options: [
-            "选项A：这是第一个可能的答案",
-            "选项B：这是第二个可能的答案", 
-            "选项C：这是第三个可能的答案", 
-            "选项D：这是第四个可能的答案"
-          ],
-          correctAnswer: Math.floor(Math.random() * 4),
-          difficulty: difficulty,
-          explanation: "正确答案是选项B，因为它最符合课程中讲到的内容。选项A虽然看似合理，但缺少了关键要素。选项C和D则与课程主题无关。"
-        }));
-        
-        setQuestions(mockQuestions);
-        setIsLoading(false);
-        setCurrentQuestionIndex(0);
-        setSelectedOption(null);
-        setIsAnswered(false);
-        setUserAnswers([]);
-      }, 1000);
-    };
-    
-    loadQuestions();
-  }, [difficulty]);
-  
-  const handleDifficultyChange = (newDifficulty: QuestionDifficulty) => {
-    if (difficulty !== newDifficulty) {
-      setDifficulty(newDifficulty);
+    // Load courses from local storage
+    const storedCourses = localStorage.getItem('courses');
+    if (storedCourses) {
+      setCourses(JSON.parse(storedCourses));
     }
-  };
-  
-  const handleOptionSelect = (optionIndex: number) => {
-    if (!isAnswered) {
-      setSelectedOption(optionIndex);
+
+    // Load user answers from local storage
+    const storedAnswers = localStorage.getItem('userAnswers');
+    if (storedAnswers) {
+      setUserAnswers(JSON.parse(storedAnswers));
     }
+  }, []);
+
+  useEffect(() => {
+    // Save user answers to local storage whenever they change
+    localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
+  }, [userAnswers]);
+
+  const handleCourseSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const courseId = event.target.value;
+    setSelectedCourseId(courseId);
+
+    // Load raw content from local storage based on selected course
+    const storedContent = localStorage.getItem(`courseContent_${courseId}`);
+    if (storedContent) {
+      setRawContent(storedContent);
+    } else {
+      setRawContent(''); // Clear content if not found
+    }
+
+    // Reset quiz state when course changes
+    setQuizStarted(false);
+    setUserAnswers([]);
+    setQuestionIndex(0);
+    setCurrentQuestion(null);
+    setSelectedAnswer(null);
+    setIsAnswerCorrect(null);
   };
-  
+
+  const handleStartQuiz = () => {
+    if (!selectedCourseId) {
+      toast.error("请选择课程");
+      return;
+    }
+    if (!rawContent) {
+      toast.error("请先输入课程内容");
+      return;
+    }
+
+    // Basic question generation logic (replace with your actual logic)
+    const generatedQuestions = generateQuestions(rawContent);
+    if (generatedQuestions.length === 0) {
+      toast.error("无法生成问题，请检查课程内容");
+      return;
+    }
+
+    // Set the first question
+    setCurrentQuestion(generatedQuestions[0]);
+    setQuizStarted(true);
+  };
+
+  const handleAnswerSelect = (index: number) => {
+    setSelectedAnswer(index);
+  };
+
   const handleSubmitAnswer = () => {
-    if (selectedOption === null) return;
-    
-    const currentQuestion = questions[currentQuestionIndex];
-    const isCorrect = selectedOption === currentQuestion.correctAnswer;
-    
-    const answer: UserAnswer = {
-      questionId: currentQuestion.id,
-      selectedOptionIndex: selectedOption,
-      isCorrect: isCorrect,
-      timestamp: new Date()
-    };
-    
-    setUserAnswers([...userAnswers, answer]);
-    setIsAnswered(true);
-    
-    if (isCorrect) {
-      toast.success("回答正确！");
-    } else {
-      toast.error("回答错误！");
+    if (selectedAnswer === null) {
+      toast.error("请选择一个答案");
+      return;
     }
-  };
-  
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedOption(null);
-      setIsAnswered(false);
-    } else {
-      const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
-      toast.success(`测验完成！正确率: ${correctAnswers}/${questions.length}`);
-    }
-  };
-  
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-      
-      const prevAnswer = userAnswers.find(
-        a => a.questionId === questions[currentQuestionIndex - 1].id
-      );
-      
-      if (prevAnswer) {
-        setSelectedOption(prevAnswer.selectedOptionIndex);
-        setIsAnswered(true);
-      } else {
-        setSelectedOption(null);
-        setIsAnswered(false);
+
+    if (!currentQuestion) return;
+
+    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+    setIsAnswerCorrect(isCorrect);
+
+    // Add the answer to the list of user answers
+    setUserAnswers(prev => [
+      ...prev,
+      {
+        questionId: currentQuestion.id,
+        selectedOptionIndex: selectedAnswer,
+        isCorrect: isCorrect,
+        timestamp: new Date(),
+        courseId: selectedCourseId
       }
+    ]);
+  };
+
+  const handleNextQuestion = () => {
+    if (!currentQuestion) return;
+
+    const generatedQuestions = generateQuestions(rawContent);
+    if (questionIndex < generatedQuestions.length - 1) {
+      setQuestionIndex(prev => prev + 1);
+      setCurrentQuestion(generatedQuestions[questionIndex + 1]);
+      setSelectedAnswer(null);
+      setIsAnswerCorrect(null);
+    } else {
+      toast.info("已完成所有问题");
     }
   };
-  
-  const handleRegenerateQuiz = () => {
-    setIsLoading(true);
-    
-    setTimeout(() => {
-      toast.success(`已重新生成${
-        difficulty === 'easy' ? '简单' : 
-        difficulty === 'medium' ? '普通' : 
-        '困难'
-      }难度测验题`);
-      
-      const mockQuestions: Question[] = Array(10).fill(null).map((_, index) => ({
-        id: index + 100,
-        text: `这是一个新生成的${difficulty}难度测验题，内容与之前的题目不同？`,
-        options: [
-          "新选项A：这是第一个可能的答案",
-          "新选项B：这是第二个可能的答案", 
-          "新选项C：这是第三个可能的答案", 
-          "新选项D：这是第四个可能的答案"
-        ],
-        correctAnswer: Math.floor(Math.random() * 4),
-        difficulty: difficulty,
-        explanation: "这是对新题目的解释，详细说明了为什么某个选项是正确答案，而其他选项是错误的。"
-      }));
-      
-      setQuestions(mockQuestions);
-      setIsLoading(false);
-      setCurrentQuestionIndex(0);
-      setSelectedOption(null);
-      setIsAnswered(false);
-      setUserAnswers([]);
-    }, 1500);
+
+  // Dummy question generation function (replace with your actual logic)
+  const generateQuestions = (content: string) => {
+    // Split content into "questions" based on line breaks
+    const lines = content.split('\n').filter(line => line.trim() !== '');
+
+    // Create dummy questions
+    return lines.map((line, index) => ({
+      id: index + 1,
+      text: `问题 ${index + 1}: ${line.substring(0, 50)}...?`,
+      options: [
+        `${line.substring(0, 20)}...`,
+        `${line.substring(20, 40)}...`,
+        `${line.substring(40, 60)}...`,
+        `${line.substring(60, 80)}...`,
+      ],
+      correctAnswer: index % 4, // Just for dummy purposes
+    }));
   };
-  
-  const progress = userAnswers.length > 0 
-    ? Math.round((userAnswers.filter(a => a.isCorrect).length / userAnswers.length) * 100) 
-    : 0;
 
   return (
-    <div className="flex flex-col">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full"
-      >
-        <Card className="glass border-0 mb-6 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-primary/20 to-accent/20 border-b border-white/10">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-xl text-white flex items-center">
-                  <HelpCircle className="mr-2 h-5 w-5 text-primary" />
-                  互动知识测验
-                </CardTitle>
-                <CardDescription className="text-gray-300">
-                  测试您对课程内容的理解和掌握程度
-                </CardDescription>
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRegenerateQuiz}
-                disabled={isLoading}
-                className="border-gray-700 text-gray-300 hover:text-white hover:border-gray-500"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                重新生成测验
+    <div className="container mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-4">互动测验</h1>
+
+      <div className="mb-4">
+        <Label htmlFor="courseSelect" className="block text-sm font-medium text-gray-700">
+          选择课程:
+        </Label>
+        <select
+          id="courseSelect"
+          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          value={selectedCourseId}
+          onChange={handleCourseSelect}
+        >
+          <option value="">请选择课程</option>
+          {courses.map(course => (
+            <option key={course.id} value={course.id}>{course.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mb-4">
+        <Button onClick={handleStartQuiz} disabled={quizStarted}>
+          {quizStarted ? '测验已开始' : '开始测验'}
+        </Button>
+      </div>
+
+      {quizStarted && currentQuestion && (
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>问题 {questionIndex + 1}</CardTitle>
+            <CardDescription>{currentQuestion.text}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {currentQuestion.options.map((option, index) => (
+                <li key={index}
+                  className={`p-3 rounded-lg border ${selectedAnswer === index ? 'bg-blue-100 border-blue-500' : 'border-gray-200'}`}
+                  onClick={() => handleAnswerSelect(index)}
+                >
+                  <Button variant="ghost" className="w-full justify-start">
+                    {option}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-4 flex justify-between">
+              <Button onClick={handleSubmitAnswer} disabled={selectedAnswer === null}>
+                提交答案
+              </Button>
+              <Button onClick={handleNextQuestion}>
+                下一题
               </Button>
             </div>
-          </CardHeader>
-          
-          <CardContent className="p-4 bg-dark/20">
-            <div className="flex flex-wrap justify-between items-center gap-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-400">难度：</span>
-                <Tabs 
-                  value={difficulty} 
-                  onValueChange={(value) => handleDifficultyChange(value as QuestionDifficulty)}
-                  className="w-full"
-                >
-                  <TabsList className="glass bg-dark/30 h-8">
-                    <TabsTrigger
-                      value="easy"
-                      className="text-xs px-3 h-6 data-[state=active]:bg-primary/20 data-[state=active]:text-primary"
-                    >
-                      简单
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="medium"
-                      className="text-xs px-3 h-6 data-[state=active]:bg-primary/20 data-[state=active]:text-primary"
-                    >
-                      普通
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="hard"
-                      className="text-xs px-3 h-6 data-[state=active]:bg-primary/20 data-[state=active]:text-primary"
-                    >
-                      困难
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-              
-              <div className="flex items-center space-x-4">
+
+            {isAnswerCorrect !== null && (
+              <div className={`mt-4 p-4 rounded-lg ${isAnswerCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                 <div className="flex items-center">
-                  <span className="text-sm text-gray-400 mr-2">进度：</span>
-                  <span className="text-sm font-medium text-white">
-                    {currentQuestionIndex + 1} / {questions.length}
-                  </span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-400 mr-2">正确率：</span>
-                  <div className="w-32 flex items-center">
-                    <Progress value={progress} className="h-2 bg-gray-700" />
-                    <span className="text-sm font-medium text-white ml-2">
-                      {progress}%
-                    </span>
-                  </div>
+                  {isAnswerCorrect ? (
+                    <CheckCircle className="text-green-500 h-5 w-5 mr-2" />
+                  ) : (
+                    <XCircle className="text-red-500 h-5 w-5 mr-2" />
+                  )}
+                  {isAnswerCorrect ? '回答正确' : '回答错误'}
                 </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
-        
-        <div className="grid grid-cols-1 gap-6">
-          {isLoading ? (
-            <Card className="glass border-0">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <Skeleton className="h-8 w-3/4 bg-white/5" />
-                  <Skeleton className="h-20 w-full bg-white/5" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-12 w-full bg-white/5" />
-                    <Skeleton className="h-12 w-full bg-white/5" />
-                    <Skeleton className="h-12 w-full bg-white/5" />
-                    <Skeleton className="h-12 w-full bg-white/5" />
+      )}
+
+      {userAnswers.length > 0 && (
+        <div>
+          <h2 className="text-xl font-bold mt-8 mb-4">你的答案:</h2>
+          <ul className="space-y-4 mt-4">
+            {userAnswers.map((answer, index) => (
+              <li key={index} className={`p-4 rounded-lg border ${answer.isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <div className="flex items-center">
+                  {answer.isCorrect ? (
+                    <CheckCircle className="text-green-500 h-5 w-5 mr-2" />
+                  ) : (
+                    <XCircle className="text-red-500 h-5 w-5 mr-2" />
+                  )}
+                  <div>
+                    <div className="font-medium">{answer.question || `问题 ${index + 1}`}</div>
+                    <div className="text-sm text-gray-600">
+                      {answer.isCorrect ? '回答正确' : `您选择了: ${answer.options?.[answer.selectedOptionIndex] || '未知选项'}`}
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            questions.length > 0 && (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentQuestionIndex}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="glass border-0">
-                    <CardHeader className="pb-2 px-6 pt-5 border-b border-white/10">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-0">
-                            问题 {currentQuestionIndex + 1}/{questions.length}
-                          </Badge>
-                          
-                          <Badge className={`border-0 ${
-                            difficulty === 'easy' 
-                              ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' 
-                              : difficulty === 'medium'
-                              ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'
-                              : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                          }`}>
-                            {difficulty === 'easy' ? '简单' : difficulty === 'medium' ? '普通' : '困难'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent className="p-6">
-                      <div className="space-y-6">
-                        <div className="text-lg font-medium text-white">
-                          {questions[currentQuestionIndex].text}
-                        </div>
-                        
-                        <div className="space-y-3">
-                          {questions[currentQuestionIndex].options.map((option, index) => (
-                            <motion.button
-                              key={index}
-                              onClick={() => handleOptionSelect(index)}
-                              whileTap={{ scale: 0.98 }}
-                              className={`w-full p-4 text-left rounded-lg transition-all duration-200 ${
-                                selectedOption === index 
-                                  ? isAnswered
-                                    ? index === questions[currentQuestionIndex].correctAnswer
-                                      ? 'bg-green-500/20 border border-green-500/50 text-white'
-                                      : 'bg-red-500/20 border border-red-500/50 text-white'
-                                    : 'bg-primary/20 border border-primary/50 text-white'
-                                  : 'bg-dark/20 border border-gray-700 text-gray-300 hover:bg-dark/40 hover:border-gray-600'
-                              }`}
-                            >
-                              <div className="flex items-start">
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mr-3 ${
-                                  selectedOption === index 
-                                    ? isAnswered
-                                      ? index === questions[currentQuestionIndex].correctAnswer
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-red-500 text-white'
-                                      : 'bg-primary text-white'
-                                    : 'bg-gray-700 text-gray-300'
-                                }`}>
-                                  {isAnswered ? (
-                                    index === questions[currentQuestionIndex].correctAnswer ? (
-                                      <Check className="h-4 w-4" />
-                                    ) : selectedOption === index ? (
-                                      <X className="h-4 w-4" />
-                                    ) : (
-                                      String.fromCharCode(65 + index)
-                                    )
-                                  ) : (
-                                    String.fromCharCode(65 + index)
-                                  )}
-                                </div>
-                                <span>{option}</span>
-                              </div>
-                            </motion.button>
-                          ))}
-                        </div>
-                        
-                        {isAnswered && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            transition={{ duration: 0.3 }}
-                            className={`p-4 rounded-lg ${
-                              selectedOption === questions[currentQuestionIndex].correctAnswer
-                                ? 'bg-green-500/10 border border-green-500/30'
-                                : 'bg-red-500/10 border border-red-500/30'
-                            }`}
-                          >
-                            <h4 className={`text-base font-medium mb-2 ${
-                              selectedOption === questions[currentQuestionIndex].correctAnswer
-                                ? 'text-green-400'
-                                : 'text-red-400'
-                            }`}>
-                              {selectedOption === questions[currentQuestionIndex].correctAnswer
-                                ? '正确！解释：'
-                                : '错误！解释：'}
-                            </h4>
-                            <p className="text-sm text-gray-300">
-                              {questions[currentQuestionIndex].explanation}
-                            </p>
-                          </motion.div>
-                        )}
-                      </div>
-                    </CardContent>
-                    
-                    <CardFooter className="p-6 pt-0 flex justify-between">
-                      <Button
-                        variant="outline"
-                        onClick={handlePreviousQuestion}
-                        disabled={currentQuestionIndex === 0}
-                        className="border-gray-700 text-gray-300 hover:text-white hover:border-gray-500"
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        上一题
-                      </Button>
-                      
-                      {!isAnswered ? (
-                        <Button
-                          onClick={handleSubmitAnswer}
-                          disabled={selectedOption === null}
-                          className="bg-primary hover:bg-primary-hover text-white disabled:bg-gray-700"
-                        >
-                          提交答案
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={handleNextQuestion}
-                          className="bg-primary hover:bg-primary-hover text-white"
-                        >
-                          {currentQuestionIndex < questions.length - 1 ? (
-                            <>
-                              下一题
-                              <ChevronRight className="h-4 w-4 ml-1" />
-                            </>
-                          ) : (
-                            '完成测验'
-                          )}
-                        </Button>
-                      )}
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              </AnimatePresence>
-            )
-          )}
+              </li>
+            ))}
+          </ul>
         </div>
-      </motion.div>
+      )}
     </div>
   );
 };
