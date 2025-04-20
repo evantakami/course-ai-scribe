@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CourseContent, Summary, SummaryStyle, SummaryLanguage, Question, QuestionDifficulty, HistoryItem, UserAnswer, Course } from "@/types";
 import { Toaster } from "@/components/ui/sonner";
@@ -683,7 +682,8 @@ const Index = () => {
       <WelcomeModal 
         isOpen={showWelcomeModal} 
         onClose={() => setShowWelcomeModal(false)}
-        hasApiKey={isKeySet}
+        hasApiKey={!!openaiService.getApiKey()}
+        onSetApiKey={handleApiKeySet}
       />
       
       <Toaster position="top-center" />

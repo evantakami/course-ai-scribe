@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UserAnswer, Course } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -286,9 +285,7 @@ const MistakeCollection = () => {
                         key={index} 
                         className={`
                           flex items-start space-x-2 rounded-md p-3 border
-                          ${index === selectedMistake.correctAnswer ? 'bg-green-50 border-green-200' :
-                            index === selectedMistake.selectedOption ? 'bg-red-50 border-red-200' :
-                            'border-gray-100'}
+                          ${option === mistake.selectedOptionIndex ? 'bg-red-100 text-red-600' : ''}
                         `}
                       >
                         <div className="flex-grow font-normal">
@@ -296,7 +293,7 @@ const MistakeCollection = () => {
                         </div>
                         {index === selectedMistake.correctAnswer ? (
                           <CheckCircle className="text-green-500 h-5 w-5 flex-shrink-0" />
-                        ) : index === selectedMistake.selectedOption ? (
+                        ) : index === selectedMistake.selectedOptionIndex ? (
                           <XCircle className="text-red-500 h-5 w-5 flex-shrink-0" />
                         ) : null}
                       </div>

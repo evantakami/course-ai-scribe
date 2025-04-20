@@ -30,7 +30,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
       const currentQuestion = questions[currentQuestionIndex];
       if (currentQuestion) {
         const existingAnswer = initialAnswers?.find(a => a.questionId === currentQuestion.id);
-        setSelectedOption(existingAnswer ? existingAnswer.selectedOption : null);
+        setSelectedOption(existingAnswer ? existingAnswer.selectedOptionIndex : null);
       } else {
         setSelectedOption(null);
       }
@@ -49,7 +49,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
     if (questions && questions.length > 0 && currentQuestionIndex < questions.length) {
       const currentQuestion = questions[currentQuestionIndex];
       const existingAnswer = userAnswers.find(a => a.questionId === currentQuestion.id);
-      setSelectedOption(existingAnswer ? existingAnswer.selectedOption : null);
+      setSelectedOption(existingAnswer ? existingAnswer.selectedOptionIndex : null);
       setIsShowingExplanation(!!existingAnswer);
       setCustomExplanation(null);
     }
@@ -93,9 +93,9 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
 
     const isCorrect = selectedOption === currentQuestion.correctAnswer;
     
-    const newAnswer = {
+    const newAnswer: UserAnswer = {
       questionId: currentQuestion.id,
-      selectedOption,
+      selectedOptionIndex: selectedOption,
       isCorrect,
       question: currentQuestion.text,
       options: currentQuestion.options,
@@ -172,7 +172,7 @@ const Quiz = ({ questions, initialAnswers = [], saveUserAnswers }: QuizProps) =>
     try {
       const explanation = await openaiService.evaluateAnswer(
         currentQuestion, 
-        userAnswer.selectedOption
+        userAnswer.selectedOptionIndex
       );
       setCustomExplanation(explanation);
       setIsShowingExplanation(true);

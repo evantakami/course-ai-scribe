@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -27,12 +26,10 @@ const InteractiveQuiz = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   
-  // Generate mock questions for demo
   useEffect(() => {
     const loadQuestions = async () => {
       setIsLoading(true);
       
-      // Simulate API call
       setTimeout(() => {
         const mockQuestions: Question[] = Array(10).fill(null).map((_, index) => ({
           id: index + 1,
@@ -80,7 +77,7 @@ const InteractiveQuiz = () => {
     
     const answer: UserAnswer = {
       questionId: currentQuestion.id,
-      selectedAnswer: selectedOption,
+      selectedOptionIndex: selectedOption,
       isCorrect: isCorrect,
       timestamp: new Date()
     };
@@ -101,7 +98,6 @@ const InteractiveQuiz = () => {
       setSelectedOption(null);
       setIsAnswered(false);
     } else {
-      // End of quiz
       const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
       toast.success(`测验完成！正确率: ${correctAnswers}/${questions.length}`);
     }
@@ -111,13 +107,12 @@ const InteractiveQuiz = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
       
-      // Check if this question was already answered
       const prevAnswer = userAnswers.find(
         a => a.questionId === questions[currentQuestionIndex - 1].id
       );
       
       if (prevAnswer) {
-        setSelectedOption(prevAnswer.selectedAnswer);
+        setSelectedOption(prevAnswer.selectedOptionIndex);
         setIsAnswered(true);
       } else {
         setSelectedOption(null);
@@ -129,7 +124,6 @@ const InteractiveQuiz = () => {
   const handleRegenerateQuiz = () => {
     setIsLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       toast.success(`已重新生成${
         difficulty === 'easy' ? '简单' : 
@@ -138,7 +132,7 @@ const InteractiveQuiz = () => {
       }难度测验题`);
       
       const mockQuestions: Question[] = Array(10).fill(null).map((_, index) => ({
-        id: index + 100, // Different IDs
+        id: index + 100,
         text: `这是一个新生成的${difficulty}难度测验题，内容与之前的题目不同？`,
         options: [
           "新选项A：这是第一个可能的答案",
@@ -160,7 +154,6 @@ const InteractiveQuiz = () => {
     }, 1500);
   };
   
-  // Calculate progress
   const progress = userAnswers.length > 0 
     ? Math.round((userAnswers.filter(a => a.isCorrect).length / userAnswers.length) * 100) 
     : 0;
@@ -173,7 +166,6 @@ const InteractiveQuiz = () => {
         transition={{ duration: 0.4 }}
         className="w-full"
       >
-        {/* Header Card */}
         <Card className="glass border-0 mb-6 overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-primary/20 to-accent/20 border-b border-white/10">
             <div className="flex justify-between items-center">
@@ -254,7 +246,6 @@ const InteractiveQuiz = () => {
           </CardContent>
         </Card>
         
-        {/* Quiz Content */}
         <div className="grid grid-cols-1 gap-6">
           {isLoading ? (
             <Card className="glass border-0">
@@ -352,7 +343,6 @@ const InteractiveQuiz = () => {
                           ))}
                         </div>
                         
-                        {/* Explanation */}
                         {isAnswered && (
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
