@@ -77,130 +77,45 @@ const MainTabs = ({
     })
   };
   
-  // Define icon and indicator styling for each tab
-  const tabStyles = {
-    upload: {
-      bgActive: "bg-white",
-      bgInactive: "bg-transparent",
-      textActive: "text-edu-700",
-      textInactive: "text-muted-foreground",
-      indicator: "bg-edu-500"
-    },
-    summary: {
-      bgActive: "bg-white",
-      bgInactive: "bg-transparent",
-      textActive: "text-summary-DEFAULT",
-      textInactive: "text-muted-foreground",
-      indicator: "bg-summary-DEFAULT"
-    },
-    quiz: {
-      bgActive: "bg-white",
-      bgInactive: "bg-transparent",
-      textActive: "text-quiz-DEFAULT",
-      textInactive: "text-muted-foreground",
-      indicator: "bg-quiz-DEFAULT"
-    },
-    mistakes: {
-      bgActive: "bg-white",
-      bgInactive: "bg-transparent",
-      textActive: "text-mistake-DEFAULT",
-      textInactive: "text-muted-foreground",
-      indicator: "bg-mistake-DEFAULT"
-    }
-  };
-  
   return (
     <Tabs
       value={activeTab}
       onValueChange={setActiveTab}
       className="space-y-6"
     >
-      <motion.div
-        initial={{ y: 10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <TabsList className="relative w-full grid grid-cols-4 p-1 rounded-xl bg-muted/80 backdrop-blur sticky top-0 z-10">
-          <TabsTrigger 
-            value="upload" 
-            disabled={isLoading}
-            className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
-          >
-            <div className="flex items-center">
-              <FileText className="mr-2 h-4 w-4" />
-              <span className="text-sm">输入内容</span>
-            </div>
-            {activeTab === "upload" && (
-              <motion.div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-edu-500"
-                layoutId="tab-indicator"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              />
-            )}
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="summary" 
-            disabled={isLoading || !courseContent?.summary}
-            className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:text-summary-DEFAULT data-[state=active]:shadow-sm transition-all duration-200"
-          >
-            <div className="flex items-center">
-              <BookOpen className="mr-2 h-4 w-4" />
-              <span className="text-sm">摘要</span>
-            </div>
-            {activeTab === "summary" && (
-              <motion.div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-summary-DEFAULT"
-                layoutId="tab-indicator"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              />
-            )}
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="quiz" 
-            disabled={isLoading || isGeneratingQuiz || !hasQuestions}
-            className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:text-quiz-DEFAULT data-[state=active]:shadow-sm transition-all duration-200"
-          >
-            <div className="flex items-center">
-              <HelpCircle className="mr-2 h-4 w-4" />
-              <span className="text-sm">知识测验</span>
-            </div>
-            {activeTab === "quiz" && (
-              <motion.div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-quiz-DEFAULT"
-                layoutId="tab-indicator"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              />
-            )}
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="mistakes"
-            className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:text-mistake-DEFAULT data-[state=active]:shadow-sm transition-all duration-200"
-          >
-            <div className="flex items-center">
-              <BookOpenCheck className="mr-2 h-4 w-4" />
-              <span className="text-sm">错题本</span>
-            </div>
-            {activeTab === "mistakes" && (
-              <motion.div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-mistake-DEFAULT"
-                layoutId="tab-indicator"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              />
-            )}
-          </TabsTrigger>
-        </TabsList>
-      </motion.div>
+      <TabsList className="grid w-full grid-cols-4 p-1 rounded-xl bg-muted/80 backdrop-blur">
+        <TabsTrigger 
+          value="upload" 
+          disabled={isLoading}
+          className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          <span className="text-sm">输入内容</span>
+        </TabsTrigger>
+        <TabsTrigger 
+          value="summary" 
+          disabled={isLoading || !courseContent?.summary}
+          className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
+        >
+          <BookOpen className="mr-2 h-4 w-4" />
+          <span className="text-sm">总结</span>
+        </TabsTrigger>
+        <TabsTrigger 
+          value="quiz" 
+          disabled={isLoading || isGeneratingQuiz || !hasQuestions}
+          className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
+        >
+          <HelpCircle className="mr-2 h-4 w-4" />
+          <span className="text-sm">知识测验</span>
+        </TabsTrigger>
+        <TabsTrigger 
+          value="mistakes"
+          className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
+        >
+          <BookOpenCheck className="mr-2 h-4 w-4" />
+          <span className="text-sm">错题本</span>
+        </TabsTrigger>
+      </TabsList>
 
       <AnimatePresence mode="wait" initial={false}>
         {activeTab === "upload" && (

@@ -13,8 +13,7 @@ import {
   Book, 
   HelpCircle, 
   Trash2,
-  Calendar,
-  Eye
+  Calendar
 } from "lucide-react";
 import {
   AlertDialog,
@@ -29,16 +28,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
-import { 
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 
 interface CourseHistoryProps {
   courseId: string;
@@ -49,7 +38,6 @@ interface CourseHistoryProps {
 const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistoryProps) => {
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [course, setCourse] = useState<Course | null>(null);
-  const [previewItem, setPreviewItem] = useState<HistoryItem | null>(null);
 
   useEffect(() => {
     loadData();
@@ -155,10 +143,6 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
     }
   };
 
-  const handlePreviewSummary = (item: HistoryItem) => {
-    setPreviewItem(item);
-  };
-
   const listVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -231,114 +215,45 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
             const { hasSummaries, hasQuiz, hasAnswers } = getHistoryItemStatus(item);
             
             return (
-              <motion.div 
-                key={item.id} 
-                variants={itemVariants}
-                whileHover={{ 
-                  scale: 1.02,
-                  transition: { duration: 0.2 }
-                }}
-              >
+              <motion.div key={item.id} variants={itemVariants}>
                 <Card className="overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200">
                   <CardHeader className="p-4 pb-2">
                     <div className="flex justify-between items-start">
                       <h3 className="font-medium line-clamp-2">
                         {item.title || "未命名笔记"}
                       </h3>
-                      <div className="flex items-center space-x-1">
-                        {hasSummaries && (
-                          <Drawer>
-                            <DrawerTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-gray-400 hover:text-summary-DEFAULT hover:bg-summary-light"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePreviewSummary(item);
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </DrawerTrigger>
-                            <DrawerContent>
-                              <DrawerHeader>
-                                <DrawerTitle>{item.title || "未命名笔记"}</DrawerTitle>
-                                <DrawerDescription>
-                                  {formatDate(item.timestamp)}
-                                </DrawerDescription>
-                              </DrawerHeader>
-                              <div className="p-4">
-                                <ScrollArea className="h-[50vh]">
-                                  {item.summaries && Object.keys(item.summaries).length > 0 ? (
-                                    <div className="space-y-4">
-                                      {Object.entries(item.summaries).map(([style, content]) => (
-                                        <div key={style} className="space-y-2">
-                                          <h4 className="font-medium text-lg capitalize">{
-                                            style === 'casual' ? '通俗易懂' : 
-                                            style === 'academic' ? '学术风格' : 
-                                            style === 'basic' ? '基础概念' : style
-                                          }</h4>
-                                          <div className="p-4 bg-gray-50 rounded-md">
-                                            <p className="whitespace-pre-wrap">{content}</p>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <p className="text-center text-gray-500 py-10">暂无摘要内容</p>
-                                  )}
-                                </ScrollArea>
-                              </div>
-                              <DrawerFooter>
-                                <Button 
-                                  onClick={() => handleSelectItem(item)}
-                                  className="w-full bg-edu-500 hover:bg-edu-600 text-white"
-                                >
-                                  使用此内容
-                                </Button>
-                                <DrawerClose asChild>
-                                  <Button variant="outline">关闭</Button>
-                                </DrawerClose>
-                              </DrawerFooter>
-                            </DrawerContent>
-                          </Drawer>
-                        )}
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                              onClick={(e) => e.stopPropagation()}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-white">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>确认删除</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              确定要删除这条历史记录吗？此操作无法撤销。
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="border-gray-200">取消</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="bg-red-500 hover:bg-red-600 text-white"
                             >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-white">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>确认删除</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                确定要删除这条历史记录吗？此操作无法撤销。
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="border-gray-200">取消</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteItem(item.id)}
-                                className="bg-red-500 hover:bg-red-600 text-white"
-                              >
-                                删除
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                              删除
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="p-4 pt-2" onClick={() => handleSelectItem(item)}>
+                  <CardContent className="p-4 pt-2">
                     <div className="flex flex-wrap gap-2 mb-3">
                       {hasSummaries && (
                         <Badge variant="outline" className="bg-summary-light text-summary-DEFAULT border-0">
