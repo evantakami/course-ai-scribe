@@ -12,6 +12,8 @@ import MainTabs from "@/components/MainTabs";
 import { v4 as uuidv4 } from "uuid";
 import CourseCatalog from "@/components/courses/CourseCatalog";
 import CourseHistory from "@/components/courses/CourseHistory";
+import WelcomeModal from "@/components/WelcomeModal";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Index = () => {
   const [isKeySet, setIsKeySet] = useState<boolean>(!!openaiService.getApiKey());
@@ -23,6 +25,7 @@ const Index = () => {
   const [currentQuizDifficulty, setCurrentQuizDifficulty] = useState<QuestionDifficulty>("medium");
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [view, setView] = useState<"catalog" | "history" | "content">("content");
+  const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
 
   const handleApiKeySet = () => {
     setIsKeySet(true);
@@ -30,7 +33,13 @@ const Index = () => {
   
   useEffect(() => {
     initializeUserProfile();
+    checkOnboarding();
   }, []);
+  
+  const checkOnboarding = () => {
+    const hasCompletedOnboarding = localStorage.getItem("onboarding_completed") === "true";
+    setShowWelcomeModal(!hasCompletedOnboarding);
+  };
   
   useEffect(() => {
     if (courseContent?.rawContent && !isLoading) {
@@ -45,7 +54,7 @@ const Index = () => {
         const defaultCourse: Course = {
           id: uuidv4(),
           name: "通用课程",
-          color: "bg-blue-500",
+          color: "bg-edu-500",
           timestamp: new Date()
         };
         
@@ -551,57 +560,111 @@ const Index = () => {
     setView("history");
   };
 
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      x: 20
+    },
+    animate: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.3
+      }
+    },
+    exit: {
+      opacity: 0,
+      x: -20,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
   const renderContent = () => {
     if (!isKeySet) {
       return (
-        <div className="flex justify-center my-8">
+        <motion.div 
+          className="flex justify-center my-8 p-6 bg-blue-50 rounded-xl"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <ApiKeyInput onApiKeySet={handleApiKeySet} />
-        </div>
+        </motion.div>
       );
     }
 
     if (view === "catalog") {
       return (
-        <CourseCatalog onCourseSelect={handleCourseSelect} />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="catalog"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+          >
+            <CourseCatalog onCourseSelect={handleCourseSelect} />
+          </motion.div>
+        </AnimatePresence>
       );
     }
 
     if (view === "history") {
       return (
-        <CourseHistory 
-          courseId={selectedCourseId}
-          onBackClick={() => setView("catalog")}
-          onSelectContent={handleSelectHistoryContent}
-        />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="history"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+          >
+            <CourseHistory 
+              courseId={selectedCourseId}
+              onBackClick={() => setView("catalog")}
+              onSelectContent={handleSelectHistoryContent}
+            />
+          </motion.div>
+        </AnimatePresence>
       );
     }
 
     return (
-      <>
-        <TopControls 
-          onSelectHistoryContent={handleSelectHistoryContent} 
-          onApiKeySet={handleApiKeySet} 
-          onViewCourses={() => setView("catalog")}
-        />
-        
-        <MainTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          courseContent={courseContent}
-          isLoading={isLoading}
-          isGeneratingQuiz={isGeneratingQuiz}
-          handleContentLoaded={handleContentLoaded}
-          handleStyleChange={handleStyleChange}
-          handleLanguageChange={handleLanguageChange}
-          handleGenerateQuiz={handleGenerateQuiz}
-          handleDifficultyChange={handleDifficultyChange}
-          saveUserAnswersToHistory={saveUserAnswersToHistory}
-          handleRegenerateQuiz={handleRegenerateQuiz}
-          selectedCourseId={selectedCourseId}
-          onSelectCourse={setSelectedCourseId}
-          onViewCourses={() => setView("catalog")}
-        />
-      </>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="content"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+        >
+          <TopControls 
+            onSelectHistoryContent={handleSelectHistoryContent} 
+            onApiKeySet={handleApiKeySet} 
+            onViewCourses={() => setView("catalog")}
+          />
+          
+          <MainTabs 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            courseContent={courseContent}
+            isLoading={isLoading}
+            isGeneratingQuiz={isGeneratingQuiz}
+            handleContentLoaded={handleContentLoaded}
+            handleStyleChange={handleStyleChange}
+            handleLanguageChange={handleLanguageChange}
+            handleGenerateQuiz={handleGenerateQuiz}
+            handleDifficultyChange={handleDifficultyChange}
+            saveUserAnswersToHistory={saveUserAnswersToHistory}
+            handleRegenerateQuiz={handleRegenerateQuiz}
+            selectedCourseId={selectedCourseId}
+            onSelectCourse={setSelectedCourseId}
+            onViewCourses={() => setView("catalog")}
+          />
+        </motion.div>
+      </AnimatePresence>
     );
   };
 
@@ -616,6 +679,12 @@ const Index = () => {
           <Footer />
         </div>
       </div>
+      
+      <WelcomeModal 
+        isOpen={showWelcomeModal} 
+        onClose={() => setShowWelcomeModal(false)}
+        hasApiKey={isKeySet}
+      />
       
       <Toaster position="top-center" />
     </div>

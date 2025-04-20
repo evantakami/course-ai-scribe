@@ -6,6 +6,7 @@ import FileUpload from "./FileUpload";
 import CourseSummary from "./CourseSummary";
 import QuizGenerator from "./QuizGenerator";
 import MistakeCollection from "./MistakeCollection";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface MainTabsProps {
   activeTab: string;
@@ -59,72 +60,144 @@ const MainTabs = ({
     (courseContent.questions.hard && courseContent.questions.hard.length > 0)
   );
   
+  const tabVariants = {
+    hidden: (direction: number) => ({
+      x: direction * 20,
+      opacity: 0
+    }),
+    visible: {
+      x: 0,
+      opacity: 1,
+      transition: { duration: 0.3, ease: "easeInOut" }
+    },
+    exit: (direction: number) => ({
+      x: direction * -20,
+      opacity: 0,
+      transition: { duration: 0.2 }
+    })
+  };
+  
   return (
     <Tabs
       value={activeTab}
       onValueChange={setActiveTab}
-      className="space-y-4"
+      className="space-y-6"
     >
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="upload" disabled={isLoading}>
+      <TabsList className="grid w-full grid-cols-4 p-1 rounded-xl bg-muted/80 backdrop-blur">
+        <TabsTrigger 
+          value="upload" 
+          disabled={isLoading}
+          className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
+        >
           <FileText className="mr-2 h-4 w-4" />
-          输入内容
+          <span className="text-sm">输入内容</span>
         </TabsTrigger>
         <TabsTrigger 
           value="summary" 
           disabled={isLoading || !courseContent?.summary}
+          className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
         >
           <BookOpen className="mr-2 h-4 w-4" />
-          总结
+          <span className="text-sm">总结</span>
         </TabsTrigger>
         <TabsTrigger 
           value="quiz" 
           disabled={isLoading || isGeneratingQuiz || !hasQuestions}
+          className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
         >
           <HelpCircle className="mr-2 h-4 w-4" />
-          知识测验
+          <span className="text-sm">知识测验</span>
         </TabsTrigger>
-        <TabsTrigger value="mistakes">
+        <TabsTrigger 
+          value="mistakes"
+          className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-edu-700 data-[state=active]:shadow-sm transition-all duration-200"
+        >
           <BookOpenCheck className="mr-2 h-4 w-4" />
-          错题本
+          <span className="text-sm">错题本</span>
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="upload" className="mt-4">
-        <div className="flex justify-center">
-          <FileUpload 
-            onContentLoaded={handleContentLoaded} 
-            isLoading={isLoading}
-            selectedCourseId={selectedCourseId}
-            onSelectCourse={onSelectCourse}
-            generateAllContent={true}
-          />
-        </div>
-      </TabsContent>
+      <AnimatePresence mode="wait" initial={false}>
+        {activeTab === "upload" && (
+          <motion.div
+            key="upload"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={tabVariants}
+            custom={1}
+          >
+            <TabsContent value="upload" className="mt-0">
+              <div className="flex justify-center">
+                <FileUpload 
+                  onContentLoaded={handleContentLoaded} 
+                  isLoading={isLoading}
+                  selectedCourseId={selectedCourseId}
+                  onSelectCourse={onSelectCourse}
+                  generateAllContent={true}
+                />
+              </div>
+            </TabsContent>
+          </motion.div>
+        )}
 
-      <TabsContent value="summary" className="mt-4">
-        <CourseSummary 
-          summary={courseContent?.summary || null} 
-          isLoading={isLoading}
-          onStyleChange={handleStyleChange}
-          onLanguageChange={handleLanguageChange}
-          onGenerateQuiz={handleGenerateQuiz}
-        />
-      </TabsContent>
+        {activeTab === "summary" && (
+          <motion.div
+            key="summary"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={tabVariants}
+            custom={-1}
+          >
+            <TabsContent value="summary" className="mt-0">
+              <CourseSummary 
+                summary={courseContent?.summary || null} 
+                isLoading={isLoading}
+                onStyleChange={handleStyleChange}
+                onLanguageChange={handleLanguageChange}
+                onGenerateQuiz={handleGenerateQuiz}
+              />
+            </TabsContent>
+          </motion.div>
+        )}
 
-      <TabsContent value="quiz" className="mt-4">
-        <QuizGenerator 
-          questions={courseContent?.questions || null}
-          isGenerating={isGeneratingQuiz}
-          onDifficultyChange={handleDifficultyChange}
-          saveUserAnswers={saveUserAnswersToHistory}
-          onRegenerateQuiz={handleRegenerateQuiz}
-        />
-      </TabsContent>
-      
-      <TabsContent value="mistakes" className="mt-4">
-        <MistakeCollection />
-      </TabsContent>
+        {activeTab === "quiz" && (
+          <motion.div
+            key="quiz"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={tabVariants}
+            custom={-1}
+          >
+            <TabsContent value="quiz" className="mt-0">
+              <QuizGenerator 
+                questions={courseContent?.questions || null}
+                isGenerating={isGeneratingQuiz}
+                onDifficultyChange={handleDifficultyChange}
+                saveUserAnswers={saveUserAnswersToHistory}
+                onRegenerateQuiz={handleRegenerateQuiz}
+              />
+            </TabsContent>
+          </motion.div>
+        )}
+
+        {activeTab === "mistakes" && (
+          <motion.div
+            key="mistakes"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={tabVariants}
+            custom={-1}
+          >
+            <TabsContent value="mistakes" className="mt-0">
+              <MistakeCollection />
+            </TabsContent>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Tabs>
   );
 };

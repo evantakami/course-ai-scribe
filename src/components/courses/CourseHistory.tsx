@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { motion } from "framer-motion";
 
 interface CourseHistoryProps {
   courseId: string;
@@ -142,21 +143,41 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
     }
   };
 
+  const listVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="p-4">
       <div className="flex items-center mb-6">
         <Button 
-          variant="ghost" 
+          variant="outline" 
           size="sm" 
           onClick={onBackClick}
-          className="mr-2"
+          className="mr-2 border-gray-200"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           返回
         </Button>
         
         {course && (
-          <div className="flex items-center">
+          <motion.div 
+            className="flex items-center"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <Avatar className="h-8 w-8 mr-2">
               {course.icon ? (
                 <AvatarImage src={course.icon} alt={course.name} />
@@ -166,102 +187,115 @@ const CourseHistory = ({ courseId, onBackClick, onSelectContent }: CourseHistory
               </AvatarFallback>
             </Avatar>
             <h2 className="text-xl font-bold">{course.name}</h2>
-          </div>
+          </motion.div>
         )}
       </div>
 
       {historyItems.length === 0 ? (
-        <div className="text-center py-10">
-          <File className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-medium mb-2">暂无课程笔记</h3>
-          <p className="text-muted-foreground">
+        <motion.div 
+          className="text-center py-16 px-4 bg-white rounded-xl shadow-sm"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <File className="mx-auto h-16 w-16 text-muted-foreground/40 mb-6" />
+          <h3 className="text-xl font-medium mb-3">暂无课程笔记</h3>
+          <p className="text-gray-500 max-w-md mx-auto">
             在"输入内容"页面添加课程内容，系统将自动保存到这里
           </p>
-        </div>
+        </motion.div>
       ) : (
-        <div className="space-y-4">
+        <motion.div 
+          className="space-y-4"
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+        >
           {historyItems.map((item) => {
             const { hasSummaries, hasQuiz, hasAnswers } = getHistoryItemStatus(item);
             
             return (
-              <Card key={item.id} className="overflow-hidden">
-                <CardHeader className="p-4 pb-2">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-medium line-clamp-2">
-                      {item.title || "未命名笔记"}
-                    </h3>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                        >
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>确认删除</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            确定要删除这条历史记录吗？此操作无法撤销。
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>取消</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteItem(item.id)}
+              <motion.div key={item.id} variants={itemVariants}>
+                <Card className="overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium line-clamp-2">
+                        {item.title || "未命名笔记"}
+                      </h3>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
                           >
-                            删除
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="p-4 pt-2">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {hasSummaries && (
-                      <Badge variant="outline" className="bg-blue-50">
-                        <Book className="h-3 w-3 mr-1" />
-                        已生成摘要
-                      </Badge>
-                    )}
-                    {hasQuiz && (
-                      <Badge variant="outline" className="bg-green-50">
-                        <HelpCircle className="h-3 w-3 mr-1" />
-                        有测验题
-                      </Badge>
-                    )}
-                    {hasAnswers && (
-                      <Badge variant="outline" className="bg-orange-50">
-                        已答题
-                      </Badge>
-                    )}
-                  </div>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-white">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>确认删除</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              确定要删除这条历史记录吗？此操作无法撤销。
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="border-gray-200">取消</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="bg-red-500 hover:bg-red-600 text-white"
+                            >
+                              删除
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardHeader>
                   
-                  <div className="text-xs text-muted-foreground flex items-center">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    {formatDate(item.timestamp)}
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="p-4 pt-0">
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="gap-1 ml-auto"
-                    onClick={() => handleSelectItem(item)}
-                  >
-                    使用此内容
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </CardFooter>
-              </Card>
+                  <CardContent className="p-4 pt-2">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {hasSummaries && (
+                        <Badge variant="outline" className="bg-summary-light text-summary-DEFAULT border-0">
+                          <Book className="h-3 w-3 mr-1" />
+                          已生成摘要
+                        </Badge>
+                      )}
+                      {hasQuiz && (
+                        <Badge variant="outline" className="bg-quiz-light text-quiz-DEFAULT border-0">
+                          <HelpCircle className="h-3 w-3 mr-1" />
+                          有测验题
+                        </Badge>
+                      )}
+                      {hasAnswers && (
+                        <Badge variant="outline" className="bg-orange-50 text-orange-500 border-0">
+                          已答题
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="text-xs text-gray-500 flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {formatDate(item.timestamp)}
+                    </div>
+                  </CardContent>
+                  
+                  <CardFooter className="p-4 pt-0">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="gap-1 ml-auto bg-edu-500 hover:bg-edu-600 text-white"
+                      onClick={() => handleSelectItem(item)}
+                    >
+                      使用此内容
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );

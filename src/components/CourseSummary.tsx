@@ -4,7 +4,7 @@ import { Summary, SummaryStyle, SummaryLanguage } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, BookOpen, CheckCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { 
   Select, 
@@ -13,6 +13,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { motion } from "framer-motion";
 
 interface CourseSummaryProps {
   summary: Summary | null;
@@ -40,6 +41,7 @@ const CourseSummary = ({
     academic: false,
     basic: false
   });
+  const [summaryGenerated, setSummaryGenerated] = useState<boolean>(false);
 
   // Update saved summaries when new summary is received
   useEffect(() => {
@@ -54,6 +56,11 @@ const CourseSummary = ({
         ...prev,
         [summary.style]: false
       }));
+      
+      // Show generated animation
+      setSummaryGenerated(true);
+      const timer = setTimeout(() => setSummaryGenerated(false), 2000);
+      return () => clearTimeout(timer);
     }
   }, [summary, isLoading]);
 
@@ -124,78 +131,122 @@ const CourseSummary = ({
   // Determine if we should display loading state for current style
   const isCurrentStyleLoading = localLoading[activeStyle] || (isLoading && !savedSummaries[activeStyle]);
 
+  const styleLabels = {
+    casual: "通俗易懂",
+    academic: "学术专业",
+    basic: "基础概念"
+  };
+
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>课程摘要</CardTitle>
-        <div className="flex items-center space-x-2">
-          <Select 
-            value={summary?.language || "chinese"} 
-            onValueChange={handleLanguageChange}
-            disabled={isLoading}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="w-full overflow-hidden border border-gray-200 shadow-md">
+        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-summary-light to-white">
+          <div className="flex items-center space-x-2">
+            <BookOpen className="h-5 w-5 text-summary-DEFAULT" />
+            <CardTitle>课程摘要</CardTitle>
+            {summaryGenerated && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs"
+              >
+                <CheckCircle className="h-3 w-3 mr-1" />
+                已生成
+              </motion.div>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Select 
+              value={summary?.language || "chinese"} 
+              onValueChange={handleLanguageChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="w-[120px] border border-gray-300 shadow-sm">
+                <SelectValue placeholder="选择语言" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                {languageOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value} className="cursor-pointer">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button 
+              onClick={onGenerateQuiz} 
+              disabled={isLoading || !summary}
+              className="bg-edu-500 hover:bg-edu-600 text-white shadow-sm transition-all"
+            >
+              生成测验题
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Tabs 
+            defaultValue="casual" 
+            value={activeStyle}
+            onValueChange={handleStyleChange}
+            className="w-full"
           >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="选择语言" />
-            </SelectTrigger>
-            <SelectContent>
-              {languageOptions.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100/80 rounded-none border-b">
+              {Object.entries(styleLabels).map(([style, label]) => (
+                <TabsTrigger 
+                  key={style} 
+                  value={style} 
+                  disabled={isLoading}
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-summary-DEFAULT rounded-none"
+                >
+                  {label}
+                </TabsTrigger>
               ))}
-            </SelectContent>
-          </Select>
-          <Button 
-            onClick={onGenerateQuiz} 
-            disabled={isLoading || !summary}
-            className="bg-edu-600 hover:bg-edu-700"
-          >
-            生成测验题
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs 
-          defaultValue="casual" 
-          value={activeStyle}
-          onValueChange={handleStyleChange}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="casual" disabled={isLoading}>通俗易懂</TabsTrigger>
-            <TabsTrigger value="academic" disabled={isLoading}>学术专业</TabsTrigger>
-            <TabsTrigger value="basic" disabled={isLoading}>基础概念</TabsTrigger>
-          </TabsList>
-          
-          {isCurrentStyleLoading ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-edu-500" />
-              <span className="ml-2 text-edu-600">正在生成摘要...</span>
-            </div>
-          ) : savedSummaries[activeStyle] ? (
-            <TabsContent value={activeStyle} className="mt-0">
-              <div className="prose max-w-none">
-                <ReactMarkdown>
-                  {savedSummaries[activeStyle]}
-                </ReactMarkdown>
+            </TabsList>
+            
+            {isCurrentStyleLoading ? (
+              <div className="flex flex-col justify-center items-center py-16">
+                <Loader2 className="h-10 w-10 animate-spin text-summary-DEFAULT mb-4" />
+                <p className="text-gray-500">正在生成{styleLabels[activeStyle]}摘要...</p>
               </div>
-            </TabsContent>
-          ) : summary ? (
-            <TabsContent value={activeStyle} className="mt-0">
-              <div className="prose max-w-none">
-                <ReactMarkdown>
-                  {summary.content}
-                </ReactMarkdown>
+            ) : savedSummaries[activeStyle] ? (
+              <TabsContent value={activeStyle} className="mt-0 p-6">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="prose prose-slate max-w-none"
+                >
+                  <ReactMarkdown>
+                    {savedSummaries[activeStyle]}
+                  </ReactMarkdown>
+                </motion.div>
+              </TabsContent>
+            ) : summary ? (
+              <TabsContent value={activeStyle} className="mt-0 p-6">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="prose prose-slate max-w-none"
+                >
+                  <ReactMarkdown>
+                    {summary.content}
+                  </ReactMarkdown>
+                </motion.div>
+              </TabsContent>
+            ) : (
+              <div className="flex flex-col justify-center items-center py-16 text-gray-400">
+                <BookOpen className="h-12 w-12 mb-4 opacity-30" />
+                <p className="text-center">上传内容后将自动生成摘要</p>
+                <p className="text-sm mt-2">支持切换不同风格的摘要查看</p>
               </div>
-            </TabsContent>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              上传内容后将自动生成摘要
-            </div>
-          )}
-        </Tabs>
-      </CardContent>
-    </Card>
+            )}
+          </Tabs>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
