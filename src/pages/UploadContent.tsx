@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -35,7 +34,7 @@ import {
 } from "lucide-react";
 import { SummaryLanguage, QuestionDifficulty } from "@/types";
 import { openaiService } from "@/services/openaiService";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import CourseSelector from "@/components/courses/CourseSelector";
 
 interface UploadContentProps {
@@ -144,37 +143,22 @@ const UploadContent = ({
       }
     }
 
-    if (!selectedCourseId) {
-      toast.error("请先选择课程分类");
-      return;
-    }
-
-    const stopLoading = startLoading("正在生成摘要和测验题...");
+    const stopLoading = startLoading("正在生成摘要...");
 
     try {
       saveToHistory(contentToProcess);
       
-      // 修改：强制生成所有内容，总是设置generateQuiz为true
       onContentLoaded(
         contentToProcess, 
-        true, // 始终生成测验题
+        generateQuiz, 
         quizDifficulty, 
         language, 
         selectedCourseId
       );
       
-      console.log("Content processing started:", {
-        contentLength: contentToProcess.length,
-        generateQuiz: true,
-        quizDifficulty,
-        language,
-        selectedCourseId
-      });
-      
       stopLoading();
     } catch (error) {
       stopLoading();
-      console.error("Content processing error:", error);
       toast.error("处理内容失败，请重试");
     }
   };
@@ -258,7 +242,6 @@ const UploadContent = ({
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
-                    <DialogTitle>选择课程分类</DialogTitle>
                     <CourseSelector 
                       selectedCourseId={selectedCourseId} 
                       onSelectCourse={(id) => {
@@ -329,7 +312,7 @@ const UploadContent = ({
                   <Textarea 
                     placeholder="在此粘贴或输入课程内容..."
                     value={textContent}
-                    onChange={handleTextChange}
+                    onChange={(e) => setTextContent(e.target.value)}
                     className="min-h-[200px] bg-dark/20 border-gray-700 text-white placeholder:text-gray-500 focus-visible:ring-primary"
                   />
                 </TabsContent>
@@ -408,8 +391,7 @@ const UploadContent = ({
               onClick={handleProcessContent}
               disabled={
                 (activeTab === "paste" && !textContent.trim()) || 
-                (activeTab === "upload" && !selectedFile) ||
-                !selectedCourseId
+                (activeTab === "upload" && !selectedFile)
               }
               className="bg-primary hover:bg-primary-hover text-white hover-glow"
             >
