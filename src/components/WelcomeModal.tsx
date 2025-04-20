@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,9 +12,15 @@ interface WelcomeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSetApiKey: (key: string) => void;
+  hasApiKey?: boolean;
 }
 
-const WelcomeModal = ({ isOpen, onClose, onSetApiKey }: WelcomeModalProps) => {
+const WelcomeModal = ({ 
+  isOpen, 
+  onClose, 
+  onSetApiKey, 
+  hasApiKey = false 
+}: WelcomeModalProps) => {
   const [activeTab, setActiveTab] = useState("welcome");
   const [apiKey, setApiKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);

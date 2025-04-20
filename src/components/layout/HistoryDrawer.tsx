@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { X, BookOpenCheck, History, FileText } from "lucide-react";
+import { X, BookOpenCheck, History, FileText, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { HistoryItem } from "@/types";
