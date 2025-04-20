@@ -9,9 +9,9 @@ import NotFound from "./pages/NotFound";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import UploadContent from "./pages/UploadContent";
-import SummaryReport from "./pages/SummaryReport";
-import InteractiveQuiz from "./pages/InteractiveQuiz";
-import RevisionCenter from "./pages/RevisionCenter";
+import SummaryReportWrapper from "./pages/SummaryReportWrapper";
+import InteractiveQuizWrapper from "./pages/InteractiveQuizWrapper";
+import RevisionCenterWrapper from "./pages/RevisionCenterWrapper";
 import HistoryDrawer from "./components/layout/HistoryDrawer";
 import ProgressBar from "./components/common/ProgressBar";
 import ApiKeyModal from "./components/modals/ApiKeyModal";
@@ -143,7 +143,7 @@ const App = () => {
                     <Route 
                       path="/summary" 
                       element={
-                        <SummaryReport 
+                        <SummaryReportWrapper 
                           initialContent={processedContent} 
                           activeTab={activeTab}
                         />
@@ -152,7 +152,7 @@ const App = () => {
                     <Route 
                       path="/quiz" 
                       element={
-                        <InteractiveQuiz 
+                        <InteractiveQuizWrapper 
                           initialContent={processedContent}
                           activeTab={activeTab}
                         />
@@ -161,7 +161,7 @@ const App = () => {
                     <Route 
                       path="/revision" 
                       element={
-                        <RevisionCenter 
+                        <RevisionCenterWrapper 
                           initialContent={processedContent}
                           activeTab={activeTab}
                         />
