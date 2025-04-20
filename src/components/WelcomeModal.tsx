@@ -80,6 +80,9 @@ const WelcomeModal = ({ isOpen, onClose, hasApiKey }: WelcomeModalProps) => {
     }, 300);
   };
   
+  // Get the current step icon component
+  const CurrentStepIcon = steps[currentStep].icon;
+  
   return (
     <Dialog open={showModal} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-md bg-white rounded-xl shadow-xl border-0">
@@ -96,32 +99,35 @@ const WelcomeModal = ({ isOpen, onClose, hasApiKey }: WelcomeModalProps) => {
           <div className="relative mb-8">
             <div className="absolute top-5 left-8 right-8 h-0.5 bg-gray-200 z-0" />
             <div className="relative z-10 flex justify-between">
-              {steps.map((step, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ 
-                      scale: 1, 
-                      opacity: 1,
-                      transition: { delay: index * 0.2, duration: 0.3 }
-                    }}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      index <= currentStep ? step.bgColor : "bg-gray-100"
-                    } ${index <= currentStep ? step.color : "text-gray-400"}`}
-                  >
-                    {index < currentStep ? (
-                      <Check className="h-5 w-5" />
-                    ) : (
-                      <step.icon className="h-5 w-5" />
+              {steps.map((step, index) => {
+                const StepIcon = step.icon;
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ 
+                        scale: 1, 
+                        opacity: 1,
+                        transition: { delay: index * 0.2, duration: 0.3 }
+                      }}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        index <= currentStep ? step.bgColor : "bg-gray-100"
+                      } ${index <= currentStep ? step.color : "text-gray-400"}`}
+                    >
+                      {index < currentStep ? (
+                        <Check className="h-5 w-5" />
+                      ) : (
+                        <StepIcon className="h-5 w-5" />
+                      )}
+                    </motion.div>
+                    {index === 0 && hasApiKey && (
+                      <div className="absolute -top-3 left-0 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        已完成
+                      </div>
                     )}
-                  </motion.div>
-                  {index === 0 && hasApiKey && (
-                    <div className="absolute -top-3 left-0 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      已完成
-                    </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
           
@@ -135,7 +141,7 @@ const WelcomeModal = ({ isOpen, onClose, hasApiKey }: WelcomeModalProps) => {
               className="text-center px-4 min-h-[120px] flex flex-col items-center"
             >
               <div className={`w-16 h-16 rounded-full ${steps[currentStep].bgColor} ${steps[currentStep].color} flex items-center justify-center mb-4`}>
-                <steps[currentStep].icon className="h-8 w-8" />
+                <CurrentStepIcon className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold mb-2 text-gray-800">{steps[currentStep].title}</h3>
               <p className="text-gray-600">{steps[currentStep].description}</p>
