@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import {
@@ -30,20 +29,35 @@ const promptTypes: { value: CustomPromptType; label: string }[] = [
   { value: "explanation", label: "答案解析" },
 ];
 
-const CustomPromptSettings = () => {
+interface CustomPromptSettingsProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const CustomPromptSettings = ({ 
+  open: externalOpen, 
+  onOpenChange 
+}: CustomPromptSettingsProps) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (externalOpen !== undefined) {
+      setIsOpen(externalOpen);
+    }
+  }, [externalOpen]);
+
   const [activeTab, setActiveTab] = useState<CustomPromptType>("summary");
   const [summaryStyle, setSummaryStyle] = useState<"casual" | "academic" | "basic" | undefined>("casual");
   const [promptContent, setPromptContent] = useState("");
-  
+
   const handleSheetOpen = (open: boolean) => {
     if (open) {
-      // Load current prompt when opening
       loadCurrentPrompt();
     }
     setIsOpen(open);
+    onOpenChange?.(open);
   };
-  
+
   const loadCurrentPrompt = () => {
     let content: string;
     
@@ -55,29 +69,26 @@ const CustomPromptSettings = () => {
     
     setPromptContent(content);
   };
-  
+
   const handleTabChange = (value: string) => {
     const tabValue = value as CustomPromptType;
     setActiveTab(tabValue);
     
-    // Reset summary style when changing tabs
     if (tabValue !== "summary") {
       setSummaryStyle(undefined);
     } else if (!summaryStyle) {
       setSummaryStyle("casual");
     }
     
-    // Load the prompt for the new tab
     setTimeout(() => {
       loadCurrentPrompt();
     }, 0);
   };
-  
+
   const handleSummaryStyleChange = (value: string) => {
     const style = value as "casual" | "academic" | "basic";
     setSummaryStyle(style);
     
-    // Load the prompt for the new style
     setTimeout(() => {
       loadCurrentPrompt();
     }, 0);

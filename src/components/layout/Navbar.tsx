@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
@@ -14,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import ThemeToggle from '../common/ThemeToggle';
 import { motion } from 'framer-motion';
+import CustomPromptSettings from '../CustomPromptSettings';
 
 interface NavbarProps {
   isKeySet: boolean;
@@ -24,6 +24,7 @@ interface NavbarProps {
 const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCustomPromptOpen, setIsCustomPromptOpen] = useState(false);
   
   const navItems = [
     { path: '/upload', icon: FileText, label: '上传内容' },
@@ -36,12 +37,15 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const handleSettingsClick = () => {
+    setIsCustomPromptOpen(true);
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full">
       <div className="glass backdrop-blur-md border-t-0 border-x-0">
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
             <div className="flex items-center">
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -54,7 +58,6 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
               </motion.div>
             </div>
 
-            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-4">
               {navItems.map((item) => (
                 <NavLink 
@@ -70,7 +73,6 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
               ))}
             </nav>
 
-            {/* Right Side Controls */}
             <div className="flex items-center space-x-2">
               <Button 
                 variant="ghost" 
@@ -97,12 +99,12 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
               <Button 
                 variant="ghost" 
                 size="icon"
+                onClick={handleSettingsClick}
                 className="text-gray-300 hover:text-primary hover:bg-white/10"
               >
                 <Settings className="h-5 w-5" />
               </Button>
               
-              {/* Mobile Menu Toggle */}
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -120,7 +122,6 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
@@ -152,6 +153,11 @@ const Navbar = ({ isKeySet, onOpenApiModal, onToggleHistory }: NavbarProps) => {
           </div>
         </motion.div>
       )}
+
+      <CustomPromptSettings 
+        open={isCustomPromptOpen} 
+        onOpenChange={(open) => setIsCustomPromptOpen(open)} 
+      />
     </header>
   );
 };
