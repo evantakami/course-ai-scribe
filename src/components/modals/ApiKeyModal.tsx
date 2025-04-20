@@ -56,9 +56,7 @@ const ApiKeyModal = ({ isOpen, onClose, onApiKeySet }: ApiKeyModalProps) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose();
-    }}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md glass border-0 text-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white flex items-center">

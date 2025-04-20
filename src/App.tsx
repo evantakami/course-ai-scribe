@@ -16,7 +16,8 @@ import HistoryDrawer from "./components/layout/HistoryDrawer";
 import ProgressBar from "./components/common/ProgressBar";
 import ApiKeyModal from "./components/modals/ApiKeyModal";
 import { openaiService } from "./services/openaiService";
-import { QuestionDifficulty, SummaryLanguage } from "./types";
+import { QuestionDifficulty, SummaryLanguage, CourseContent } from "./types";
+import Index from "./pages/Index";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -31,8 +32,7 @@ const App = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>("default");
   const [generateQuiz, setGenerateQuiz] = useState<boolean>(true);
   const [quizDifficulty, setQuizDifficulty] = useState<QuestionDifficulty>("medium");
-  const [processedContent, setProcessedContent] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<string>("upload");
+  const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
 
   useEffect(() => {
     // Check if API key is set
@@ -71,32 +71,26 @@ const App = () => {
     };
   };
 
-  const handleContentLoaded = (
+  const handleContentLoaded = async (
     content: string, 
     generateQuiz: boolean, 
     quizDifficulty: QuestionDifficulty,
     language: SummaryLanguage,
     courseId: string
   ) => {
-    // Store processed content in state
-    setProcessedContent({
+    // Save these settings for the Index component to use
+    setGenerateQuiz(generateQuiz);
+    setQuizDifficulty(quizDifficulty);
+    setSelectedCourseId(courseId);
+    
+    // Set initial content
+    setCourseContent({
       rawContent: content,
-      generateQuiz,
-      quizDifficulty,
-      language,
-      courseId
+      summary: null,
+      questions: null
     });
     
-    // Navigate to summary
-    setActiveTab("summary");
-    
-    console.log("Content loaded and ready for processing", { 
-      contentLength: content.length, 
-      generateQuiz, 
-      quizDifficulty, 
-      language, 
-      courseId 
-    });
+    console.log("Content loaded in App.tsx:", { content, generateQuiz, quizDifficulty, language, courseId });
   };
 
   const handleSelectCourse = (courseId: string) => {
@@ -117,8 +111,6 @@ const App = () => {
                 isKeySet={isKeySet} 
                 onOpenApiModal={() => setIsApiKeyModalOpen(true)}
                 onToggleHistory={toggleHistoryDrawer}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
               />
               
               {/* Main Content */}
@@ -143,30 +135,48 @@ const App = () => {
                     <Route 
                       path="/summary" 
                       element={
-                        <SummaryReport 
-                          initialContent={processedContent} 
-                          activeTab={activeTab}
+                        <Index 
+                          initialContent={courseContent}
+                          initialGenerateQuiz={generateQuiz}
+                          initialQuizDifficulty={quizDifficulty}
+                          initialCourseId={selectedCourseId}
+                          activeTab="summary"
                         />
                       } 
                     />
                     <Route 
                       path="/quiz" 
                       element={
-                        <InteractiveQuiz 
-                          initialContent={processedContent}
-                          activeTab={activeTab}
+                        <Index
+                          initialContent={courseContent}
+                          initialGenerateQuiz={generateQuiz}
+                          initialQuizDifficulty={quizDifficulty}
+                          initialCourseId={selectedCourseId}
+                          activeTab="quiz"
                         />
                       } 
                     />
                     <Route 
-                      path="/revision" 
+                      path="/summary-report" 
                       element={
-                        <RevisionCenter 
-                          initialContent={processedContent}
-                          activeTab={activeTab}
+                        <SummaryReport
+                          summary={courseContent?.summary || null}
+                          summaries={courseContent?.summaries}
+                          rawContent={courseContent?.rawContent || ""}
                         />
                       } 
                     />
+                    <Route 
+                      path="/interactive-quiz" 
+                      element={
+                        <InteractiveQuiz 
+                          questions={courseContent?.questions || null}
+                          courseId={selectedCourseId}
+                          rawContent={courseContent?.rawContent || ""}
+                        />
+                      } 
+                    />
+                    <Route path="/revision" element={<RevisionCenter />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </div>
@@ -194,7 +204,7 @@ const App = () => {
               {/* API Key Modal */}
               <ApiKeyModal 
                 isOpen={isApiKeyModalOpen} 
-                onClose={() => isKeySet && setIsApiKeyModalOpen(false)}
+                onClose={() => !isKeySet && setIsApiKeyModalOpen(false)}
                 onApiKeySet={handleApiKeySet}
               />
             </div>
